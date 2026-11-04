@@ -1,21 +1,21 @@
-FROM python:3.8.5-slim-buster
+FROM python:3.11-slim-bookworm
 
-ENV PIP_NO_CACHE_DIR=1
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Install git and other needed tools
-RUN apt-get update && apt-get install -y git gcc && apt-get clean
+WORKDIR /app
 
-# Upgrade pip and setuptools
-RUN pip3 install --upgrade pip setuptools
+# Install system dependencies from the supported Debian Bookworm repositories.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy application code
-COPY . /app/
+RUN python -m pip install --upgrade pip setuptools
 
-# Set working directory
-WORKDIR /app/
+COPY requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -U -r requirements.txt
+COPY . .
 
-# Run the bot
-CMD ["python3", "-m", "TEAMZYRO"]
+CMD ["python", "-m", "TEAMZYRO"]
