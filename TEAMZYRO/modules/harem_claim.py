@@ -47,16 +47,16 @@ async def mclaim(_, message: t.Message):
 
     # Prevent multiple claims at the same time
     if user_id in claim_lock:
-        await message.reply_text("Your claim request is already being processed. Please wait.")
+        await message.reply_text("⏳ 𝗖𝗟𝗔𝗜𝗠 𝗜𝗡 𝗣𝗥𝗢𝗚𝗥𝗘𝗦𝗦\\n\\nYour reward is being prepared. Please wait a moment.")
         return
 
     claim_lock[user_id] = True
     try:
         # Ensure the user is in the correct chat
         if str(message.chat.id) != str(chat):
-            join_button = InlineKeyboardMarkup([[InlineKeyboardButton("Join Here", url=FORCE_JOIN_LINK)]])
+            join_button = InlineKeyboardMarkup([[InlineKeyboardButton("✦ JOIN TO CLAIM", url=FORCE_JOIN_LINK)]])
             return await message.reply_text(
-                "🔔 ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴄʟᴀɪᴍ ʏᴏᴜʀ ᴅᴀɪʟʏ ᴄʜᴀʀᴀᴄᴛᴇʀ 🔔",
+                "✦ 𝗗𝗔𝗜𝗟𝗬 𝗗𝗥𝗢𝗣 𝗟𝗢𝗖𝗞𝗘𝗗 ✦\\n\\nJoin our required channel, then return here to claim your daily character.",
                 reply_markup=join_button
             )
 
@@ -76,12 +76,12 @@ async def mclaim(_, message: t.Message):
         if last_claimed_date and last_claimed_date.date() == datetime.utcnow().date():
             remaining_time = timedelta(days=1) - (datetime.utcnow() - last_claimed_date)
             formatted_time = await format_time_delta(remaining_time)
-            return await message.reply_text(f"⏳ *You've already claimed today! Next reward in:* `{formatted_time}`")
+            return await message.reply_text(f"✦ 𝗗𝗔𝗜𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 𝗖𝗟𝗔𝗜𝗠𝗘𝗗 ✦\\n\\nYour next character drop unlocks in `{formatted_time}`.\\nCome back tomorrow for another pull!")
 
         # Fetch a unique character for the user
         unique_characters = await get_unique_characters(user_id)
         if not unique_characters:
-            return await message.reply_text("🚫 *No characters available to claim at the moment. Please try again later.*")
+            return await message.reply_text("✧ 𝗧𝗛𝗘 𝗩𝗔𝗨𝗟𝗧 𝗜𝗦 𝗘𝗠𝗣𝗧𝗬\\n\\nThere are no eligible characters available right now. Try again later.")
 
         # Update user data with the new character and claim time
         await user_collection.update_one(
@@ -96,7 +96,7 @@ async def mclaim(_, message: t.Message):
                 f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
                 f"🌈 𝐑𝐚𝐫𝐢𝐭𝐲 : {character['rarity']}\n"
                 f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
-                f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
+                f"<i>Keep collecting — your next daily drop arrives tomorrow.</i>"
             )
             media_file_id = character.get("media_file_id")
             media_type = character.get("media_type", "photo")
@@ -119,7 +119,7 @@ async def mclaim(_, message: t.Message):
 
     except Exception as e:
         print(f"Error in mclaim command: {e}")
-        await message.reply_text("❌ *An unexpected error occurred.*")
+        await message.reply_text("⚠️ 𝗖𝗟𝗔𝗜𝗠 𝗖𝗢𝗨𝗟𝗗𝗡'𝗧 𝗕𝗘 𝗖𝗢𝗠𝗣𝗟𝗘𝗧𝗘𝗗\\n\\nPlease try again in a little while.")
 
     finally:
         # Remove the user from claim lock to allow future claims
