@@ -15,7 +15,11 @@ api_id = os.getenv("API_ID", "")
 api_hash = os.getenv("API_HASH", "")
 
 # Bot Token
-TOKEN = os.getenv("TOKEN", "")
+TOKEN = os.getenv("TOKEN", "").strip()
+
+# Optional Pyrogram session string. Prefer a persistent Render disk for SQLite sessions.
+SESSION_STRING = os.getenv("SESSION_STRING", "").strip()
+PYROGRAM_WORKDIR = os.getenv("PYROGRAM_WORKDIR", "/var/data").strip() or "/var/data"
 
 # Logging & Logs Channel
 BOT_LOGGING = os.getenv("BOT_LOGGING", "")
