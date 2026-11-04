@@ -18,10 +18,9 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from pyrogram import enums
 
-from TEAMZYRO import ZYRO as app
+from TEAMZYRO import ZYRO as app, OWNER_ID
 
-OWNER_ID = [7638720582]
-EVAL = [7638720582]
+EVAL = [OWNER_ID] if OWNER_ID else []
 
 async def aexec(code, client, message):
     exec(
