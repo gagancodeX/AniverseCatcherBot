@@ -6,7 +6,7 @@
 
 from TEAMZYRO import *
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo, CallbackQuery, Message
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo, InputMediaDocument, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant, ChatWriteForbidden
 from itertools import groupby
 import math
@@ -94,7 +94,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
 
         # Calculate total and AMV character counts
         total_characters = len(characters)
-        amv_characters = len([c for c in characters if 'vid_url' in c])
+        amv_characters = len([c for c in characters if c.get('media_type') == 'video' or 'vid_url' in c])
 
         # Sort characters by anime and ID
         characters = sorted(characters, key=lambda x: (x.get('anime', ''), x.get('id', '')))
@@ -184,27 +184,54 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         # Send or edit the harem message with media
         if is_initial:
             if image_character:
+                media_file_id = image_character.get('media_file_id')
+                media_type = image_character.get('media_type', 'photo')
+                if media_file_id:
+                    if media_type == 'video':
+                        return await message.reply_video(
+                            video=media_file_id, caption=harem_message,
+                            reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                        )
+                    if media_type == 'document':
+                        return await message.reply_document(
+                            document=media_file_id, caption=harem_message,
+                            reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                        )
+                    if media_type == 'animation':
+                        return await message.reply_animation(
+                            animation=media_file_id, caption=harem_message,
+                            reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                        )
+                    return await message.reply_photo(
+                        photo=media_file_id, caption=harem_message,
+                        reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                    )
                 if 'vid_url' in image_character:
                     return await message.reply_video(
-                        video=image_character['vid_url'],
-                        caption=harem_message,
-                        reply_markup=reply_markup,
-                        parse_mode=enums.ParseMode.HTML
+                        video=image_character['vid_url'], caption=harem_message,
+                        reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
-                elif 'img_url' in image_character:
+                if 'img_url' in image_character:
                     return await message.reply_photo(
-                        photo=image_character['img_url'],
-                        caption=harem_message,
-                        reply_markup=reply_markup,
-                        parse_mode=enums.ParseMode.HTML
+                        photo=image_character['img_url'], caption=harem_message,
+                        reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
-                else:
-                    return await message.reply_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
-            else:
-                return await message.reply_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+            return await message.reply_text(
+                harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+            )
         else:
             if image_character:
-                if 'vid_url' in image_character:
+                media_file_id = image_character.get('media_file_id')
+                media_type = image_character.get('media_type', 'photo')
+                if media_file_id:
+                    if media_type == 'video':
+                        media = InputMediaVideo(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                    elif media_type == 'document':
+                        media = InputMediaDocument(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                    else:
+                        media = InputMediaPhoto(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                    await callback_query.message.edit_media(media=media, reply_markup=reply_markup)
+                elif 'vid_url' in image_character:
                     await callback_query.message.edit_media(
                         media=InputMediaVideo(image_character['vid_url'], caption=harem_message),
                         reply_markup=reply_markup
@@ -215,9 +242,13 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                         reply_markup=reply_markup
                     )
                 else:
-                    await callback_query.message.edit_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+                    await callback_query.message.edit_text(
+                        harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                    )
             else:
-                await callback_query.message.edit_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+                await callback_query.message.edit_text(
+                    harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                )
 
     except Exception as e:
         print(f"Error in display_harem: {e}")
