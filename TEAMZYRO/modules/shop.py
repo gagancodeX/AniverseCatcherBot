@@ -96,14 +96,11 @@ def is_video(url):
 @app.on_message(filters.command(["shop", "hshop", "hshopmenu"]))
 async def shop_menu(client, message):
     keyboard = []
-    for i, r in enumerate(RARITY_PRICE.keys()):
-        keyboard.append(
-            [InlineKeyboardButton(r, callback_data=f"xeno_{i}")]
-        )
+    for rarity in RARITY_PRICE:
+        keyboard.append([InlineKeyboardButton(rarity, callback_data=f"xeno_{list(RARITY_PRICE.keys()).index(rarity)}")])
 
-    await message.reply_photo(
-        photo="https://files.catbox.moe/ohi1vs.jpg",
-        caption="🌟 **Choose a rarity to browse the Bazaar!**",
+    await message.reply_text(
+        "🌟 **Choose a rarity to browse the Bazaar!**",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -164,20 +161,28 @@ async def show_character(client, msg, user_id):
 
     await msg.delete()
 
-    if is_video(char["img_url"]):
-        await msg.reply_video(
-            video=char["img_url"],
-            caption=caption,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode=ParseMode.HTML
-        )
+    media_file_id = char.get("media_file_id")
+    media_type = char.get("media_type", "photo")
+    markup = InlineKeyboardMarkup(keyboard)
+
+    if media_file_id:
+        if media_type == "video":
+            await msg.reply_video(video=media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+        elif media_type == "document":
+            await msg.reply_document(document=media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+        elif media_type == "animation":
+            await msg.reply_animation(animation=media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+        else:
+            await msg.reply_photo(photo=media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+    elif char.get("vid_url"):
+        await msg.reply_video(video=char["vid_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+    elif char.get("img_url"):
+        if is_video(char["img_url"]):
+            await msg.reply_video(video=char["img_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
+        else:
+            await msg.reply_photo(photo=char["img_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
     else:
-        await msg.reply_photo(
-            photo=char["img_url"],
-            caption=caption,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode=ParseMode.HTML
-        )
+        await msg.reply_text(caption, reply_markup=markup, parse_mode=ParseMode.HTML)
 
 
 # ---------------- NAVIGATION ---------------- #
@@ -245,12 +250,17 @@ async def claim_character(client, callback_query):
             "$inc": {"balance": -discounted_price},
             "$push": {"characters": {
                 "_id": ObjectId(),
-                "img_url": char["img_url"],
+                **{
+                    key: char[key] for key in (
+                        "media_file_id", "media_type", "media_chat_id",
+                        "media_message_id", "img_url", "vid_url", "thum_url"
+                    ) if char.get(key) is not None
+                },
                 "name": char["name"],
                 "anime": char["anime"],
                 "rarity": char["rarity"],
                 "id": char["id"]
-            }}
+            }}}
         }
     )
 
