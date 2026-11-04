@@ -7,6 +7,7 @@
 from TEAMZYRO import *
 import random
 import asyncio
+import time
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -80,7 +81,7 @@ async def send_image(update: Update, context: CallbackContext) -> None:
         selected_character = random.choice(available_characters)
 
     # Clear first_correct_guesses if exists
-    last_characters[chat_id] = character
+    last_characters[chat_id] = selected_character
     last_characters[chat_id]['timestamp'] = time.time()
     
     if chat_id in first_correct_guesses:
