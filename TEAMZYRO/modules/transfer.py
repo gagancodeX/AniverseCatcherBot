@@ -61,17 +61,17 @@ async def transfer_collection(client: Client, message: Message):
     global transfer_in_progress, active_transfer
     args = message.command[1:]
     if len(args) != 2:
-        return await message.reply_text("Incorrect format. Use: `/transfer user_id owner_id`", quote=True)
+        return await message.reply_text("✦ ANIVERSE · VAULT TRANSFER ✦\nFormat: `/transfer user_id owner_id`", quote=True)
 
     user_id = args[0]
     owner_id = args[1]
 
     # Validate numeric input
     if not user_id.isdigit() or not owner_id.isdigit():
-        return await message.reply_text("Please provide valid numeric IDs.")
+        return await message.reply_text("✦ ANIVERSE · VAULT TRANSFER ✦\nPlease provide valid numeric IDs.")
 
     if user_id == owner_id:
-        return await message.reply_text("User ID and Owner ID must be different.")
+        return await message.reply_text("✦ ANIVERSE · VAULT TRANSFER ✦\nSource and destination IDs must be different.")
 
     # Check global lock
     if is_transfer_active_and_valid():
@@ -84,11 +84,11 @@ async def transfer_collection(client: Client, message: Message):
     # Try finding user and owner with int or string IDs
     user = await user_collection.find_one({'id': {"$in": [int(user_id), str(user_id)]}})
     if not user:
-        return await message.reply_text('User not found.')
+        return await message.reply_text('✦ ANIVERSE · VAULT TRANSFER ✦\nSource user not found.')
 
     owner = await user_collection.find_one({'id': {"$in": [int(owner_id), str(owner_id)]}})
     if not owner:
-        return await message.reply_text('Owner not found.')
+        return await message.reply_text('✦ ANIVERSE · VAULT TRANSFER ✦\nDestination user not found.')
 
     user_chars = user.get('characters', [])
     if not user_chars:
@@ -226,7 +226,7 @@ async def cancel_transfer_callback(client: Client, callback_query: CallbackQuery
     transfer_in_progress = False
     active_transfer = None
 
-    await callback_query.edit_message_text("🚫 Transfer cancelled by user.")
+    await callback_query.edit_message_text("✦ ANIVERSE · TRANSFER CANCELLED ✦\nNo changes were made.")
 
 
 # Step 4: Revert (rollback/back) transfer command (1 hour validity)
