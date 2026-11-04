@@ -93,24 +93,44 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     if chat_id in first_correct_guesses:
         del first_correct_guesses[chat_id]
 
-    # Check if the character has a video URL
-    if 'vid_url' in selected_character:
-        sent_message = await context.bot.send_video(
-            chat_id=chat_id,
-            video=selected_character['vid_url'],
-            caption=f"""✨ A {selected_character['rarity']} Character Appears! ✨
+    caption = f"""✨ A {selected_character['rarity']} Character Appears! ✨
 🔍 Use /guess to claim this mysterious character!
-💫 Hurry, before someone else snatches them!""",
-            parse_mode='Markdown'
+💫 Hurry, before someone else snatches them!"""
+
+    # New characters use Telegram file_id. Legacy URL records remain supported.
+    media_file_id = selected_character.get("media_file_id")
+    media_type = selected_character.get("media_type", "photo")
+
+    if media_file_id:
+        if media_type == "video":
+            sent_message = await context.bot.send_video(
+                chat_id=chat_id, video=media_file_id,
+                caption=caption, parse_mode="Markdown"
+            )
+        elif media_type == "document":
+            sent_message = await context.bot.send_document(
+                chat_id=chat_id, document=media_file_id,
+                caption=caption, parse_mode="Markdown"
+            )
+        elif media_type == "animation":
+            sent_message = await context.bot.send_animation(
+                chat_id=chat_id, animation=media_file_id,
+                caption=caption, parse_mode="Markdown"
+            )
+        else:
+            sent_message = await context.bot.send_photo(
+                chat_id=chat_id, photo=media_file_id,
+                caption=caption, parse_mode="Markdown"
+            )
+    elif selected_character.get("vid_url"):
+        sent_message = await context.bot.send_video(
+            chat_id=chat_id, video=selected_character["vid_url"],
+            caption=caption, parse_mode="Markdown"
         )
     else:
         sent_message = await context.bot.send_photo(
-            chat_id=chat_id,
-            photo=selected_character['img_url'],
-            caption=f"""✨ A {selected_character['rarity']} Character Appears! ✨
-🔍 Use /guess to claim this mysterious character!
-💫 Hurry, before someone else snatches them!""",
-            parse_mode='Markdown'
+            chat_id=chat_id, photo=selected_character["img_url"],
+            caption=caption, parse_mode="Markdown"
         )
 
     # Keep the spawn message ID for the /guess retry button.
