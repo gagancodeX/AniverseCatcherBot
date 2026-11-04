@@ -64,20 +64,18 @@ async def get_user_stats(user_id):
 async def stats_handler(client: Client, message: Message):
     user_id = message.from_user.id
     
-    # Send initial "Processing..." message with the image
-    processing_message = await message.reply_photo(
-        photo=STATS_IMG[0],
-        caption="Processing...",
+    processing_message = await message.reply_text(
+        "Processing...",
         parse_mode=enums.ParseMode.HTML
     )
-    
+
     # Small delay to simulate processing
     await asyncio.sleep(1)
     
     stats, error = await get_user_stats(user_id)
     
     if error:
-        await processing_message.edit_caption(caption=error, parse_mode=enums.ParseMode.HTML)
+        await processing_message.edit_text(text=error, parse_mode=enums.ParseMode.HTML)
         return
     
     # Build the stats caption
