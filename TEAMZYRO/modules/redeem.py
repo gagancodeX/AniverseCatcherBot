@@ -20,14 +20,14 @@ redeem_collection = db["redeem_codes"]  # Collection for redeem codes
 async def generate_redeem_code(client, message):
     args = message.command
     if len(args) < 3:
-        await message.reply_text("Usage: `/cgen <character_id> <redeem_limit>`", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · REDEEM FORGE ✦\nUsage: `/cgen <character_id> <redeem_limit>`", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     character_id = args[1]
     try:
         redeem_limit = int(args[2])
     except ValueError:
-        await message.reply_text("Invalid redeem limit. It must be a number.", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · INPUT ERROR ✦\nRedeem limit must be a number.", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     # Check if character exists
@@ -71,7 +71,7 @@ lock = {}  # Dictionary to prevent multiple redemptions at once
 async def redeem_character(client, message):
     args = message.command
     if len(args) < 2:
-        await message.reply_text("Usage: `/redeem <code>`", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · REDEEM PORTAL ✦\nUsage: `/redeem <code>`", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     redeem_code = args[1]
@@ -84,15 +84,15 @@ async def redeem_character(client, message):
     # Normal redeem process agar special code nahi hai
     redeem_data = await redeem_collection.find_one({"code": redeem_code})
     if not redeem_data:
-        await message.reply_text("❌ Invalid or expired redeem code.", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · REDEEM PORTAL ✦\n❌ Invalid or expired code.", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     if user_id in redeem_data["redeemed_by"]:
-        await message.reply_text("❌ You have already redeemed this code.", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · REDEEM PORTAL ✦\n❌ This code is already in your collection history.", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     if len(redeem_data["redeemed_by"]) >= redeem_data["redeem_limit"]:
-        await message.reply_text("❌ This redeem code has reached its limit.", parse_mode=enums.ParseMode.MARKDOWN)
+        await message.reply_text("✦ ANIVERSE · REDEEM PORTAL ✦\n❌ This code has reached its claim limit.", parse_mode=enums.ParseMode.MARKDOWN)
         return
 
     character = await collection.find_one({'id': redeem_data["character_id"]})
@@ -116,7 +116,7 @@ async def redeem_character(client, message):
         f"📺 *Anime:* `{character.get('anime', 'Unknown')}`\n"
         f"🌟 *Rarity:* `{character.get('rarity', 'Unknown')}`\n"
         f"🖼 *Media:* Stored securely on Telegram\n\n"
-        f"🎉 *You have successfully redeemed this character!*"
+        f"✦ *CHARACTER ADDED TO YOUR VAULT!* ✦"
     )
 
     media_file_id = character.get("media_file_id")
