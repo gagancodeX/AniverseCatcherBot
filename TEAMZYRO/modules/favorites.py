@@ -31,39 +31,32 @@ async def fav_command(client, message):
         await message.reply_text("This character is not in your collection. ❌")
         return
 
-    # Check if the character has a video URL
-    if 'vid_url' in character:
-        # Send video with buttons
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("✅ Yes", callback_data=f"fav_yes_{character_id}_{user_id}"),
-                    InlineKeyboardButton("❎ No", callback_data="fav_no")
-                ]
-            ]
-        )
-        await message.reply_video(
-            video=character['vid_url'],
-            caption=f"Add {character['name']} to favorites?",
-            reply_markup=keyboard
-        )
-    elif 'img_url' in character:
-        # Send photo with buttons
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("✅ Yes", callback_data=f"fav_yes_{character_id}_{user_id}"),
-                    InlineKeyboardButton("❎ No", callback_data="fav_no")
-                ]
-            ]
-        )
-        await message.reply_photo(
-            photo=character['img_url'],
-            caption=f"Add {character['name']} to favorites?",
-            reply_markup=keyboard
-        )
+    keyboard = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton("✅ Yes", callback_data=f"fav_yes_{character_id}_{user_id}"),
+            InlineKeyboardButton("❎ No", callback_data="fav_no")
+        ]]
+    )
+
+    media_file_id = character.get("media_file_id")
+    media_type = character.get("media_type", "photo")
+
+    if media_file_id:
+        if media_type == "video":
+            await message.reply_video(media_file_id, caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
+        elif media_type == "document":
+            await message.reply_document(media_file_id, caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
+        elif media_type == "animation":
+            await message.reply_animation(media_file_id, caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
+        else:
+            await message.reply_photo(media_file_id, caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
+    elif character.get("vid_url"):
+        await message.reply_video(character["vid_url"], caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
+    elif character.get("img_url"):
+        await message.reply_photo(character["img_url"], caption=f"Add {character['name']} to favorites?", reply_markup=keyboard)
     else:
-        await message.reply_text("This character has no media (image or video) associated with it. ❌")
+        await message.reply_text(f"Add {character['name']} to favorites?", reply_markup=keyboard)
+
 
 # Handle button clicks
 @app.on_callback_query(filters.regex(r"fav_yes_(.+?)_(\d+)"))
