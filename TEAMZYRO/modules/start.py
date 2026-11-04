@@ -229,8 +229,8 @@ async def show_help_menu(client, query: CallbackQuery):
     buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
 
     text = (
-        "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
-        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
+        "⌘ <b>ANIVERSE COMMAND CENTER</b>\n\n"
+        "<blockquote>Select a category to explore its commands and features.\n\n"
         "All commands use the / prefix.</blockquote>"
     )
 
@@ -257,7 +257,7 @@ async def show_help(client, query: CallbackQuery):
         help_text = module_data.get("HELP", "Is module ka koi help nahi hai.")
         buttons = [[InlineKeyboardButton("⬅ Back", callback_data="open_help")]]
         
-        full_text = f"<b>{module_name.upper()} Help:</b>\n\n{help_text}"
+        full_text = f"✦ <b>{module_data.get('HELP_NAME', module_name.upper())}</b>  /  GUIDE\n\n{help_text}"
         
         try:
             await query.message.edit_caption(
