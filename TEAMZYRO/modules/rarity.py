@@ -4,33 +4,40 @@
 # GitHub: https://github.com/MrZyro
 # ==========================================
 
-# TEAMZYRO/commands/rarity.py
 from TEAMZYRO import app, collection
 from pyrogram import filters, enums
+
 
 @app.on_message(filters.command("rarity"))
 async def rarity_count(client, message):
     try:
-        # Fetch distinct rarities from the characters collection
         distinct_rarities = await collection.distinct('rarity')
-        
+
         if not distinct_rarities:
-            await message.reply_text("⚠️ No rarities found in the database.")
+            await message.reply_text(
+                "✦ ANIVERSE · RARITY INDEX ✦\n<blockquote>No rarities are registered yet.</blockquote>",
+                parse_mode=enums.ParseMode.HTML
+            )
             return
-        
-        response_message = "✨ Character Count by Rarity ✨\n\n"
-        total_count = 0  # total character counter
-        
-        # Loop through each rarity and count the number of characters
+
+        response_message = (
+            "<b>✦ ANIVERSE · RARITY INDEX ✦</b>\n"
+            "<blockquote>Explore the character universe by rarity</blockquote>\n"
+        )
+        total_count = 0
+
         for rarity in distinct_rarities:
             count = await collection.count_documents({'rarity': rarity})
             total_count += count
-            response_message += f"◈ {rarity} — {count} character(s)\n"
-        
-        # Add total count at the end
-        response_message += f"\n💠 Total Characters: {total_count}"
-        
-        await message.reply_text(response_message)
-    
-    except Exception as e:
-        await message.reply_text(f"⚠️ Error: {str(e)}")
+            response_message += f"◈ {rarity} — <b>{count:,}</b> character(s)\n"
+
+        response_message += (
+            f"\n✧ <b>UNIVERSE TOTAL</b> · <code>{total_count:,}</code>"
+        )
+        await message.reply_text(response_message, parse_mode=enums.ParseMode.HTML)
+
+    except Exception:
+        await message.reply_text(
+            "✦ ANIVERSE · SYSTEM NOTICE ✦\n<blockquote>Unable to load the rarity index right now.</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )

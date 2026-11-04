@@ -35,14 +35,14 @@ async def trade(client, message):
     # Check if sender is locked (already in a trade)
     if sender_id in lock:
         await message.reply_text(
-            "You already have a trade in progress. Please confirm or cancel it before starting a new trade.",
+            "✦ ANIVERSE · TRADE DESK ✦\nYou already have an active trade. Confirm or cancel it first.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
 
     if not message.reply_to_message:
         await message.reply_text(
-            "You need to reply to a user's message to trade a character!",
+            "✦ ANIVERSE · TRADE DESK ✦\nReply to a user's message to start a character trade!",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -53,7 +53,7 @@ async def trade(client, message):
 
     if sender_id == receiver_id:
         await message.reply_text(
-            "You can't trade a character with yourself!",
+            "✦ ANIVERSE · TRADE DESK ✦\nYou cannot trade with yourself.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -80,7 +80,7 @@ async def trade(client, message):
 
     if not sender or not receiver:
         await message.reply_text(
-            "One of the users is not found in the database!",
+            "✦ ANIVERSE · TRADE DESK ✦\nOne of the users is not registered yet.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -217,7 +217,7 @@ async def on_trade_callback(client, callback_query):
 
         # Update message
         await callback_query.message.edit_text(
-            "❌️ Trade cancelled.",
+            "✦ ANIVERSE · TRADE CANCELLED ✦\nNo characters were exchanged.",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=None
         )
