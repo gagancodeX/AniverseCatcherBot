@@ -417,3 +417,8 @@ Make sure to reply with an image when using /addchar or /upload!
 """
     }
 }
+
+# Keep the help menu aligned with disabled coin-wager game modules.
+for _disabled_key in ["jackpot","coinflip","slots","hl","blackjack","wheel","mines","ox"]:
+    HELP_DATA.pop(_disabled_key, None)
+
