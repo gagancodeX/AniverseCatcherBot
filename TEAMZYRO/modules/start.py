@@ -71,13 +71,17 @@ async def generate_start_message(client, message):
     uptime = get_uptime()
     
     caption = (
-        f"🍃 𝖦𝗋𝖾𝖾𝗍𝗂𝗇𝗀𝗌, 𝖨'𝗆 <b>{bot_name}</b> 🫧\n\n"
-        f"<blockquote>━━━━━━━▧▣▧━━━━━━━\n"
-        f"⦾ <b>𝖶𝖧𝖤𝖱𝖤:</b> 𝖨 𝗌𝗉𝖺𝗐𝗇 𝗐𝖺𝗂𝖿𝗎𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺𝗍 𝖿𝗈𝗋 𝗎𝗌𝖾𝗋𝗌 𝗍𝗈 𝗀𝗋𝖺𝖻.\n"
-        f"⦾ <b>𝖧𝖮𝖶 𝖳𝖮 𝖴𝖲𝖤:</b> 𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗎𝗌𝖾 /help 𝖿𝗈𝗋 𝖼𝗈𝗆𝗆𝖺𝗇𝖽𝗌.\n"
-        f"━━━━━━━▧▣▧━━━━━━━\n"
-        f"⚡ <b>𝖯𝖨𝖭𝖦:</b> {ping} ms\n"
-        f"⏳ <b>𝖴𝖯𝖳𝖨𝖬𝖤:</b> {uptime}</blockquote>"
+        f"✦ <b>WELCOME TO THE ANIVERSE</b> ✦\n"
+        f"<b>{bot_name}</b>  ·  Your anime character universe\n\n"
+        f"<blockquote>╭  ✧ <b>COLLECT</b>\n"
+        f"│  Discover characters and build your collection.\n"
+        f"├  ✧ <b>PLAY</b>\n"
+        f"│  Guess characters and trade with friends.\n"
+        f"╰  ✧ <b>EXPLORE</b>\n"
+        f"   Open /help to discover every feature.</blockquote>\n"
+        f"<code>━━━━━━━━━━━━━━━━━━━━</code>\n"
+        f"⚡ <b>{ping} ms</b>  ·  ⏱ <b>{uptime}</b>\n"
+        f"<i>Choose a destination below to begin.</i>"
     )
 
     buttons = []
@@ -87,26 +91,26 @@ async def generate_start_message(client, message):
     ) if bot_user.username else None
     if group_url:
         buttons.append([
-            InlineKeyboardButton("Aᴅᴅ Tᴏ Yᴏᴜʀ Gʀᴏᴜᴘ ", url=group_url)
+            InlineKeyboardButton("✚  ADD TO GROUP", url=group_url)
         ])
 
     social_buttons = []
     support_url = valid_button_url(SUPPORT_CHAT)
     update_url = valid_button_url(UPDATE_CHAT)
     if support_url:
-        social_buttons.append(InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=support_url))
+        social_buttons.append(InlineKeyboardButton("◈  SUPPORT", url=support_url))
     if update_url:
-        social_buttons.append(InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url=update_url))
+        social_buttons.append(InlineKeyboardButton("✧  UPDATES", url=update_url))
     if social_buttons:
         buttons.append(social_buttons)
 
     buttons.append([
-        InlineKeyboardButton("Hᴇʟᴘ", callback_data="open_help")
+        InlineKeyboardButton("⌘  COMMAND CENTER", callback_data="open_help")
     ])
 
     owner_url = valid_button_url("https://t.me/xeno_kakarot")
     if owner_url:
-        buttons.append([InlineKeyboardButton("Owner", url=owner_url)])
+        buttons.append([InlineKeyboardButton("✦  DEVELOPER", url=owner_url)])
     
     return caption, buttons
 
@@ -114,9 +118,11 @@ async def generate_start_message(client, message):
 async def generate_group_start_message(client):
     bot_user = await client.get_me()
     caption = (
-        f"🍃 𝖨'𝗆 <b>{bot_user.first_name}</b> 🫧\n\n"
-        f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝗐𝖺𝗂𝖿𝗎𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍𝗁 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎𝗇𝗍𝗌 𝖿𝗈𝗋 𝗉𝗅𝖺𝗒𝖾𝗋𝗌 𝗍𝗈 /guess.\n"
-        f"𝖴𝗌𝖾 /help 𝖿𝗈ʀ ᴍᴏʀᴇ ɪɴғᴏ.</blockquote>"
+        f"✦ <b>ANIVERSE IS ONLINE</b> ✦\n"
+        f"<b>{bot_user.first_name}</b> is ready for the next character hunt.\n\n"
+        f"<blockquote>Characters appear as your group chats.\n"
+        f"Use /guess to catch the one you recognize\n"
+        f"and /help to explore the collector tools.</blockquote>"
     )
     buttons = []
     row = []
@@ -225,7 +231,7 @@ async def show_help_menu(client, query: CallbackQuery):
     text = (
         "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
         "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
-        "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /</blockquote>"
+        "All commands use the / prefix.</blockquote>"
     )
 
     try:
