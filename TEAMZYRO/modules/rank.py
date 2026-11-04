@@ -18,7 +18,7 @@ async def rank(client, message):
     leaderboard_data.sort(key=lambda x: len(x.get('characters', [])), reverse=True)
     leaderboard_data = leaderboard_data[:10]
 
-    leaderboard_message = "<b>TOP 10 USERS WITH MOST CHARACTERS</b>\n\n"
+    leaderboard_message = "✦ <b>ANIVERSE · COLLECTOR RANKINGS</b> ✦\n<blockquote>Top 10 collectors by characters captured</blockquote>\n\n"
     for i, user in enumerate(leaderboard_data, start=1):
         user_id = user.get('id', 'Unknown')
         first_name = html.escape(user.get('first_name', 'Unknown'))[:15] + '...'
@@ -27,12 +27,12 @@ async def rank(client, message):
 
     buttons = [
         [
-            InlineKeyboardButton("✅ Top", callback_data="top"),
-            InlineKeyboardButton("Top Group", callback_data="top_group"),
+            InlineKeyboardButton("✦ COLLECTORS", callback_data="top"),
+            InlineKeyboardButton("◈ GROUPS", callback_data="top_group"),
         ],
         [
-            InlineKeyboardButton("MTOP", callback_data="mtop"),
-            InlineKeyboardButton("Tokens", callback_data="tokens"),
+            InlineKeyboardButton("🪙 COINS", callback_data="mtop"),
+            InlineKeyboardButton("🎟 TOKENS", callback_data="tokens"),
         ],
     ]
 
@@ -48,12 +48,12 @@ async def rank(client, message):
 async def update_caption(callback_query, caption, active_button):
     buttons = [
         [
-            InlineKeyboardButton("✅ Top" if active_button == "top" else "Top", callback_data="top"),
-            InlineKeyboardButton("✅ Top Group" if active_button == "top_group" else "Top Group", callback_data="top_group"),
+            InlineKeyboardButton("✦ COLLECTORS" if active_button == "top" else "COLLECTORS", callback_data="top"),
+            InlineKeyboardButton("✦ GROUPS" if active_button == "top_group" else "GROUPS", callback_data="top_group"),
         ],
         [
-            InlineKeyboardButton("✅ MTOP" if active_button == "mtop" else "MTOP", callback_data="mtop"),
-            InlineKeyboardButton("✅ Tokens" if active_button == "tokens" else "Tokens", callback_data="tokens"),
+            InlineKeyboardButton("✦ COINS" if active_button == "mtop" else "COINS", callback_data="mtop"),
+            InlineKeyboardButton("✦ TOKENS" if active_button == "tokens" else "TOKENS", callback_data="tokens"),
         ],
     ]
 
@@ -90,7 +90,7 @@ async def top_group_callback(client, callback_query):
     ])
     leaderboard_data = await cursor.to_list(length=10)
     
-    caption = "<b>TOP 10 GROUPS WHO GUESSED MOST CHARACTERS</b>\n\n"
+    caption = "✦ <b>ANIVERSE · GROUP RANKINGS</b> ✦\n<blockquote>Groups with the most successful catches</blockquote>\n\n"
     for i, group in enumerate(leaderboard_data, start=1):
         group_name = html.escape(group.get('group_name', 'Unknown'))[:15] + '...'
         count = group['count']
@@ -103,7 +103,7 @@ async def mtop_callback(client, callback_query):
     await asyncio.sleep(1)
     top_users = await user_collection.find().sort("balance", -1).limit(10).to_list(length=10)
 
-    caption = "<b>MTOP LEADERBOARD</b>\n\n🏆 Tᴏᴘ 10 Uꜱᴇʀs ʙʏ Cᴏɪɴs:\n\n"
+    caption = "✦ <b>ANIVERSE · COIN RANK</b> ✦\n<blockquote>Top 10 collectors by wallet balance</blockquote>\n\n"
     for rank, user in enumerate(top_users, start=1):
         user_id = user.get("id", "Unknown")
         first_name = user.get("first_name", "Unknown")
@@ -117,7 +117,7 @@ async def tokens_callback(client, callback_query):
     await asyncio.sleep(1)
     top_users = await user_collection.find().sort("tokens", -1).limit(10).to_list(length=10)
 
-    caption = "<b>Tokens LEADERBOARD</b>\n\n🏆 Tᴏᴘ 10 Uꜱᴇʀs ʙʏ Tokens:\n\n"
+    caption = "✦ <b>ANIVERSE · TOKEN RANK</b> ✦\n<blockquote>Top 10 collectors by token balance</blockquote>\n\n"
     for rank, user in enumerate(top_users, start=1):
         user_id = user.get("id", "Unknown")
         first_name = user.get("first_name", "Unknown")
