@@ -53,7 +53,7 @@ async def generate_redeem_code(client, message):
         f"🎭 *Character:* `{character['name']}`\n"
         f"📺 *Anime:* `{character.get('anime', 'Unknown')}`\n"
         f"🌟 *Rarity:* `{character.get('rarity', 'Unknown')}`\n"
-        f"🖼 *Image:* [Click Here]({character.get('img_url', '#' )})\n\n"
+        f"🖼 *Media:* Stored securely on Telegram\n\n"
         f"🔢 *Redeem Limit:* `{redeem_limit}`\n"
         f"🎟 *Redeem Code:* `{redeem_code}`"
     )
@@ -119,5 +119,22 @@ async def redeem_character(client, message):
         f"🎉 *You have successfully redeemed this character!*"
     )
 
-    await message.reply_text(char_info, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
+    media_file_id = character.get("media_file_id")
+    media_type = character.get("media_type", "photo")
+
+    if media_file_id:
+        if media_type == "video":
+            await message.reply_video(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+        elif media_type == "document":
+            await message.reply_document(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+        elif media_type == "animation":
+            await message.reply_animation(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+        else:
+            await message.reply_photo(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+    elif character.get("vid_url"):
+        await message.reply_video(character["vid_url"], caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+    elif character.get("img_url"):
+        await message.reply_photo(character["img_url"], caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+    else:
+        await message.reply_text(char_info, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
