@@ -303,7 +303,7 @@ Each result includes:
         "HELP": """
 ➤ /addchar character-name anime-name - Upload a character request with an image.
 ➤ /upload (or /gupload) character-name anime-name rarity-number - Upload and add a character directly (Admins only).
-➤ /server - Change the upload server (ImgBB or Catbox) for your uploads.
+➤ /server - Check storage status. All new uploads are saved directly on Telegram.
 
 Admins can approve or reject the request using the provided buttons.
 
