@@ -132,24 +132,28 @@ def main() -> None:
             pass
         sys.exit(1)
 
-    # Verify BOT_LOGGING permissions by sending a startup message.
+    # Verify BOT_LOGGING through the Bot API as well; this avoids relying
+    # on an MTProto peer cache in a fresh Render container.
     try:
         log_value = str(BOT_LOGGING or "").strip()
         if not log_value:
-            raise ValueError("BOT_LOGGING is empty. Set it to a log chat ID or @username.")
+            raise ValueError("BOT_LOGGING is empty. Set a log chat ID or @username.")
 
         try:
             log_target = int(log_value)
         except ValueError:
-            log_target = log_value
+            log_target = log_value if log_value.startswith("@") else "@" + log_value
 
-        test_msg = ZYRO.send_message(
-            chat_id=log_target,
-            text="⚙️ **ANIVERSE CATCHER Startup Notification**:\nSuccessfully connected & verified write permissions in the logs channel!"
+        log_msg = telegram_api(
+            "sendMessage",
+            {
+                "chat_id": log_target,
+                "text": "⚙️ ANIVERSE CATCHER startup check: logging channel connected.",
+            },
         )
         LOGGER("TEAMZYRO").info(
             "BOT_LOGGING permissions verified. Test message sent (ID: %s).",
-            test_msg.id,
+            log_msg["message_id"],
         )
     except Exception as e:
         LOGGER("TEAMZYRO").error(
@@ -157,7 +161,7 @@ def main() -> None:
             "=======================================================================\n"
             "❌ BOT_LOGGING CONFIGURATION ERROR:\n"
             f"Could not send a message to BOT_LOGGING ({BOT_LOGGING!r}).\n"
-            "Check the chat ID/@username and make sure the bot can post messages there.\n"
+            "Check the chat ID/@username and ensure the bot can post messages there.\n"
             f"Details: {e}\n"
             "======================================================================="
         )
