@@ -47,7 +47,13 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
 
     # Fetch all characters from MongoDB
-    all_characters = list(await collection.find({"rarity": {"$in": [k for k, v in RARITY_WEIGHTS.items() if v[1]]}}).to_list(length=None))
+    all_characters = list(await collection.find({
+        "rarity": {"$in": [k for k, v in RARITY_WEIGHTS.items() if v[1]]},
+        "$or": [
+            {"img_url": {"$exists": True, "$ne": ""}},
+            {"vid_url": {"$exists": True, "$ne": ""}},
+        ],
+    }).to_list(length=None))
 
     if not all_characters:
         await context.bot.send_message(chat_id, "No characters found with allowed rarities in the database.")
@@ -106,6 +112,9 @@ async def send_image(update: Update, context: CallbackContext) -> None:
 💫 Hurry, before someone else snatches them!""",
             parse_mode='Markdown'
         )
+
+    # Keep the spawn message ID for the /guess retry button.
+    last_characters[chat_id]["message_id"] = sent_message.message_id
 
     # Schedule message deletion after 5 minutes
     asyncio.create_task(delete_message(chat_id, sent_message.message_id, context))
