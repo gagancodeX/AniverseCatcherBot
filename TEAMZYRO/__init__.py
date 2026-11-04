@@ -35,7 +35,7 @@ def LOGGER(name: str) -> logging.Logger:
 from config import (
     api_id, api_hash, TOKEN, BOT_LOGGING, DATABASE_ID, FORCE_JOIN,
     mongo_url, backup_mongo_url, DB_NAME, SUPPORT_CHAT, UPDATE_CHAT, OWNER_ID,
-    SESSION_STRING, PYROGRAM_WORKDIR,
+    PYROGRAM_WORKDIR,
     MUSJ_JOIN, START_MEDIA
 ) 
 
@@ -50,7 +50,6 @@ ZYRO = Client(
     api_id=api_id,
     api_hash=api_hash,
     bot_token=TOKEN,
-    session_string=SESSION_STRING or None,
     workdir=PYROGRAM_WORKDIR,
 )
 bot = Bot(token=TOKEN)
