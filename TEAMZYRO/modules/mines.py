@@ -234,9 +234,8 @@ async def start_mines(client: Client, message: Message):
         "⚠️ Watch out for hidden mines!"
     )
     
-    await message.reply_photo(
-        photo="https://files.catbox.moe/szew66.png",
-        caption=caption_text,
+    await message.reply_text(
+        caption_text,
         parse_mode=enums.ParseMode.HTML,
         reply_markup=generate_keyboard(grid, game_id, player_id, 0, 0, num_mines)
     )
