@@ -1,10 +1,9 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: Adam
+# Project: AniverseCatcherBot
 # ==========================================
 
-# TEAMZYRO/commands/check.py
+# ANIVERSE/modules/check.py
 from TEAMZYRO import app, collection as character_collection, user_collection
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery

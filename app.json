@@ -1,7 +1,7 @@
 {
-  "name": "WaifuBot",
-  "description": "Interactive Waifu & Husbando Catching Telegram Bot featuring database backups, Chess, TicTacToe, and casino games.",
-  "repository": "https://github.com/MrZyro/WaifuBot",
+  "name": "AniverseCatcherBot",
+  "description": "Telegram-native anime character catcher with character collection, guessing, trading, events and interactive games.",
+  "repository": "https://github.com/gagancodeX/AniverseCatcherBot",
   "keywords": [
     "waifu-bot",
     "telegram-bot",

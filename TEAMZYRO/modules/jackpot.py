@@ -1,10 +1,9 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: Adam
+# Project: AniverseCatcherBot
 # ==========================================
 
-# TEAMZYRO/commands/jackpot.py
+# ANIVERSE/modules/jackpot.py
 from TEAMZYRO import app, user_collection
 from pyrogram import filters, enums
 from pymongo import ReturnDocument

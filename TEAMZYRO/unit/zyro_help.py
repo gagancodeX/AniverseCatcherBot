@@ -1,10 +1,9 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: Adam
+# Project: AniverseCatcherBot
 # ==========================================
 
-# TEAMZYRO/help.py
+# ANIVERSE/help.py
 
 HELP_DATA = {
     "balance": {
