@@ -29,6 +29,8 @@ try:
 except ValueError:
     DATABASE_ID = _database_id
 FORCE_JOIN = os.getenv("FORCE_JOIN", "")
+FORCE_JOIN_LINK = os.getenv("FORCE_JOIN_LINK", "").strip()
+DEVELOPER_LINK = os.getenv("DEVELOPER_LINK", "").strip()
 
 # Database configuration
 # Trim accidental whitespace from Render environment variables. Atlas users
