@@ -4,7 +4,7 @@
 
 import asyncio
 from pyrogram import filters
-from TEAMZYRO import ZYRO, collection, require_power, BOT_LOGGING
+from TEAMZYRO import ZYRO, collection, require_power, DATABASE_ID
 
 
 async def find_char(char_id: str):
@@ -73,7 +73,7 @@ async def reupload_handler(client, message):
 
             if is_video:
                 sent_msg = await client.send_video(
-                    chat_id=BOT_LOGGING, video=old_url, caption=caption
+                    chat_id=DATABASE_ID, video=old_url, caption=caption
                 )
                 if not sent_msg.video:
                     raise RuntimeError("Telegram did not return a video file reference.")
@@ -93,7 +93,7 @@ async def reupload_handler(client, message):
                 {"$set": {
                     "media_file_id": file_id,
                     "media_type": media_type,
-                    "media_chat_id": BOT_LOGGING,
+                    "media_chat_id": DATABASE_ID,
                     "media_message_id": sent_msg.id,
                 }},
             )
