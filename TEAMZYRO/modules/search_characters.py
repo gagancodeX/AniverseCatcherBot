@@ -3,7 +3,7 @@
 # Project: AniverseCatcherBot
 # ==========================================
 
-# TEAMZYRO/commands/search_characters.py
+# ANIVERSE/modules/search_characters.py
 from TEAMZYRO import app, collection, rarity_map2 as rarity_map
 from pyrogram import Client, filters, enums
 from pyrogram.enums import ParseMode
