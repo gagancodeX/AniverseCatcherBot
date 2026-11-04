@@ -15,7 +15,7 @@ async def get_user_stats(user_id):
     # Fetch user data
     user_data = await user_collection.find_one({'id': user_id}, {'balance': 1, 'first_name': 1, 'characters': 1})
     if not user_data:
-        return None, "User data not found."
+        return None, "🔎 Collector profile not found. Start collecting to unlock your stats."
     
     balance = user_data.get('balance', 0)
     first_name = html.escape(user_data.get('first_name', 'Unknown'))
@@ -65,7 +65,7 @@ async def stats_handler(client: Client, message: Message):
     user_id = message.from_user.id
     
     processing_message = await message.reply_text(
-        "Processing...",
+        "✦ Building your collector card…",
         parse_mode=enums.ParseMode.HTML
     )
 
@@ -80,23 +80,22 @@ async def stats_handler(client: Client, message: Message):
     
     # Build the stats caption
     stats_message = (
-        f"❖ 【ＺＹＲＯ】{stats['first_name']} ɪɴғᴏʀᴍᴀᴛɪᴏɴ ❖\n"
-        f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⬤ ᴜsᴇʀ ɪᴅ ➥ {stats['user_id']}\n"
-        f"⬤ ᴍᴇɴᴛɪᴏɴ ➥ {stats['first_name']}\n"
-        f"⬤ ᴄᴏɪɴ ➥ {stats['balance']}\n"
-        f"⬤ ᴄᴏʟʟᴇᴄᴛɪᴏɴ ➥ {stats['character_count']}/{stats['total_characters']} (total)\n"
-        f"⬤ ᴘʀᴏɢʀᴇss ʙᴀʀ ➥ [{stats['progress_bar']} {stats['progress_percentage']:.2f}%]\n"
-        f"⬤ ɢʟᴏʙᴀʟ ʀᴀɴᴋ ➥ {stats['rank']}/{stats['total_users']}\n"
-        f"⬤ ʀᴀʀɪᴛʏ ᴄᴏᴜɴᴛ ➥\n"
+        f"✦ <b>ANIVERSE · COLLECTOR CARD</b> ✦\n"
+        f"<b>{stats['first_name']}</b>\n"
+        f"<blockquote>╭ 🆔 <b>Collector ID</b> · <code>{stats['user_id']}</code>\n"
+        f"├ 🪙 <b>Wallet</b> · {stats['balance']} coins\n"
+        f"├ 🗂 <b>Character Vault</b> · {stats['character_count']} / {stats['total_characters']}\n"
+        f"├ 📊 <b>Collection progress</b> · {stats['progress_percentage']:.2f}%\n"
+        f"│   {stats['progress_bar']}\n"
+        f"╰ 🏆 <b>Global rank</b> · #{stats['rank']} of {stats['total_users']}\n\n"
+        f"<b>RARITY COLLECTION</b>\n"
     )
-    
     # Add rarity counts
     for rarity, count in stats['rarity_counts'].items():
         emoji = rarity_map2.get(rarity, '❍')
-        stats_message += f"  ❍ {rarity} ➥ {count}\n"
+        stats_message += f"  {emoji} {rarity} · <b>{count}</b>\n"
     
-    stats_message += "━━━━━━━━━━━━━━━━━━━━━"
+    stats_message += "</blockquote>\n✧ Keep catching characters to climb the ranks."
     
     # Edit the processing message with the final stats
     await processing_message.edit_text(

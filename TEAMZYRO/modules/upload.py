@@ -10,11 +10,15 @@ from TEAMZYRO import (
     ZYRO, DATABASE_ID, collection, rarity_map, require_power
 )
 
-WRONG_FORMAT_TEXT = """Wrong ❌ format...  eg. /upload reply to photo muzan-kibutsuji Demon-slayer 3
+WRONG_FORMAT_TEXT = """✦ ANIVERSE · CHARACTER UPLOAD ✦
 
-format:- /upload reply character-name anime-name rarity-number
+Reply to a character image/video, then use:
+/upload character-name anime-name rarity-number
 
-use rarity number accordingly rarity Map
+Example:
+/upload shinobu-kocho Demon-slayer 3
+
+Use hyphens between words in names. Choose the rarity number from the map below.
 
 rarity_map = {
     1: "⚪️ Common",
@@ -83,16 +87,16 @@ upload_lock = asyncio.Lock()
 @require_power("add")
 async def ul(client, message):
     available_id = await find()
-    await message.reply_text(f"new id {available_id}")
+    await message.reply_text(f"✦ 𝗡𝗘𝗫𝗧 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗜𝗗 ✦\n\n🆔 {available_id} is ready for your next upload.")
 
 
 @ZYRO.on_message(filters.command("server"))
 @require_power("add")
 async def storage_info(client, message):
     await message.reply_text(
-        "📦 Character storage: Telegram\n"
-        "Uploads are saved directly to the bot's Telegram database channel.\n"
-        "No ImgBB/Catbox account, API key, or external upload server is needed."
+        "✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗠𝗘𝗗𝗜𝗔 𝗩𝗔𝗨𝗟𝗧 ✦\n\n📦 Storage · Telegram native media\n"
+        "✧ New uploads are saved to the bot database channel.\n"
+        "No external image host or API key is required."
     )
 
 
@@ -101,11 +105,11 @@ async def storage_info(client, message):
 async def ul_main(client, message):
     reply = message.reply_to_message
     if not reply or not (reply.photo or reply.document or reply.video or reply.animation):
-        await message.reply_text("Please reply to a photo, image document, video, or animation.")
+        await message.reply_text("✦ UPLOAD GUIDE\nReply to a photo, image document, video, or animation, then use /upload.")
         return
 
     if upload_lock.locked():
-        await message.reply_text("Another upload is in progress. Please wait until it is completed.")
+        await message.reply_text("⏳ Another character is being added right now. Try your upload again in a moment.")
         return
 
     async with upload_lock:
@@ -120,24 +124,24 @@ async def ul_main(client, message):
         try:
             rarity = int(args[3])
         except ValueError:
-            await message.reply_text("Invalid rarity number. Please use a number from the rarity map.")
+            await message.reply_text("⚠️ Rarity must be a number from the rarity map. Check the upload guide.")
             return
 
         if rarity not in rarity_map:
             valid_rarities = ", ".join(str(number) for number in sorted(rarity_map))
-            await message.reply_text(f"Invalid rarity. Available rarity numbers: {valid_rarities}")
+            await message.reply_text(f"⚠️ Invalid rarity number. Available options: {valid_rarities}")
             return
 
         rarity_text = rarity_map[rarity]
         available_id = await find_available_id()
-        processing_message = await message.reply("<ᴘʀᴏᴄᴇꜱꜱɪɴɢ>....")
+        processing_message = await message.reply("✦ Saving character to the Aniverse vault…")
 
         try:
             database_caption = (
-                f"Character Name: {character_name}\n"
-                f"Anime Name: {anime}\n"
-                f"Rarity: {rarity_text}\n"
-                f"ID: {available_id}\n"
+                f"✧ Character · {character_name}\n"
+                f"🎬 Anime · {anime}\n"
+                f"💎 Rarity · {rarity_text}\n"
+                f"🆔 ID · {available_id}\n"
                 f"Added by [{message.from_user.first_name}](tg://user?id={message.from_user.id})"
             )
 
@@ -165,13 +169,13 @@ async def ul_main(client, message):
             await collection.insert_one(character)
 
             await message.reply_text(
-                f"➲ ᴀᴅᴅᴇᴅ ʙʏ» [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
-                f"➥ Character ID: {available_id}\n"
-                f"➥ Rarity: {rarity_text}\n"
-                f"➥ Storage: Telegram ✅"
+                f"✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗨𝗣𝗟𝗢𝗔𝗗𝗘𝗗 ✦\n\n👤 Added by · [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n"
+                f"✧ Character ID · {available_id}\n"
+                f"💎 Rarity · {rarity_text}\n"
+                f"📦 Storage · Telegram"
             )
         except Exception as exc:
-            await message.reply_text(f"Character Upload Unsuccessful. Error: {str(exc)}")
+            await message.reply_text(f"⚠️ 𝗨𝗣𝗟𝗢𝗔𝗗 𝗙𝗔𝗜𝗟𝗘𝗗\nPlease retry. Details: {str(exc)}")
         finally:
             try:
                 await processing_message.delete()

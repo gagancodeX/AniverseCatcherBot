@@ -27,7 +27,7 @@ async def daily_gift(client: Client, message: Message):
     
     # Check if user is in lock (cooldown)
     if user_id in lock and time.time() - lock[user_id] < 5:  # 5 second cooldown
-        await message.reply_text("⏰ Please wait before using this command again.")
+        await message.reply_text("⏳ 𝗪𝗔𝗟𝗟𝗘𝗧 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait a moment before claiming again.")
         return
     
     lock[user_id] = time.time()
@@ -45,7 +45,7 @@ async def daily_gift(client: Client, message: Message):
             last_daily = datetime.fromisoformat(last_daily).date()
         
         if last_daily == today:
-            await message.reply_text("🎁 You have already claimed your daily gift today! Come back tomorrow.")
+            await message.reply_text("✦ 𝗗𝗔𝗜𝗟𝗬 𝗕𝗢𝗡𝗨𝗦 𝗖𝗢𝗟𝗟𝗘𝗖𝗧𝗘𝗗 ✦\nYour next daily gift arrives tomorrow. Keep your streak going!")
             return
     
     # Give daily gift of 100 coins
@@ -63,9 +63,9 @@ async def daily_gift(client: Client, message: Message):
     user_name = html.escape(message.from_user.first_name)
     
     await message.reply_text(
-        f"🎁 {user_name}, you received your daily gift!\n"
-        f"💰 +{daily_amount} coins\n"
-        f"💳 New Balance: {new_balance} coins"
+        f"✦ 𝗗𝗔𝗜𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{daily_amount} coins\n"
+        f"╰ 💳 Wallet balance · {new_balance} coins\n"
+        
     )
 
 # Weekly gift system
@@ -75,7 +75,7 @@ async def weekly_gift(client: Client, message: Message):
     
     # Check if user is in lock (cooldown)
     if user_id in lock and time.time() - lock[user_id] < 5:  # 5 second cooldown
-        await message.reply_text("⏰ Please wait before using this command again.")
+        await message.reply_text("⏳ 𝗪𝗔𝗟𝗟𝗘𝗧 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait a moment before claiming again.")
         return
     
     lock[user_id] = time.time()
@@ -95,7 +95,7 @@ async def weekly_gift(client: Client, message: Message):
         if last_weekly >= week_start:
             next_week = week_start + timedelta(days=7)
             days_left = (next_week - now).days
-            await message.reply_text(f"🎁 You have already claimed your weekly gift! Next gift available in {days_left} days.")
+            await message.reply_text(f"✦ 𝗪𝗘𝗘𝗞𝗟𝗬 𝗕𝗢𝗡𝗨𝗦 𝗖𝗢𝗟𝗟𝗘𝗖𝗧𝗘𝗗 ✦\nYour next gift is available in {days_left} day(s).")
             return
     
     # Give weekly gift of 2000 coins
@@ -113,9 +113,9 @@ async def weekly_gift(client: Client, message: Message):
     user_name = html.escape(message.from_user.first_name)
     
     await message.reply_text(
-        f"🎉 {user_name}, you received your weekly gift!\n"
-        f"💰 +{weekly_amount} coins\n"
-        f"💳 New Balance: {new_balance} coins"
+        f"✦ 𝗪𝗘𝗘𝗞𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{weekly_amount} coins\n"
+        f"╰ 💳 Wallet balance · {new_balance} coins\n"
+        
     )
 
 @app.on_message(filters.command("balance"))
@@ -129,8 +129,8 @@ async def balance(client: Client, message: Message):
     
     user_balance, user_tokens = await get_balance(user_id)
     response = (
-        f"{html.escape(message.from_user.first_name)} \n◈⌠ {user_balance} coins⌡\n"
-        f"◈ ⌠ {user_tokens} Tokens⌡"
+        f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 𝗪𝗔𝗟𝗟𝗘𝗧 ✦\n\n👤 {html.escape(message.from_user.first_name)}\n╭ 🪙 Coins · {user_balance}\n"
+        f"╰ 🎟 Tokens · {user_tokens}"
     )
     await message.reply_text(response, reply_to_message_id=False)
 
@@ -139,7 +139,7 @@ async def pay(client: Client, message: Message):
     sender_id = message.from_user.id
     
     if sender_id in lock and time.time() - lock[sender_id] < 3:  # 3 second cooldown
-        await message.reply_text("⏰ Please wait before sending another payment.")
+        await message.reply_text("⏳ 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait before sending another payment.")
         return
     
     lock[sender_id] = time.time()
@@ -147,7 +147,7 @@ async def pay(client: Client, message: Message):
     args = message.command
 
     if len(args) < 2:
-        await message.reply_text("Usage: /pay <amount> [@username/user_id] or reply to a user.")
+        await message.reply_text("✦ 𝗖𝗢𝗜𝗡 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 ✦\nUse /pay <amount> @username, /pay <amount> user_id, or reply to a user with /pay <amount>.")
         return
 
     try:
@@ -155,7 +155,7 @@ async def pay(client: Client, message: Message):
         if amount <= 0:
             raise ValueError
     except ValueError:
-        await message.reply_text("Invalid amount. Please enter a positive number.")
+        await message.reply_text("⚠️ Invalid amount. Enter a positive whole number of coins.")
         return
 
     recipient_id = None
@@ -174,16 +174,16 @@ async def pay(client: Client, message: Message):
                 recipient_id = user_data['id']
                 recipient_name = user_data.get('first_name', recipient_username)
             else:
-                await message.reply_text("Recipient not found. Please check the username or reply to a user.")
+                await message.reply_text("🔎 Recipient not found. Check the username or reply directly to their message.")
                 return
 
     if not recipient_id:
-        await message.reply_text("Recipient not found. Reply to a user or provide a valid user ID/username.")
+        await message.reply_text("🔎 Choose a valid recipient: reply to their message or provide their user ID/username.")
         return
 
     sender_balance, _ = await get_balance(sender_id)
     if sender_balance < amount:
-        await message.reply_text("Insufficient balance.")
+        await message.reply_text("🪙 Your wallet does not have enough coins for this transfer.")
         return
 
     await user_collection.update_one({'id': sender_id}, {'$inc': {'balance': -amount}})
@@ -197,14 +197,14 @@ async def pay(client: Client, message: Message):
     sender_display = html.escape(message.from_user.first_name or str(sender_id))
 
     await message.reply_text(
-        f"✅ You paid {amount} coins to {recipient_display}.\n"
-        f"💰 Your New Balance: {updated_sender_balance} coins"
+        f"✦ 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 𝗦𝗘𝗡𝗧 ✦\n\n🪙 {amount} coins → {recipient_display}\n"
+        f"💳 Remaining balance · {updated_sender_balance} coins"
     )
 
     await client.send_message(
         chat_id=recipient_id,
-        text=f"🎉 You received {amount} coins from {sender_display}!\n"
-        f"💰 Your New Balance: {updated_recipient_balance} coins"
+        text=f"✦ 𝗖𝗢𝗜𝗡𝗦 𝗥𝗘𝗖𝗘𝗜𝗩𝗘𝗗 ✦\n\n🪙 +{amount} coins from {sender_display}\n"
+        f"💳 Wallet balance · {updated_recipient_balance} coins"
     )
 
 @app.on_message(filters.command("kill"))
@@ -214,13 +214,13 @@ async def kill_handler(client, message):
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
     else:
-        await message.reply_text("Please reply to a user's message to use the /kill command.")
+        await message.reply_text("✦ ADMIN ACTION · Reply to the user's message before using /kill.")
         return
 
     command_args = message.text.split()
 
     if len(command_args) < 2:
-        await message.reply_text("Please specify an option: `c` to delete character, `f` to delete full data, or `b` to delete balance.")
+        await message.reply_text("✦ ADMIN ACTION GUIDE\nUse /kill c <character_id>, /kill f, or /kill b <amount> while replying to the user.")
         return
 
     option = command_args[1]
@@ -229,12 +229,12 @@ async def kill_handler(client, message):
         if option == 'f':
             # Delete full user data
             await user_collection.delete_one({"id": user_id})
-            await message.reply_text("The full data of the user has been deleted.")
+            await message.reply_text("✦ USER DATA CLEARED\nThe selected user's profile data was removed.")
 
         elif option == 'c':
             # Delete specific character from the user's collection
             if len(command_args) < 3:
-                await message.reply_text("Please specify a character ID to remove.")
+                await message.reply_text("✦ CHARACTER REMOVAL\nProvide the character ID you want to remove.")
                 return
 
             char_id = command_args[2]
@@ -245,25 +245,25 @@ async def kill_handler(client, message):
                 updated_characters = [c for c in characters if c.get('id') != char_id]
 
                 if len(updated_characters) == len(characters):
-                    await message.reply_text(f"No character with ID {char_id} found in the user's collection.")
+                    await message.reply_text(f"🔎 Character ID {char_id} was not found in this user's vault.")
                     return
 
                 # Update user collection
                 await user_collection.update_one({"id": user_id}, {"$set": {"characters": updated_characters}})
-                await message.reply_text(f"Character with ID {char_id} has been removed from the user's collection.")
+                await message.reply_text(f"✦ CHARACTER REMOVED\nID {char_id} has been removed from the user's vault.")
             else:
-                await message.reply_text(f"No characters found in the user's collection.")
+                await message.reply_text(f"This user's Character Vault is empty.")
 
         elif option == 'b':
             # Check if amount is provided
             if len(command_args) < 3:
-                await message.reply_text("Please specify an amount to deduct from balance.")
+                await message.reply_text("✦ WALLET ADJUSTMENT\nProvide the number of coins to deduct.")
                 return
 
             try:
                 amount = int(command_args[2])
             except ValueError:
-                await message.reply_text("Invalid amount. Please enter a valid number.")
+                await message.reply_text("⚠️ Enter a valid whole-number coin amount.")
                 return
 
             # Fetch user balance
@@ -273,13 +273,13 @@ async def kill_handler(client, message):
                 new_balance = max(0, current_balance - amount)  # Ensure balance doesn't go negative
                 
                 await user_collection.update_one({"id": user_id}, {"$set": {"balance": new_balance}})
-                await message.reply_text(f"{amount} has been deducted from the user's balance. New balance: {new_balance}")
+                await message.reply_text(f"✦ WALLET UPDATED\n🪙 Deducted · {amount}\n💳 New balance · {new_balance}")
             else:
-                await message.reply_text("The user has no balance to deduct from.")
+                await message.reply_text("This user's wallet has no coins to deduct.")
 
         else:
-            await message.reply_text("Invalid option. Use `c` for character, `f` for full data, or `b {amount}` to deduct balance.")
+            await message.reply_text("⚠️ Invalid admin option. Use c, f, or b <amount>.")
 
     except Exception as e:
         print(f"Error in /kill command: {e}")
-        await message.reply_text("An error occurred while processing the request. Please try again later.")
+        await message.reply_text("⚠️ The admin action could not be completed. Please try again.")

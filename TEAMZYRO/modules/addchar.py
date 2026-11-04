@@ -10,11 +10,15 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from TEAMZYRO import app as ZYRO, DATABASE_ID, db, collection, require_power, rarity_map
 
 
-WRONG_FORMAT_TEXT = """Wrong ❌ format...
+WRONG_FORMAT_TEXT = """✦ ANIVERSE · CHARACTER REQUEST ✦
 
-eg. /addchar reply to a photo tanjiro-kamado Demon-slayer
+Reply to a character image/video, then send:
+/addchar character-name anime-name
 
-format:- /addchar character-name anime-name"""
+Example:
+/addchar tanjiro-kamado Demon-slayer
+
+Use hyphens between words in names. An admin will review your request."""
 
 
 upload_collection = db.uploads
@@ -53,7 +57,7 @@ async def find_available_id():
 async def request_upload(client, message):
     reply = message.reply_to_message
     if not reply or not (reply.photo or reply.document or reply.video or reply.animation):
-        return await message.reply_text("Please reply to a photo, image document, video, or animation.")
+        return await message.reply_text("✦ CHARACTER REQUEST\nReply to a photo, image document, video, or animation.")
 
     args = message.text.split()
     if len(args) != 3:
@@ -61,7 +65,7 @@ async def request_upload(client, message):
 
     character_name = args[1].replace("-", " ").title()
     anime = args[2].replace("-", " ").title()
-    processing_message = await message.reply("⏳ Processing...")
+    processing_message = await message.reply("✦ Sending your character request…")
 
     request_id = None
     try:
@@ -88,17 +92,17 @@ async def request_upload(client, message):
                 for key, value in rarity_items[i:i + 4]
             ])
         rarity_buttons.append([
-            InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_{request_id}")
+            InlineKeyboardButton("↩ CANCEL REQUEST", callback_data=f"cancel_{request_id}")
         ])
         keyboard = InlineKeyboardMarkup(rarity_buttons)
 
         database_caption = (
             "#pending\n\n"
-            "**New Character Upload Request**\n"
-            f"Character Name: {character_name}\n"
-            f"Anime Name: {anime}\n"
+            "✦ **ANIVERSE · NEW CHARACTER REQUEST** ✦\n"
+            f"✧ Character · {character_name}\n"
+            f"🎬 Anime · {anime}\n"
             f"Requested by [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n\n"
-            "Select a rarity to upload the character or cancel the request:"
+            "Choose a rarity to approve the character, or cancel this request:"
         )
 
         saved_message = await client.copy_message(
@@ -121,11 +125,11 @@ async def request_upload(client, message):
             }},
         )
 
-        await processing_message.edit("✅ Your request has been submitted successfully!")
+        await processing_message.edit("✦ 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗦𝗘𝗡𝗧 ✦\n\nYour character is now in the review queue. You’ll be notified after moderation.")
     except Exception as exc:
         if request_id is not None:
             await upload_collection.delete_one({"_id": request_id})
-        await processing_message.edit(f"❌ Request upload failed.\nError: {str(exc)}")
+        await processing_message.edit(f"⚠️ 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗙𝗔𝗜𝗟𝗘𝗗\nPlease try again. Details: {str(exc)}")
 
 
 @ZYRO.on_callback_query(filters.create(lambda _, __, q: q.data.startswith("cancel_")))
@@ -137,15 +141,15 @@ async def handle_cancel(client, callback_query):
 
         if result.deleted_count > 0:
             await callback_query.edit_message_caption(
-                caption="❌ The upload request has been canceled.",
+                caption="↩ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗖𝗔𝗡𝗖𝗘𝗟𝗟𝗘𝗗",
                 reply_markup=None
             )
-            await callback_query.answer("Request canceled successfully.")
+            await callback_query.answer("Request cancelled. ✦")
         else:
-            await callback_query.answer("Request not found or already processed.", show_alert=True)
+            await callback_query.answer("This request is no longer available.", show_alert=True)
     except Exception as exc:
         print(f"Error in handle_cancel: {exc}")
-        await callback_query.answer("An error occurred while canceling the request.", show_alert=True)
+        await callback_query.answer("The request could not be cancelled. Try again.", show_alert=True)
 
 
 @ZYRO.on_callback_query(filters.create(lambda _, __, q: q.data.startswith("rarity_")))
@@ -161,7 +165,7 @@ async def handle_callback(client, callback_query):
             return await callback_query.answer("Request not found or already processed.", show_alert=True)
 
         if not request.get("media_file_id"):
-            return await callback_query.answer("This request has no saved Telegram media. Please submit it again.", show_alert=True)
+            return await callback_query.answer("No Telegram media was saved for this request. Please send it again.", show_alert=True)
 
         available_id = await find_available_id()
         character = {
@@ -180,17 +184,17 @@ async def handle_callback(client, callback_query):
 
         await callback_query.edit_message_caption(
             caption=(
-                "**✅ Character Uploaded**\n"
-                f"Character Name: {request['name']}\n"
-                f"Anime Name: {request['anime']}\n"
-                f"Rarity: {new_rarity_text}\n"
-                f"ID: {available_id}\n"
-                f"Uploaded by [{callback_query.from_user.first_name}](tg://user?id={callback_query.from_user.id})"
+                "✦ **CHARACTER ADDED TO ANIVERSE** ✦\n"
+                f"✧ Character · {request['name']}\n"
+                f"🎬 Anime · {request['anime']}\n"
+                f"💎 Rarity · {new_rarity_text}\n"
+                f"🆔 Character ID · {available_id}\n"
+                f"👤 Added by [{callback_query.from_user.first_name}](tg://user?id={callback_query.from_user.id})"
             ),
             reply_markup=None
         )
 
-        await callback_query.answer(f"Character uploaded with rarity: {new_rarity_text}")
+        await callback_query.answer(f"✦ Character added · {new_rarity_text}")
     except Exception as exc:
         print(f"Error in handle_callback: {exc}")
-        await callback_query.answer("An error occurred while processing the request.", show_alert=True)
+        await callback_query.answer("The character request could not be approved. Please try again.", show_alert=True)

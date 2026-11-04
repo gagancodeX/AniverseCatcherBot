@@ -31,14 +31,14 @@ async def gift(client, message):
     for _sender_id, _ in pending_gifts.keys():
         if _sender_id == sender_id:
             await message.reply_text(
-                "You already have a gift processing. Please confirm or cancel it before sending another gift.",
+                "⏳ You already have a gift request pending. Confirm or cancel it before starting another transfer.",
                 parse_mode=ParseMode.MARKDOWN
             )
             return
 
     if not message.reply_to_message:
         await message.reply_text(
-            "You need to reply to a user's message to gift a character!",
+            "✦ GIFT TRANSFER · Reply to the person who should receive your character.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -49,14 +49,14 @@ async def gift(client, message):
 
     if sender_id == receiver_id:
         await message.reply_text(
-            "You can't gift a character to yourself!",
+            "⚠️ You cannot send a character to yourself.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
 
     if len(message.command) != 2:
         await message.reply_text(
-            "You need to provide a character ID!",
+            "✦ Add the character ID to your command. Example: /gift 01",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -70,7 +70,7 @@ async def gift(client, message):
 
     if not character:
         await message.reply_text(
-            "You don't have this character in your collection!",
+            "🔎 That character is not in your Character Vault.",
             parse_mode=ParseMode.MARKDOWN
         )
         return
@@ -85,15 +85,15 @@ async def gift(client, message):
 
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("✅ Confirm Gift", callback_data="confirm_gift")],
-            [InlineKeyboardButton("❌ Cancel Gift", callback_data="cancel_gift")]
+            [InlineKeyboardButton("✦ CONFIRM TRANSFER", callback_data="confirm_gift")],
+            [InlineKeyboardButton("↩ CANCEL", callback_data="cancel_gift")]
         ]
     )
 
     # Prepare character details for caption
     caption = (
-        f"🎁 <b>Gift Character</b>\n"
-        f"🌸 <b>{character.get('name', 'Unknown')}</b>\n"
+        f"✦ <b>ANIVERSE · GIFT TRANSFER</b> ✦\n\n"
+        f"🎁 <b>{character.get('name', 'Unknown')}</b>\n\n<i>Review this character before confirming the transfer.</i>"
     )
 
     # New characters use Telegram-hosted file IDs; legacy URL records remain valid.
@@ -149,13 +149,13 @@ async def on_callback_query(client, callback_query):
         if _sender_id == sender_id:
             break
     else:
-        await callback_query.answer("This is not for you!", show_alert=True)
+        await callback_query.answer("This gift request belongs to another collector.", show_alert=True)
         return
 
     if callback_query.data == "confirm_gift":
         # Check if the gift has already been processed
         if gift['processed']:
-            await callback_query.answer("This gift has already been processed.", show_alert=True)
+            await callback_query.answer("This gift has already been completed.", show_alert=True)
             return
 
         # Mark the gift as processed
@@ -182,8 +182,8 @@ async def on_callback_query(client, callback_query):
 
         # Edit the message to disable the buttons and update caption
         new_caption = (
-            f"🎉 <b>Gift Successful!</b>\n\n"
-            f"You have successfully gifted your character to "
+            f"✦ <b>GIFT TRANSFER COMPLETE</b> ✦\n\n"
+            f"Your character has been delivered to "
             f"<a href='tg://user?id={receiver_id}'>{gift['receiver_first_name']}</a>!"
         )
         try:
@@ -201,7 +201,7 @@ async def on_callback_query(client, callback_query):
 
     elif callback_query.data == "cancel_gift":
         del pending_gifts[(sender_id, receiver_id)]
-        cancel_caption = "❌️ Gift cancelled."
+        cancel_caption = "↩ Gift transfer cancelled."
         try:
             await callback_query.message.edit_caption(
                 caption=cancel_caption,
