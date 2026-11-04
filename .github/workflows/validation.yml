@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Compile Python modules
-        run: python -m compileall -q TEAMZYRO config.py
+        run: python -m compileall -q ANIVERSE config.py
 
       - name: Validate app metadata
         run: python -m json.tool app.json > /dev/null

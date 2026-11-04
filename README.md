@@ -54,10 +54,10 @@ Fill in the required values in `.env`:
 ## ✦ Run
 
 ```bash
-python -m TEAMZYRO
+python -m ANIVERSE
 ```
 
-The `TEAMZYRO` package name is retained as the project's internal Python entry point for compatibility with existing imports. The bot's public identity and creator credit are Aniverse / Adam.
+The project now runs from the `ANIVERSE` Python package. Internal imports, startup commands and the Docker entry point all use this package name.
 
 ## ✦ Deployment
 

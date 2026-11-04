@@ -1,1 +1,1 @@
-web: python -m TEAMZYRO
+web: python -m ANIVERSE
