@@ -244,24 +244,28 @@ async def claim_character(client, callback_query):
     if user.get("balance", 0) < discounted_price:
         return await callback_query.answer("Not enough Star Coins!", True)
 
+    owned_character = {
+        "_id": ObjectId(),
+        "name": char["name"],
+        "anime": char["anime"],
+        "rarity": char["rarity"],
+        "id": char["id"],
+        **{
+            key: char[key]
+            for key in (
+                "media_file_id", "media_type", "media_chat_id",
+                "media_message_id", "img_url", "vid_url", "thum_url"
+            )
+            if char.get(key) is not None
+        },
+    }
+
     await user_collection.update_one(
         {"id": user_id},
         {
             "$inc": {"balance": -discounted_price},
-            "$push": {"characters": {
-                "_id": ObjectId(),
-                **{
-                    key: char[key] for key in (
-                        "media_file_id", "media_type", "media_chat_id",
-                        "media_message_id", "img_url", "vid_url", "thum_url"
-                    ) if char.get(key) is not None
-                },
-                "name": char["name"],
-                "anime": char["anime"],
-                "rarity": char["rarity"],
-                "id": char["id"]
-            }}}
-        }
+            "$push": {"characters": owned_character},
+        },
     )
 
     await callback_query.answer(f"🎉 You claimed {char['name']}!", True)
