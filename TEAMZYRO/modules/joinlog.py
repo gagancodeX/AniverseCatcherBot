@@ -29,9 +29,9 @@ async def on_new_chat_members(client: Client, message: Message):
         # Construct the log message
         log_message = (
             f"#newgoroup\n\n"
-            f"chat name : {chat_title}\n"
+            f"🏷 Group · {chat_title}\\n"
             f"username : {chat_username}\n"
-            f"added by : {added_by}"
+            f"👤 Added by · {added_by}"
         )
         
         # Send the log message
@@ -41,9 +41,9 @@ async def on_new_chat_members(client: Client, message: Message):
         chat_members_count = await client.get_chat_members_count(chat_id)
         if chat_members_count < 1:
             leave_message = (
-                f"#leftgroup\n\n"
+                f"✦ ANIVERSE · GROUP LEFT ✦\\n\\n"
                 f"chat name : {chat_title}\n"
-                f"chat username : {chat_username}\n"
+                f"🔗 Username · {chat_username}\\n"
                 f"reason : Group has less than 1 members"
             )
             await send_log_message(chat_id, leave_message)
@@ -71,10 +71,10 @@ async def on_left_chat_member(_, message: Message):
 
         # Construct the log message
         log_message = (
-            f"#leftgroup \n\n"
+            f"✦ ANIVERSE · GROUP REMOVED ✦\\n\\n"
             f"chat name : {chat_title}\n"
             f"chat username : {chat_username}\n"
-            f"remove by : {removed_by}\n"
+            f"👤 Removed by · {removed_by}\\n"
         )
         
         await send_log_message(BOT_LOGGING, log_message)
