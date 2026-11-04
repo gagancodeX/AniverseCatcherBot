@@ -5,6 +5,7 @@
 # ==========================================
 
 import os
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -27,8 +28,29 @@ DATABASE_ID = os.getenv("DATABASE_ID", "")
 FORCE_JOIN = os.getenv("FORCE_JOIN", "")
 
 # Database configuration
-mongo_url = os.getenv("MONGO_URL", "")
-backup_mongo_url = os.getenv("BACKUP_MONGO_URL", "")
+# Trim accidental whitespace from Render environment variables. Atlas users
+# authenticate against the admin database unless an explicit authSource is set.
+def _normalize_mongo_uri(value: str) -> str:
+    uri = (value or "").strip()
+    if not uri:
+        return ""
+    try:
+        parts = urlsplit(uri)
+        hostname = (parts.hostname or "").lower()
+        if hostname.endswith(".mongodb.net"):
+            options = parse_qsl(parts.query, keep_blank_values=True)
+            if not any(key.lower() == "authsource" for key, _ in options):
+                options.append(("authSource", "admin"))
+            uri = urlunsplit(parts._replace(query=urlencode(options)))
+    except Exception:
+        # Leave malformed/nonstandard URIs unchanged so the driver reports
+        # the original configuration error without logging credentials.
+        pass
+    return uri
+
+
+mongo_url = _normalize_mongo_uri(os.getenv("MONGO_URL", ""))
+backup_mongo_url = _normalize_mongo_uri(os.getenv("BACKUP_MONGO_URL", ""))
 DB_NAME = os.getenv("DB_NAME", "WAIFUBOT")
 
 # Channels & Chats
