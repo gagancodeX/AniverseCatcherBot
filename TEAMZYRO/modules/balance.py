@@ -27,7 +27,7 @@ async def daily_gift(client: Client, message: Message):
     
     # Check if user is in lock (cooldown)
     if user_id in lock and time.time() - lock[user_id] < 5:  # 5 second cooldown
-        await message.reply_text("⏰ Please wait before using this command again.")
+        await message.reply_text("⏳ 𝗪𝗔𝗟𝗟𝗘𝗧 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait a moment before claiming again.")
         return
     
     lock[user_id] = time.time()
@@ -45,7 +45,7 @@ async def daily_gift(client: Client, message: Message):
             last_daily = datetime.fromisoformat(last_daily).date()
         
         if last_daily == today:
-            await message.reply_text("🎁 You have already claimed your daily gift today! Come back tomorrow.")
+            await message.reply_text("✦ 𝗗𝗔𝗜𝗟𝗬 𝗕𝗢𝗡𝗨𝗦 𝗖𝗢𝗟𝗟𝗘𝗖𝗧𝗘𝗗 ✦\nYour next daily gift arrives tomorrow. Keep your streak going!")
             return
     
     # Give daily gift of 100 coins
@@ -63,9 +63,9 @@ async def daily_gift(client: Client, message: Message):
     user_name = html.escape(message.from_user.first_name)
     
     await message.reply_text(
-        f"🎁 {user_name}, you received your daily gift!\n"
-        f"💰 +{daily_amount} coins\n"
-        f"💳 New Balance: {new_balance} coins"
+        f"✦ 𝗗𝗔𝗜𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{daily_amount} coins\n"
+        f"╰ 💳 Wallet balance · {new_balance} coins\n"
+        ""
     )
 
 # Weekly gift system
@@ -75,7 +75,7 @@ async def weekly_gift(client: Client, message: Message):
     
     # Check if user is in lock (cooldown)
     if user_id in lock and time.time() - lock[user_id] < 5:  # 5 second cooldown
-        await message.reply_text("⏰ Please wait before using this command again.")
+        await message.reply_text("⏳ 𝗪𝗔𝗟𝗟𝗘𝗧 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait a moment before claiming again.")
         return
     
     lock[user_id] = time.time()
@@ -95,7 +95,7 @@ async def weekly_gift(client: Client, message: Message):
         if last_weekly >= week_start:
             next_week = week_start + timedelta(days=7)
             days_left = (next_week - now).days
-            await message.reply_text(f"🎁 You have already claimed your weekly gift! Next gift available in {days_left} days.")
+            await message.reply_text(f"✦ 𝗪𝗘𝗘𝗞𝗟𝗬 𝗕𝗢𝗡𝗨𝗦 𝗖𝗢𝗟𝗟𝗘𝗖𝗧𝗘𝗗 ✦\nYour next gift is available in {days_left} day(s).")
             return
     
     # Give weekly gift of 2000 coins
@@ -113,9 +113,9 @@ async def weekly_gift(client: Client, message: Message):
     user_name = html.escape(message.from_user.first_name)
     
     await message.reply_text(
-        f"🎉 {user_name}, you received your weekly gift!\n"
-        f"💰 +{weekly_amount} coins\n"
-        f"💳 New Balance: {new_balance} coins"
+        f"✦ 𝗪𝗘𝗘𝗞𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{weekly_amount} coins\n"
+        f"╰ 💳 Wallet balance · {new_balance} coins\n"
+        ""
     )
 
 @app.on_message(filters.command("balance"))
@@ -129,8 +129,8 @@ async def balance(client: Client, message: Message):
     
     user_balance, user_tokens = await get_balance(user_id)
     response = (
-        f"{html.escape(message.from_user.first_name)} \n◈⌠ {user_balance} coins⌡\n"
-        f"◈ ⌠ {user_tokens} Tokens⌡"
+        f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 𝗪𝗔𝗟𝗟𝗘𝗧 ✦\n\n👤 {html.escape(message.from_user.first_name)}\n╭ 🪙 Coins · {user_balance}\n"
+        f"╰ 🎟 Tokens · {user_tokens}"
     )
     await message.reply_text(response, reply_to_message_id=False)
 
@@ -139,7 +139,7 @@ async def pay(client: Client, message: Message):
     sender_id = message.from_user.id
     
     if sender_id in lock and time.time() - lock[sender_id] < 3:  # 3 second cooldown
-        await message.reply_text("⏰ Please wait before sending another payment.")
+        await message.reply_text("⏳ 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 𝗖𝗢𝗢𝗟𝗗𝗢𝗪𝗡\nPlease wait before sending another payment.")
         return
     
     lock[sender_id] = time.time()
@@ -147,7 +147,7 @@ async def pay(client: Client, message: Message):
     args = message.command
 
     if len(args) < 2:
-        await message.reply_text("Usage: /pay <amount> [@username/user_id] or reply to a user.")
+        await message.reply_text("✦ 𝗖𝗢𝗜𝗡 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 ✦\nUse /pay <amount> @username, /pay <amount> user_id, or reply to a user with /pay <amount>.")
         return
 
     try:
@@ -155,7 +155,7 @@ async def pay(client: Client, message: Message):
         if amount <= 0:
             raise ValueError
     except ValueError:
-        await message.reply_text("Invalid amount. Please enter a positive number.")
+        await message.reply_text("⚠️ Invalid amount. Enter a positive whole number of coins.")
         return
 
     recipient_id = None
@@ -174,16 +174,16 @@ async def pay(client: Client, message: Message):
                 recipient_id = user_data['id']
                 recipient_name = user_data.get('first_name', recipient_username)
             else:
-                await message.reply_text("Recipient not found. Please check the username or reply to a user.")
+                await message.reply_text("🔎 Recipient not found. Check the username or reply directly to their message.")
                 return
 
     if not recipient_id:
-        await message.reply_text("Recipient not found. Reply to a user or provide a valid user ID/username.")
+        await message.reply_text("🔎 Choose a valid recipient: reply to their message or provide their user ID/username.")
         return
 
     sender_balance, _ = await get_balance(sender_id)
     if sender_balance < amount:
-        await message.reply_text("Insufficient balance.")
+        await message.reply_text("🪙 Your wallet does not have enough coins for this transfer.")
         return
 
     await user_collection.update_one({'id': sender_id}, {'$inc': {'balance': -amount}})
@@ -197,14 +197,14 @@ async def pay(client: Client, message: Message):
     sender_display = html.escape(message.from_user.first_name or str(sender_id))
 
     await message.reply_text(
-        f"✅ You paid {amount} coins to {recipient_display}.\n"
-        f"💰 Your New Balance: {updated_sender_balance} coins"
+        f"✦ 𝗧𝗥𝗔𝗡𝗦𝗙𝗘𝗥 𝗦𝗘𝗡𝗧 ✦\n\n🪙 {amount} coins → {recipient_display}\n"
+        f"💳 Remaining balance · {updated_sender_balance} coins"
     )
 
     await client.send_message(
         chat_id=recipient_id,
-        text=f"🎉 You received {amount} coins from {sender_display}!\n"
-        f"💰 Your New Balance: {updated_recipient_balance} coins"
+        text=f"✦ 𝗖𝗢𝗜𝗡𝗦 𝗥𝗘𝗖𝗘𝗜𝗩𝗘𝗗 ✦\n\n🪙 +{amount} coins from {sender_display}\n"
+        f"💳 Wallet balance · {updated_recipient_balance} coins"
     )
 
 @app.on_message(filters.command("kill"))
