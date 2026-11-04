@@ -39,10 +39,10 @@ async def check_support_channel(client: Client, user_id: int) -> bool:
 async def fetch_user_characters(user_id):
     user = await user_collection.find_one({"id": user_id})
     if not user or 'characters' not in user:
-        return None, 'You have not guessed any characters yet.'
+        return None, 'Your Character Vault is empty. Catch a character to start collecting.'
     characters = [c for c in user['characters'] if 'id' in c]
     if not characters:
-        return None, 'No valid characters found in your collection.'
+        return None, 'No valid characters are in your vault yet.'
     return characters, None
 
 @app.on_message(filters.command(["harem", "collection"]))
@@ -51,10 +51,10 @@ async def harem_handler(client: Client, message: Message):
 
     # Check if the user is in the support channel
     if not await check_support_channel(client, user_id):
-        keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
+        keyboard = [[InlineKeyboardButton("✦ JOIN SUPPORT", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await message.reply_text(
-            f"Please join our support channel {SUPPORT_CHANNEL} to use this command!",
+            f"✦ ACCESS REQUIRED\nJoin {SUPPORT_CHANNEL} to open your Character Vault.",
             reply_markup=reply_markup
         )
         return
@@ -79,7 +79,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await callback_query.message.edit_text(
-                f"Please join our support channel {SUPPORT_CHANNEL} to view your harem!",
+                f"✦ ACCESS REQUIRED\nJoin {SUPPORT_CHANNEL} to view your Character Vault.",
                 reply_markup=reply_markup
             )
             return
@@ -104,17 +104,17 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
                 keyboard = [
-                    [InlineKeyboardButton("Remove Filter", callback_data=f"remove_filter:{user_id}")]
+                    [InlineKeyboardButton("↻ CLEAR FILTER", callback_data=f"remove_filter:{user_id}")]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 if is_initial:
                     await message.reply_text(
-                        f"No characters found with rarity: **{filter_rarity}**. Click below to remove the filter.",
+                        f"No characters found for {filter_rarity}. Remove the filter to view your full vault.",
                         reply_markup=reply_markup
                     )
                 else:
                     await callback_query.message.edit_text(
-                        f"No characters found with rarity: **{filter_rarity}**. Click below to remove the filter.",
+                        f"No characters found for {filter_rarity}. Remove the filter to view your full vault.",
                         reply_markup=reply_markup
                     )
                 return
@@ -275,7 +275,7 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
             keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await callback_query.message.edit_text(
-                f"Please join our support channel {SUPPORT_CHANNEL} to use this feature!",
+                f"✦ ACCESS REQUIRED\nJoin {SUPPORT_CHANNEL} to use this feature.",
                 reply_markup=reply_markup
             )
             return
@@ -331,10 +331,10 @@ async def hmode_handler(client: Client, message: Message):
             row = []
     if row:
         keyboard.append(row)
-    keyboard.append([InlineKeyboardButton("All", callback_data=f"set_rarity:{user_id}:None")])
+    keyboard.append([InlineKeyboardButton("✦ ALL RARITIES", callback_data=f"set_rarity:{user_id}:None")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("Select a rarity to filter your harem:", reply_markup=reply_markup)
+    await message.reply_text("✦ VAULT FILTER\nChoose a rarity to narrow your collection.", reply_markup=reply_markup)
 
 @app.on_callback_query(filters.regex(r"^set_rarity"))
 async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
@@ -362,9 +362,9 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
 
         # Edit the message to show which rarity is set and remove the buttons
         if filter_rarity:
-            await callback_query.message.edit_text(f"Rarity filter set to: **{filter_rarity}**")
+            await callback_query.message.edit_text(f"✦ Rarity filter · {filter_rarity}")
         else:
-            await callback_query.message.edit_text("Rarity filter cleared. Showing all rarities.")
+            await callback_query.message.edit_text("✦ Filter cleared · showing your full Character Vault.")
 
         await callback_query.answer(f"Rarity filter set to {filter_rarity if filter_rarity else 'All'}", show_alert=True)
     except Exception as e:
