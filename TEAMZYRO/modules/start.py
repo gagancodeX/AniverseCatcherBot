@@ -187,7 +187,7 @@ async def start_private_command(client, message):
         await user_collection.insert_one(user_data)
 
     caption, buttons = await generate_start_message(client, message)
-    media = random.choice(START_MEDIA) if START_MEDIA else None
+    media = random.choice(START_MEDIA) if START_MEDIA else None if START_MEDIA else None
 
     try:
         await app.send_message(
@@ -204,7 +204,7 @@ async def start_private_command(client, message):
 @app.on_message(filters.command("start") & filters.group)
 async def start_group_command(client, message):
     caption, buttons = await generate_group_start_message(client)
-    media = random.choice(START_MEDIA)
+    media = random.choice(START_MEDIA) if START_MEDIA else None
     await send_media_message(message, media, caption, buttons)
 
 # 🔹 Function to Find Help Modules
