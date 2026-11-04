@@ -96,20 +96,44 @@ async def gift(client, message):
         f"🌸 <b>{character.get('name', 'Unknown')}</b>\n"
     )
 
-    # Send the character image with caption and buttons
-    if character.get('img_url'):
+    # New characters use Telegram-hosted file IDs; legacy URL records remain valid.
+    media_file_id = character.get('media_file_id')
+    media_type = character.get('media_type', 'photo')
+
+    if media_file_id:
+        if media_type == 'video':
+            await message.reply_video(
+                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+        elif media_type == 'document':
+            await message.reply_document(
+                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+        elif media_type == 'animation':
+            await message.reply_animation(
+                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+        else:
+            await message.reply_photo(
+                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                reply_markup=keyboard
+            )
+    elif character.get('vid_url'):
+        await message.reply_video(
+            character['vid_url'], caption=caption, parse_mode=ParseMode.HTML,
+            reply_markup=keyboard
+        )
+    elif character.get('img_url'):
         await message.reply_photo(
-            photo=character['img_url'],
-            caption=caption,
-            parse_mode=ParseMode.HTML,
+            character['img_url'], caption=caption, parse_mode=ParseMode.HTML,
             reply_markup=keyboard
         )
     else:
-        # fallback if no image
         await message.reply_text(
-            caption,
-            parse_mode=ParseMode.HTML,
-            reply_markup=keyboard
+            caption, parse_mode=ParseMode.HTML, reply_markup=keyboard
         )
 
     # Start the auto-cancel task for this gift
