@@ -30,7 +30,16 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     quit(1)
 
 LOAD = []
-NO_LOAD = []
+NO_LOAD = [
+    "blackjack",
+    "coinflip",
+    "high_low",
+    "jackpot",
+    "mines",
+    "slot",
+    "tic_tac_toe",
+    "wheel",
+]
 
 def __list_all_modules():
     import glob
