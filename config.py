@@ -61,18 +61,9 @@ MUSJ_JOIN = os.getenv("MUSJ_JOIN", "")
 # Admin user configurations
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 
-# Media Configurations
+# Optional start media URLs. Leave them unset to use a text-only /start.
 START_MEDIA = [
-    os.getenv("START_MEDIA_1", "https://files.catbox.moe/zufhkk.mp4"),
-    os.getenv("START_MEDIA_2", "https://files.catbox.moe/zufhkk.mp4")
+    value.strip()
+    for value in (os.getenv("START_MEDIA_1", ""), os.getenv("START_MEDIA_2", ""))
+    if value and value.strip()
 ]
-
-PHOTO_URL = [
-    os.getenv("PHOTO_URL_1", "https://files.catbox.moe/7ccoub.jpg"),
-    os.getenv("PHOTO_URL_2", "https://files.catbox.moe/7ccoub.jpg")
-]
-
-STATS_IMG = [
-    os.getenv("STATS_IMG", "https://files.catbox.moe/gknnju.jpg")
-]
-
