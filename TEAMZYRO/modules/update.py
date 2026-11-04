@@ -7,7 +7,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
-from TEAMZYRO import collection, app, user_collection, require_power
+from TEAMZYRO import collection, app, user_collection, require_power, DATABASE_ID
 from TEAMZYRO.unit.zyro_rarity import rarity_map  # Importing rarity_map
 
 @app.on_message(filters.command("gdelete"))
@@ -56,7 +56,7 @@ async def update(client: Client, message: Message):
         new_value = args[3]
 
         # Validate field
-        valid_fields = ['img_url', 'name', 'anime', 'rarity']
+        valid_fields = ['name', 'anime', 'rarity']
         if field_to_update not in valid_fields:
             await message.reply_text(f'Invalid field. Please use one of the following: {", ".join(valid_fields)}')
             return
@@ -129,7 +129,7 @@ async def update_multiple(client: Client, message: Message):
         new_value = ' '.join(args[3:])
 
         # Validate field
-        valid_fields = ['img_url', 'vid_url', 'name', 'anime', 'rarity']  # Added vid_url
+        valid_fields = ['name', 'anime', 'rarity']
         if field_to_update not in valid_fields:
             await message.reply_text(f'Invalid field. Use one of: {", ".join(valid_fields)}')
             return
@@ -187,3 +187,68 @@ async def update_multiple(client: Client, message: Message):
     except Exception as e:
         await message.reply_text(f'Error: {str(e)}')
 
+
+
+# Replace a character's media with a Telegram-hosted copy.
+@app.on_message(filters.command("gmedia"))
+@require_power("up")
+async def update_character_media(client: Client, message: Message):
+    reply = message.reply_to_message
+    args = message.text.split()
+
+    if len(args) != 2 or not reply or not (
+        reply.photo or reply.video or reply.document or reply.animation
+    ):
+        return await message.reply_text(
+            "Reply to a photo/video/document/animation and use: /gmedia character_id"
+        )
+
+    character_id = args[1]
+    character = await collection.find_one({"id": character_id})
+    if not character:
+        return await message.reply_text("Character not found.")
+
+    status = await message.reply_text("⏳ Saving media to Telegram...")
+    try:
+        saved = await client.copy_message(
+            chat_id=DATABASE_ID,
+            from_chat_id=reply.chat.id,
+            message_id=reply.id,
+            caption=f"Character media archive | ID: {character_id} | {character.get('name', '')}",
+        )
+
+        if saved.photo:
+            media_type, file_id = "photo", saved.photo.file_id
+        elif saved.video:
+            media_type, file_id = "video", saved.video.file_id
+        elif saved.document:
+            media_type, file_id = "document", saved.document.file_id
+        elif saved.animation:
+            media_type, file_id = "animation", saved.animation.file_id
+        else:
+            raise ValueError("Telegram did not return a supported media reference.")
+
+        await collection.update_one(
+            {"id": character_id},
+            {"$set": {
+                "media_file_id": file_id,
+                "media_type": media_type,
+                "media_chat_id": DATABASE_ID,
+                "media_message_id": saved.id,
+            }},
+        )
+
+        await user_collection.update_many(
+            {"characters.id": character_id},
+            {"$set": {
+                "characters.$[character].media_file_id": file_id,
+                "characters.$[character].media_type": media_type,
+                "characters.$[character].media_chat_id": DATABASE_ID,
+                "characters.$[character].media_message_id": saved.id,
+            }},
+            array_filters=[{"character.id": character_id}],
+        )
+
+        await status.edit_text(f"✅ Character {character_id} media updated and stored on Telegram.")
+    except Exception as exc:
+        await status.edit_text(f"❌ Media update failed: {exc}")
