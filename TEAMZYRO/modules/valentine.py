@@ -83,19 +83,34 @@ async def valentine(_, message: t.Message):
             }
         )
 
-        # Send character images and info
+        # Send the character from Telegram storage, with legacy URL fallback.
         for character in valentine_characters:
-            await message.reply_photo(
-                photo=character['img_url'],
-                caption=(
-                    f"💖 **Happy Valentine's Day!** {mention}\n\n"
-                    f"🌟 **Name**: `{character['name']}`  \n"
-                    f"💖 **Rarity**: `{character['rarity']}`  \n"
-                    f"📺 **Anime**: `{character['anime']}`  \n"
-                    f"🆔 **ID**: `{character['id']}`  \n\n"
-                    f"💕 **Come back next Valentine's season for another special character!** 💕"
-                )
+            caption = (
+                f"💖 **Happy Valentine's Day!** {mention}\n\n"
+                f"🌟 **Name**: `{character['name']}`  \n"
+                f"💖 **Rarity**: `{character['rarity']}`  \n"
+                f"📺 **Anime**: `{character['anime']}`  \n"
+                f"🆔 **ID**: `{character['id']}`  \n\n"
+                f"💕 **Come back next Valentine's season for another special character!** 💕"
             )
+            media_file_id = character.get("media_file_id")
+            media_type = character.get("media_type", "photo")
+
+            if media_file_id:
+                if media_type == "video":
+                    await message.reply_video(media_file_id, caption=caption)
+                elif media_type == "document":
+                    await message.reply_document(media_file_id, caption=caption)
+                elif media_type == "animation":
+                    await message.reply_animation(media_file_id, caption=caption)
+                else:
+                    await message.reply_photo(media_file_id, caption=caption)
+            elif character.get("vid_url"):
+                await message.reply_video(character["vid_url"], caption=caption)
+            elif character.get("img_url"):
+                await message.reply_photo(character["img_url"], caption=caption)
+            else:
+                await message.reply_text(caption)
 
     except Exception as e:
         print(f"Error in valentine command: {e}")
