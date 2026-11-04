@@ -115,7 +115,7 @@ async def redeem_character(client, message):
         f"🎭 *Character:* `{character['name']}`\n"
         f"📺 *Anime:* `{character.get('anime', 'Unknown')}`\n"
         f"🌟 *Rarity:* `{character.get('rarity', 'Unknown')}`\n"
-        f"🖼 *Image:* [Click Here]({character.get('img_url', '#' )})\n\n"
+        f"🖼 *Media:* Stored securely on Telegram\n\n"
         f"🎉 *You have successfully redeemed this character!*"
     )
 
