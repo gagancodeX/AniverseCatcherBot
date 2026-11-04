@@ -250,15 +250,18 @@ async def claim_character(client, callback_query):
         "anime": char["anime"],
         "rarity": char["rarity"],
         "id": char["id"],
-        **{
-            key: char[key]
-            for key in (
-                "media_file_id", "media_type", "media_chat_id",
-                "media_message_id", "img_url", "vid_url", "thum_url"
-            )
-            if char.get(key) is not None
-        },
     }
+    for media_key in (
+        "media_file_id",
+        "media_type",
+        "media_chat_id",
+        "media_message_id",
+        "img_url",
+        "vid_url",
+        "thum_url",
+    ):
+        if char.get(media_key) is not None:
+            owned_character[media_key] = char[media_key]
 
     await user_collection.update_one(
         {"id": user_id},
