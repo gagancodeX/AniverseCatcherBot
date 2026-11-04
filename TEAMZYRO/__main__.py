@@ -1,28 +1,42 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# ANIVERSE CATCHER - Runtime entry point
 # ==========================================
 
-from TEAMZYRO import *
 import importlib
 import logging
 import os
+import sys
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import requests
+from pyrogram.errors import FloodWait
+
+import TEAMZYRO
+from TEAMZYRO import TOKEN, ZYRO, application, LOGGER, FORCE_JOIN, BOT_LOGGING
 from TEAMZYRO.modules import ALL_MODULES
 
 
+BOT_READY = False
+
+
 def start_health_server() -> None:
-    """Expose a small HTTP health endpoint for Render Web Services."""
+    """Keep Render's HTTP health check responsive while Telegram connects."""
     port = int(os.environ.get("PORT", "10000"))
 
     class HealthHandler(BaseHTTPRequestHandler):
         def do_GET(self):
-            self.send_response(200)
+            if self.path == "/ready" and not BOT_READY:
+                self.send_response(503)
+                body = b"Telegram bot is still starting"
+            else:
+                self.send_response(200)
+                body = b"OK"
             self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(b"OK")
+            self.wfile.write(body)
 
         def log_message(self, format, *args):
             pass
@@ -33,152 +47,169 @@ def start_health_server() -> None:
         daemon=True,
         name="render-health-server",
     ).start()
-    LOGGER("TEAMZYRO").info("Render health endpoint listening on port %s", port)
+    LOGGER("ANIVERSE").info("Render health endpoint listening on port %s", port)
+
+
+def telegram_api(method: str, payload=None):
+    """Call Telegram Bot API and return its result or a useful error."""
+    response = requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/{method}",
+        json=payload or {},
+        timeout=20,
+    )
+    try:
+        result = response.json()
+    except ValueError as exc:
+        raise RuntimeError(f"Telegram {method} returned a non-JSON response") from exc
+
+    if not response.ok or not result.get("ok"):
+        description = result.get("description", "Unknown Telegram API error")
+        raise RuntimeError(f"Telegram {method} failed: {description}")
+    return result["result"]
+
+
+def normalise_chat_target(value: str):
+    value = str(value or "").strip()
+    value = value.replace("https://t.me/", "").replace("http://t.me/", "")
+    value = value.replace("t.me/", "")
+    value = value.replace("\u2212", "-").replace("\u2013", "-").replace("\u2014", "-")
+    value = value.replace("\u200b", "").replace("\ufeff", "")
+    if not value:
+        raise ValueError("Chat setting is empty")
+    if value.lstrip("-").isdigit():
+        return int(value)
+    return value if value.startswith("@") else f"@{value}"
+
+
+def verify_bot_api_and_chats() -> None:
+    """Validate token, public/private FORCE_JOIN group and log-chat access."""
+    me = telegram_api("getMe")
+    LOGGER("ANIVERSE").info("Bot API authenticated as @%s", me.get("username"))
+
+    force_join_target = normalise_chat_target(FORCE_JOIN)
+    chat_info = telegram_api("getChat", {"chat_id": force_join_target})
+    bot_member = telegram_api(
+        "getChatMember",
+        {"chat_id": force_join_target, "user_id": me["id"]},
+    )
+
+    if bot_member.get("status") not in ("administrator", "creator"):
+        raise RuntimeError(
+            "The bot must be an administrator in FORCE_JOIN. "
+            "Promote it in the public group and restart the service."
+        )
+
+    username = chat_info.get("username")
+    invite_link = chat_info.get("invite_link")
+    if username:
+        invite_link = f"https://t.me/{username}"
+    elif not invite_link:
+        if not bot_member.get("can_invite_users", False):
+            raise RuntimeError(
+                "FORCE_JOIN is private and the bot needs the 'Invite Users' permission."
+            )
+        invite = telegram_api("createChatInviteLink", {"chat_id": force_join_target})
+        invite_link = invite["invite_link"]
+
+    TEAMZYRO.FORCE_JOIN_LINK = invite_link
+    LOGGER("ANIVERSE").info(
+        "FORCE_JOIN group verified: %s",
+        chat_info.get("title") or username or force_join_target,
+    )
+
+    log_target = normalise_chat_target(BOT_LOGGING)
+    test_message = telegram_api(
+        "sendMessage",
+        {
+            "chat_id": log_target,
+            "text": "ANIVERSE CATCHER startup check: log chat connected.",
+        },
+    )
+    try:
+        telegram_api(
+            "deleteMessage",
+            {
+                "chat_id": log_target,
+                "message_id": test_message["message_id"],
+            },
+        )
+    except Exception:
+        LOGGER("ANIVERSE").warning(
+            "Could not remove the temporary BOT_LOGGING startup-check message."
+        )
+    LOGGER("ANIVERSE").info("BOT_LOGGING chat verified successfully.")
+
+
+def load_modules() -> None:
+    for module_name in ALL_MODULES:
+        importlib.import_module(f"TEAMZYRO.modules.{module_name}")
+    LOGGER("ANIVERSE").info("Loaded %s feature modules.", len(ALL_MODULES))
+
+
+def start_pyrogram_client() -> None:
+    """Respect Telegram's FloodWait instead of crashing/restarting in a loop."""
+    try:
+        ZYRO.start()
+    except FloodWait as exc:
+        wait_seconds = max(1, int(exc.value)) + 3
+        LOGGER("ANIVERSE").warning(
+            "Telegram rate-limited Pyrogram authorization. "
+            "Waiting %s seconds once before retrying. Keep this Render instance running.",
+            wait_seconds,
+        )
+        try:
+            ZYRO.disconnect()
+        except Exception:
+            pass
+        time.sleep(wait_seconds)
+        ZYRO.start()
+
+    LOGGER("ANIVERSE").info("Pyrogram client connected successfully.")
 
 
 def main() -> None:
+    global BOT_READY
+
     start_health_server()
 
-    for module_name in ALL_MODULES:
-        imported_module = importlib.import_module("TEAMZYRO.modules." + module_name)
-    LOGGER("TEAMZYRO.modules").info("𝐀𝐥𝐥 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬 𝐋𝐨𝐚𝐝𝐞𝐝 𝐁𝐚𝐛𝐲🥳...")
+    if not TOKEN:
+        raise RuntimeError("TOKEN is missing in Render environment variables.")
+    if not TEAMZYRO.api_id or not TEAMZYRO.api_hash:
+        raise RuntimeError("API_ID or API_HASH is missing in Render environment variables.")
+    if not TEAMZYRO.mongo_url:
+        raise RuntimeError("MONGO_URL is missing in Render environment variables.")
+    if not FORCE_JOIN:
+        raise RuntimeError("FORCE_JOIN is missing in Render environment variables.")
+    if not BOT_LOGGING:
+        raise RuntimeError("BOT_LOGGING is missing in Render environment variables.")
 
-    ZYRO.start()
+    # Validate Bot API settings before making an MTProto authorization attempt.
+    verify_bot_api_and_chats()
+    load_modules()
 
-    # Verify FORCE_JOIN using the official Telegram Bot API.
-    # MTProto messages.GetDialogs is not available to bot accounts.
-    import sys
-    import requests
-    import TEAMZYRO
-
-    def telegram_api(method, payload=None):
-        response = requests.post(
-            "https://api.telegram.org/bot" + TOKEN + "/" + method,
-            json=payload or {},
-            timeout=20,
-        )
-        try:
-            result = response.json()
-        except ValueError:
-            raise RuntimeError("Telegram returned a non-JSON response.")
-        if not response.ok or not result.get("ok"):
-            description = result.get("description", "Unknown Telegram API error")
-            raise RuntimeError(f"{method} failed: {description}")
-        return result["result"]
+    start_pyrogram_client()
 
     try:
-        force_join_value = str(FORCE_JOIN or "").strip()
-        force_join_value = (
-            force_join_value
-            .replace("\u2212", "-")
-            .replace("\u2013", "-")
-            .replace("\u2014", "-")
-            .replace("\u200b", "")
-            .replace("\ufeff", "")
+        BOT_READY = True
+        LOGGER("ANIVERSE").info("ANIVERSE CATCHER is online. Starting update polling.")
+        # The bot's feature modules use Pyrogram; these PTB handlers are used
+        # for group message counting, inline queries and a few utility commands.
+        application.run_polling(
+            drop_pending_updates=True,
+            close_loop=False,
         )
-        if not force_join_value:
-            raise ValueError("FORCE_JOIN is empty. Set a channel ID or @username.")
-
+    finally:
+        BOT_READY = False
         try:
-            chat_target = int(force_join_value)
-        except ValueError:
-            chat_target = force_join_value
-            if not chat_target.startswith("@"):
-                chat_target = "@" + chat_target
-
-        chat_info = telegram_api("getChat", {"chat_id": chat_target})
-        me = telegram_api("getMe")
-        bot_member = telegram_api(
-            "getChatMember",
-            {"chat_id": chat_target, "user_id": me["id"]},
-        )
-
-        if bot_member.get("status") not in ("administrator", "creator"):
-            raise RuntimeError(
-                "The bot is not an administrator in the FORCE_JOIN channel. "
-                "Promote it to admin in Telegram."
-            )
-
-        invite_link = chat_info.get("invite_link")
-        if not invite_link and chat_info.get("username"):
-            invite_link = "https://t.me/" + chat_info["username"]
-
-        if not invite_link:
-            if not bot_member.get("can_invite_users", False):
-                raise RuntimeError(
-                    "The channel is private and the bot lacks the 'Invite Users' admin permission."
-                )
-            invite = telegram_api(
-                "createChatInviteLink",
-                {"chat_id": chat_target},
-            )
-            invite_link = invite["invite_link"]
-
-        TEAMZYRO.FORCE_JOIN_LINK = invite_link
-        LOGGER("TEAMZYRO").info("FORCE_JOIN channel verified successfully.")
-    except Exception as e:
-        LOGGER("TEAMZYRO").error(
-            "\\n"
-            "=======================================================================\\n"
-            "❌ FORCE_JOIN CONFIGURATION ERROR:\\n"
-            f"Could not verify FORCE_JOIN ({FORCE_JOIN!r}).\\n"
-            "Check the chat ID/@username and ensure the bot is an admin.\\n"
-            f"Details: {e}\\n"
-            "======================================================================="
-        )
-        try:
-            ZYRO.stop()
+            if ZYRO.is_connected:
+                ZYRO.stop()
         except Exception:
-            pass
-        sys.exit(1)
+            LOGGER("ANIVERSE").exception("Error while stopping the Pyrogram client.")
 
-    # Verify BOT_LOGGING through the Bot API as well; this avoids relying
-    # on an MTProto peer cache in a fresh Render container.
-    try:
-        log_value = str(BOT_LOGGING or "").strip()
-        if not log_value:
-            raise ValueError("BOT_LOGGING is empty. Set a log chat ID or @username.")
-
-        try:
-            log_target = int(log_value)
-        except ValueError:
-            log_target = log_value if log_value.startswith("@") else "@" + log_value
-
-        log_msg = telegram_api(
-            "sendMessage",
-            {
-                "chat_id": log_target,
-                "text": "⚙️ ANIVERSE CATCHER startup check: logging channel connected.",
-            },
-        )
-        LOGGER("TEAMZYRO").info(
-            "BOT_LOGGING permissions verified. Test message sent (ID: %s).",
-            log_msg["message_id"],
-        )
-    except Exception as e:
-        LOGGER("TEAMZYRO").error(
-            "\n"
-            "=======================================================================\n"
-            "❌ BOT_LOGGING CONFIGURATION ERROR:\n"
-            f"Could not send a message to BOT_LOGGING ({BOT_LOGGING!r}).\n"
-            "Check the chat ID/@username and ensure the bot can post messages there.\n"
-            f"Details: {e}\n"
-            "======================================================================="
-        )
-        try:
-            ZYRO.stop()
-        except Exception:
-            pass
-        sys.exit(1)
-
-    application.run_polling(drop_pending_updates=True)
-    LOGGER("TEAMZYRO").info(
-        "╔═════ஜ۩۞۩ஜ════╗\n  ☠︎︎MADE BY TEAMZYRO☠︎︎\n╚═════ஜ۩۞۩ஜ════╝"
-    )
-    send_start_message()
-    
 
 if __name__ == "__main__":
-    main()
-    
-    
+    try:
+        main()
+    except Exception:
+        logging.getLogger("ANIVERSE").exception("Bot startup/runtime failed.")
+        sys.exit(1)
