@@ -65,7 +65,7 @@ async def daily_gift(client: Client, message: Message):
     await message.reply_text(
         f"✦ 𝗗𝗔𝗜𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{daily_amount} coins\n"
         f"╰ 💳 Wallet balance · {new_balance} coins\n"
-        ""
+        
     )
 
 # Weekly gift system
@@ -115,7 +115,7 @@ async def weekly_gift(client: Client, message: Message):
     await message.reply_text(
         f"✦ 𝗪𝗘𝗘𝗞𝗟𝗬 𝗥𝗘𝗪𝗔𝗥𝗗 ✦\n\n👤 {user_name}\n╭ 🪙 +{weekly_amount} coins\n"
         f"╰ 💳 Wallet balance · {new_balance} coins\n"
-        ""
+        
     )
 
 @app.on_message(filters.command("balance"))
