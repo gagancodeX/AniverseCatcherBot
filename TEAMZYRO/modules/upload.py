@@ -97,18 +97,28 @@ def upload_to_catbox(file_path=None, file_url=None, expires=None, secret=None):
 def upload_to_imgbb(file_path: str) -> str:
     if not os.path.exists(file_path):
         raise Exception(f"Invalid file path: {file_path}")
+    if not IMGBB_API_KEY:
+        raise Exception("ImgBB API key is missing. Set IMGBB_API_KEY in Render environment variables.")
+
     url = "https://api.imgbb.com/1/upload"
     with open(file_path, "rb") as f:
         response = requests.post(
             url,
             data={"key": IMGBB_API_KEY},
-            files={"image": f}
+            files={"image": f},
+            timeout=60
         )
-    if response.status_code == 200:
+
+    try:
         data = response.json()
+    except ValueError:
+        raise Exception(f"ImgBB returned an invalid response (HTTP {response.status_code}).")
+
+    if response.status_code == 200 and data.get("success") and data.get("data", {}).get("url"):
         return data["data"]["url"]
-    else:
-        raise Exception(f"HTTP Error: {response.status_code} | {response.text}")
+
+    error = data.get("error", {}).get("message") or response.text[:500]
+    raise Exception(f"ImgBB upload failed (HTTP {response.status_code}): {error}")
 
 
 server_collection = db["user_upload_servers"]
@@ -235,12 +245,10 @@ async def ul_main(client, message):
                         is_doc_non_image = True
 
                 if server == "imgbb" and not is_video and not is_doc_non_image:
-                    try:
-                        file_url = upload_to_imgbb(path)
-                    except Exception as e:
-                        # Fallback to catbox
-                        file_url = upload_to_catbox(path)
+                    # Do not silently fall back to Catbox: expose the real ImgBB error.
+                    file_url = upload_to_imgbb(path)
                 else:
+                    # Catbox is currently used for videos/non-image documents.
                     file_url = upload_to_catbox(path)
 
                 # Update character with the image or video URL
