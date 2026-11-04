@@ -46,7 +46,7 @@ async def ctop(client: Client, message: Message):
     chat_id = message.chat.id
 
     cursor = group_user_totals_collection.aggregate([
-        {"$match": {"group_id": chat_id}},
+        {"$match": {"group_id": str(chat_id)}},
         {"$project": {"username": 1, "first_name": 1, "character_count": "$count"}},
         {"$sort": {"character_count": -1}},
         {"$limit": 10}
