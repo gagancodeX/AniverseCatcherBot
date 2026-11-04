@@ -8,7 +8,11 @@ import re
 import time
 from html import escape
 from cachetools import TTLCache
-from telegram import Update, InlineQueryResultPhoto, InlineQueryResultVideo
+from telegram import (
+    Update, InlineQueryResultPhoto, InlineQueryResultVideo,
+    InlineQueryResultCachedPhoto, InlineQueryResultCachedVideo,
+    InlineQueryResultCachedDocument,
+)
 from telegram.ext import InlineQueryHandler, CallbackContext
 from TEAMZYRO import application  # Assuming 'application' is the main bot object
 from TEAMZYRO.unit.zyro_inline import *
@@ -46,11 +50,20 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             all_characters = all_characters_cache.get('all_characters') or await get_all_characters()
             all_characters_cache['all_characters'] = all_characters  # Cache the result
 
-    # Filter characters based on whether they have a video or image
+    # New Telegram-stored media and older URL-based media are both supported.
     if '.AMV' in query:
-        all_characters = [char for char in all_characters if 'vid_url' in char]
+        all_characters = [
+            char for char in all_characters
+            if char.get('media_type') == 'video' or 'vid_url' in char
+        ]
     else:
-        all_characters = [char for char in all_characters if 'img_url' in char]
+        all_characters = [
+            char for char in all_characters
+            if (
+                (char.get('media_file_id') and char.get('media_type') != 'video')
+                or 'img_url' in char
+            )
+        ]
 
     # Pagination logic
     characters = all_characters[offset:offset + 50]
@@ -78,12 +91,48 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 f"🆔️ <b>{character['id']}</b>\n\n"
             )
 
-        # If the character has a video URL, create a video result
-        if 'vid_url' in character:
-            thumbnail_url = character.get('thum_url', 'https://envs.sh/6Y3.jpg')  # Use a default thumbnail if missing
+        media_file_id = character.get('media_file_id')
+        media_type = character.get('media_type', 'photo')
+        result_id = f"{character['id']}_{time.time_ns()}"
+
+        # Cached Telegram results need no public URL or external hosting.
+        if media_file_id:
+            if media_type == 'video':
+                results.append(
+                    InlineQueryResultCachedVideo(
+                        id=result_id,
+                        video_file_id=media_file_id,
+                        title=character['name'],
+                        description=f"From: {character['anime']} | Rarity: {character['rarity']}",
+                        caption=caption,
+                        parse_mode='HTML'
+                    )
+                )
+            elif media_type in ('document', 'animation'):
+                results.append(
+                    InlineQueryResultCachedDocument(
+                        id=result_id,
+                        document_file_id=media_file_id,
+                        title=character['name'],
+                        description=f"From: {character['anime']} | Rarity: {character['rarity']}",
+                        caption=caption,
+                        parse_mode='HTML'
+                    )
+                )
+            else:
+                results.append(
+                    InlineQueryResultCachedPhoto(
+                        id=result_id,
+                        photo_file_id=media_file_id,
+                        caption=caption,
+                        parse_mode='HTML'
+                    )
+                )
+        elif 'vid_url' in character:
+            thumbnail_url = character.get('thum_url', 'https://envs.sh/6Y3.jpg')
             results.append(
                 InlineQueryResultVideo(
-                    id=f"{character['id']}_{time.time()}",
+                    id=result_id,
                     video_url=character['vid_url'],
                     mime_type="video/mp4",
                     thumbnail_url=thumbnail_url,
@@ -94,11 +143,10 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 )
             )
         elif 'img_url' in character:
-            # Add photo result to inline query results
             results.append(
                 InlineQueryResultPhoto(
                     thumbnail_url=character['img_url'],
-                    id=f"{character['id']}_{time.time()}",
+                    id=result_id,
                     photo_url=character['img_url'],
                     caption=caption,
                     parse_mode='HTML'
