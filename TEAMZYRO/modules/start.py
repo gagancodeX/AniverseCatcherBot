@@ -9,6 +9,7 @@ import importlib.util
 import random
 import time
 import asyncio
+from urllib.parse import urlsplit
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from TEAMZYRO import *
@@ -22,6 +23,43 @@ def get_uptime():
     hours, remainder = divmod(uptime_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{hours}h {minutes}m {seconds}s"
+
+
+def valid_button_url(value):
+    """Normalize a Telegram-style link and reject malformed button URLs."""
+    if not isinstance(value, str):
+        return None
+
+    value = value.strip()
+    if not value or any(char.isspace() for char in value):
+        return None
+
+    if value.startswith("@"):
+        value = f"https://t.me/{value[1:]}"
+    elif value.startswith(("t.me/", "telegram.me/")):
+        value = f"https://{value}"
+    elif "://" not in value:
+        # Treat a plain username as a Telegram link; accept other explicit
+        # host/path values by adding HTTPS.
+        if "/" not in value:
+            value = f"https://t.me/{value}"
+        else:
+            value = f"https://{value}"
+
+    try:
+        parsed = urlsplit(value)
+        if parsed.scheme.lower() not in ("http", "https"):
+            return None
+        if not parsed.netloc or not parsed.hostname:
+            return None
+        if parsed.username or parsed.password:
+            return None
+        _ = parsed.port  # Force validation of malformed port values.
+    except ValueError:
+        return None
+
+    return value
+
 
 # START_MEDIA is imported from TEAMZYRO package
 
@@ -42,13 +80,33 @@ async def generate_start_message(client, message):
         f"⏳ <b>𝖴𝖯𝖳𝖨𝖬𝖤:</b> {uptime}</blockquote>"
     )
 
-    buttons = [
-        [InlineKeyboardButton("Aᴅᴅ Tᴏ Yᴏᴜʀ Gʀᴏᴜᴘ ", url=f"https://t.me/{bot_user.username}?startgroup=true")],
-        [InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT), 
-         InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url=UPDATE_CHAT)],
-        [InlineKeyboardButton("Hᴇʟᴘ", callback_data="open_help")],
-        [InlineKeyboardButton("Owner", url=f"https://t.me/xeno_kakarot")],
-    ]
+    buttons = []
+
+    group_url = valid_button_url(
+        f"https://t.me/{bot_user.username}?startgroup=true"
+    ) if bot_user.username else None
+    if group_url:
+        buttons.append([
+            InlineKeyboardButton("Aᴅᴅ Tᴏ Yᴏᴜʀ Gʀᴏᴜᴘ ", url=group_url)
+        ])
+
+    social_buttons = []
+    support_url = valid_button_url(SUPPORT_CHAT)
+    update_url = valid_button_url(UPDATE_CHAT)
+    if support_url:
+        social_buttons.append(InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=support_url))
+    if update_url:
+        social_buttons.append(InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url=update_url))
+    if social_buttons:
+        buttons.append(social_buttons)
+
+    buttons.append([
+        InlineKeyboardButton("Hᴇʟᴘ", callback_data="open_help")
+    ])
+
+    owner_url = valid_button_url("https://t.me/xeno_kakarot")
+    if owner_url:
+        buttons.append([InlineKeyboardButton("Owner", url=owner_url)])
     
     return caption, buttons
 
@@ -60,22 +118,50 @@ async def generate_group_start_message(client):
         f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝗐𝖺𝗂𝖿𝗎𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍𝗁 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎𝗇𝗍𝗌 𝖿𝗈𝗋 𝗉𝗅𝖺𝗒𝖾𝗋𝗌 𝗍𝗈 /guess.\n"
         f"𝖴𝗌𝖾 /help 𝖿𝗈ʀ ᴍᴏʀᴇ ɪɴғᴏ.</blockquote>"
     )
-    buttons = [
-        [
-            InlineKeyboardButton("Aᴅᴅ Mᴇ", url=f"https://t.me/{bot_user.username}?startgroup=true"),
-            InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT)
-        ]
-    ]
+    buttons = []
+    row = []
+
+    group_url = valid_button_url(
+        f"https://t.me/{bot_user.username}?startgroup=true"
+    ) if bot_user.username else None
+    support_url = valid_button_url(SUPPORT_CHAT)
+
+    if group_url:
+        row.append(InlineKeyboardButton("Aᴅᴅ Mᴇ", url=group_url))
+    if support_url:
+        row.append(InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=support_url))
+    if row:
+        buttons.append(row)
     return caption, buttons
 
 # 🔹 Send Media (Helper)
 async def send_media_message(message, media, caption, buttons):
-    if media.lower().endswith(('.png', '.jpg', '.jpeg')):
-        await message.reply_photo(photo=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
-    elif media.lower().endswith('.gif'):
-        await message.reply_animation(animation=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
-    else:
-        await message.reply_video(video=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
+    """Send the start media; an invalid optional button must not break /start."""
+    media_type = media.lower()
+    reply_markup = InlineKeyboardMarkup(buttons) if buttons else None
+
+    async def send(markup):
+        kwargs = {"caption": caption, "parse_mode": enums.ParseMode.HTML}
+        if markup is not None:
+            kwargs["reply_markup"] = markup
+
+        if media_type.endswith((".png", ".jpg", ".jpeg")):
+            await message.reply_photo(photo=media, **kwargs)
+        elif media_type.endswith(".gif"):
+            await message.reply_animation(animation=media, **kwargs)
+        else:
+            await message.reply_video(video=media, **kwargs)
+
+    try:
+        await send(reply_markup)
+    except Exception as exc:
+        if "BUTTON_URL_INVALID" not in str(exc):
+            raise
+
+        LOGGER("TEAMZYRO").warning(
+            "A /start button URL was rejected by Telegram; sending media without buttons."
+        )
+        await send(None)
 
 # 🔹 Private Start Command Handler
 @app.on_message(filters.command("start") & filters.private)
