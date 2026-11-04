@@ -133,9 +133,9 @@ async def generate_group_start_message(client):
     support_url = valid_button_url(SUPPORT_CHAT)
 
     if group_url:
-        row.append(InlineKeyboardButton("Aᴅᴅ Mᴇ", url=group_url))
+        row.append(InlineKeyboardButton("✚  ADD TO GROUP", url=group_url))
     if support_url:
-        row.append(InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=support_url))
+        row.append(InlineKeyboardButton("◈  SUPPORT", url=support_url))
     if row:
         buttons.append(row)
     return caption, buttons
