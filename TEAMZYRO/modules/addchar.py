@@ -141,7 +141,7 @@ async def handle_cancel(client, callback_query):
 
         if result.deleted_count > 0:
             await callback_query.edit_message_caption(
-                caption="↩ <b>CHARACTER REQUEST CANCELLED</b>",
+                caption="↩ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗖𝗔𝗡𝗖𝗘𝗟𝗟𝗘𝗗",
                 reply_markup=None
             )
             await callback_query.answer("Request cancelled. ✦")
@@ -185,11 +185,11 @@ async def handle_callback(client, callback_query):
         await callback_query.edit_message_caption(
             caption=(
                 "✦ **CHARACTER ADDED TO ANIVERSE** ✦\n"
-                f"Character Name: {request['name']}\n"
-                f"Anime Name: {request['anime']}\n"
+                f"✧ Character · {request['name']}\n"
+                f"🎬 Anime · {request['anime']}\n"
                 f"💎 Rarity · {new_rarity_text}\n"
                 f"🆔 Character ID · {available_id}\n"
-                f"Uploaded by [{callback_query.from_user.first_name}](tg://user?id={callback_query.from_user.id})"
+                f"👤 Added by [{callback_query.from_user.first_name}](tg://user?id={callback_query.from_user.id})"
             ),
             reply_markup=None
         )
@@ -197,4 +197,4 @@ async def handle_callback(client, callback_query):
         await callback_query.answer(f"✦ Character added · {new_rarity_text}")
     except Exception as exc:
         print(f"Error in handle_callback: {exc}")
-        await callback_query.answer("An error occurred while processing the request.", show_alert=True)
+        await callback_query.answer("The character request could not be approved. Please try again.", show_alert=True)
