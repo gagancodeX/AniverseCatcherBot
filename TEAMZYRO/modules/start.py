@@ -171,7 +171,7 @@ async def send_media_message(message, media, caption, buttons):
         if "BUTTON_URL_INVALID" not in str(exc):
             raise
 
-        LOGGER("TEAMZYRO").warning(
+        LOGGER("ANIVERSE").warning(
             "A /start button URL was rejected by Telegram; sending media without buttons."
         )
         await send(None)
@@ -201,7 +201,7 @@ async def start_private_command(client, message):
         )
     
     except Exception as exc:
-        LOGGER("TEAMZYRO").warning("Could not send /start log message: %s", exc)
+        LOGGER("ANIVERSE").warning("Could not send /start log message: %s", exc)
 
     await send_media_message(message, media, caption, buttons)
 
