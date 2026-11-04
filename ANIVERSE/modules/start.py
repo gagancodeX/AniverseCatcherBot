@@ -107,7 +107,7 @@ async def generate_start_message(client, message):
         InlineKeyboardButton("⌘  COMMAND CENTER", callback_data="open_help")
     ])
 
-    owner_url = valid_button_url("https://t.me/xeno_kakarot")
+    owner_url = valid_button_url(DEVELOPER_LINK)
     if owner_url:
         buttons.append([InlineKeyboardButton("✦  DEVELOPER", url=owner_url)])
     

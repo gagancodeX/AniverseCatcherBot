@@ -47,7 +47,10 @@ Fill in the required values in `.env`:
 - `TOKEN` — Telegram bot token.
 - `MONGO_URL` — MongoDB connection URI.
 - `BOT_LOGGING` and `DATABASE_ID` — log and character storage chat IDs/usernames.
-- `FORCE_JOIN`, `SUPPORT_CHAT`, `UPDATE_CHAT` and `OWNER_ID` — bot configuration.
+- `FORCE_JOIN` — required chat ID for the claim restriction.
+- `FORCE_JOIN_LINK` — public Telegram link or invite link shown by `/hclaim`.
+- `SUPPORT_CHAT`, `UPDATE_CHAT` and `OWNER_ID` — bot configuration.
+- `DEVELOPER_LINK` — Telegram profile link shown by the `/start` Developer button.
 
 `BACKUP_MONGO_URL`, `MUSJ_JOIN` and start media settings are optional. **A Pyrogram SESSION_STRING is not required.**
 

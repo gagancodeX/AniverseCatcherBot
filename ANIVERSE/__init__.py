@@ -35,10 +35,10 @@ from config import (
     api_id, api_hash, TOKEN, BOT_LOGGING, DATABASE_ID, FORCE_JOIN,
     mongo_url, backup_mongo_url, DB_NAME, SUPPORT_CHAT, UPDATE_CHAT, OWNER_ID,
     PYROGRAM_WORKDIR,
-    MUSJ_JOIN, START_MEDIA
+    MUSJ_JOIN, START_MEDIA, FORCE_JOIN_LINK, DEVELOPER_LINK
 ) 
 
-FORCE_JOIN_LINK = "https://t.me/oneforall_support"  # Updated dynamically on bot startup
+
 
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
