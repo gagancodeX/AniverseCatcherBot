@@ -99,7 +99,7 @@ async def stats_handler(client: Client, message: Message):
     stats_message += "━━━━━━━━━━━━━━━━━━━━━"
     
     # Edit the processing message with the final stats
-    await processing_message.edit_caption(
-        caption=stats_message,
+    await processing_message.edit_text(
+        text=stats_message,
         parse_mode=enums.ParseMode.HTML
     )
