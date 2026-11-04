@@ -134,9 +134,9 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         user_first_name = user_db.get("first_name", "User") if user_db else "User"
 
         # Build harem message
-        harem_message = f"🌸 <b>{escape(user_first_name)}'s 𝖧𝖠𝖱𝖤𝖬</b> (𝖯𝖺𝗀𝖾 {page+1}/{total_pages})\n\n"
+        harem_message = f"✦ <b>{escape(user_first_name)}'S CHARACTER VAULT</b>\\n<code>PAGE {page+1} / {total_pages}</code>  ·  <code>{total_characters} OWNED</code>\\n\\n"
         if filter_rarity:
-            harem_message += f"<blockquote>🎯 <b>𝖥𝗂𝗅𝗍𝖾𝗋𝖾𝖽 𝖻𝗒:</b> {filter_rarity}</blockquote>\n"
+            harem_message += f"<blockquote>⌁ <b>ACTIVE FILTER</b>  ·  {filter_rarity}</blockquote>\\n"
 
         harem_message += "<blockquote>"
         # Get characters for the current page
@@ -146,18 +146,18 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         # Add character details to the message
         for anime, chars in current_grouped_characters.items():
             total_anime_chars = await collection.count_documents({"anime": anime})
-            harem_message += f'\n⛩️ <b>{anime}</b> ({len(chars)}/{total_anime_chars})\n'
+            harem_message += f'\\n✧ <b>{anime}</b>  <code>{len(chars)}/{total_anime_chars}</code>\\n'
             for character in chars:
                 count = character_counts[character['id']]
                 rarity_emoji = rarity_map2.get(character.get('rarity'), '')
-                harem_message += f'  ◈⌠{rarity_emoji}⌡ <code>{character["id"]}</code> {character["name"]} <b>(x{count})</b>\n'
+                harem_message += f'  ├ {rarity_emoji} <code>#{character["id"]}</code> {character["name"]} <b>×{count}</b>\\n'
         harem_message += "</blockquote>"
 
         # Add inline buttons for collection and video-only collection with counts
         keyboard = [
             [
-                InlineKeyboardButton(f"Collection ({total_characters})", switch_inline_query_current_chat=f"collection.{user_id}"),
-                InlineKeyboardButton(f"💌 AMV ({amv_characters})", switch_inline_query_current_chat=f"collection.{user_id}.AMV")
+                InlineKeyboardButton(f"▤  BROWSE VAULT ({total_characters})", switch_inline_query_current_chat=f"collection.{user_id}"),
+                InlineKeyboardButton(f"▶  AMV ARCHIVE ({amv_characters})", switch_inline_query_current_chat=f"collection.{user_id}.AMV")
             ]
         ]
 
