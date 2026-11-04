@@ -8,6 +8,7 @@ import os
 import importlib.util
 import random
 import time
+import asyncio
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from TEAMZYRO import *
@@ -94,10 +95,14 @@ async def start_private_command(client, message):
     caption, buttons = await generate_start_message(client, message)
     media = random.choice(START_MEDIA)
 
-    await app.send_message(
-        chat_id=BOT_LOGGING,
-        text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
-    )
+    try:
+        await app.send_message(
+            chat_id=BOT_LOGGING,
+            text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
+        )
+    
+    except Exception as exc:
+        LOGGER("TEAMZYRO").warning("Could not send /start log message: %s", exc)
 
     await send_media_message(message, media, caption, buttons)
 
@@ -119,7 +124,7 @@ def find_help_modules():
 # 🔹 Help Button Click Handler
 @app.on_callback_query(filters.regex("^open_help$"))
 async def show_help_menu(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1)
     buttons = find_help_modules()
     buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
 
@@ -145,7 +150,7 @@ async def show_help_menu(client, query: CallbackQuery):
 # 🔹 Individual Module Help Handler
 @app.on_callback_query(filters.regex(r"^help_(.+)"))
 async def show_help(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1)
     module_name = query.data.split("_", 1)[1]
     try:
         module_data = HELP_DATA.get(module_name, {})
@@ -172,7 +177,7 @@ async def show_help(client, query: CallbackQuery):
 # 🔹 Back to Home
 @app.on_callback_query(filters.regex("^back_to_home$"))
 async def back_to_home(client, query: CallbackQuery):
-    time.sleep(1)
+    await asyncio.sleep(1)
     caption, buttons = await generate_start_message(client, query.message)
     try:
         await query.message.edit_caption(
