@@ -1,134 +1,70 @@
-<h1 align="center"><b>🌸 Waifu & Husbando Catcher Bot 🌸</b></h1> 
+<h1 align="center">✦ ANIVERSE CATCHER BOT ✦</h1>
+
+<p align="center"><b>Catch · Collect · Trade · Play</b></p>
+<p align="center">A Telegram-native anime character collection game with interactive group gameplay.</p>
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" alt="Divider">
-</p>
-
-<p align="center">
-  <p>Telegram-native anime character catcher bot.</p>
-</p>
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" alt="Divider">
-</p>
-
-<p align="center">
-  <b>A feature-rich Telegram Bot for catching, guessing, and trading anime characters, with interactive games (Blackjack, Mines, Chess, Tic-Tac-Toe) and web dashboard support.</b>
-</p>
-
-<p align="center">
-  <a href="https://dashboard.heroku.com/new?template=https://github.com/MrZyro/ZyroWaifu">
-    <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" height="40">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://t.me/MrZyro_dev">
-    <img src="https://img.shields.io/badge/Developer-Telegram-blue?style=for-the-badge&logo=telegram" alt="Developer Telegram">
-  </a>
-  &nbsp;
-  <a href="https://github.com/MrZyro">
-    <img src="https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github" alt="GitHub Profile">
-  </a>
+  <a href="https://github.com/gagancodeX/AniverseCatcherBot">GitHub Repository</a>
+  · Creator: <b>Adam</b>
 </p>
 
 ---
 
-## 🛠️ Features
+## ✦ Features
 
-* **Character Spawning**: Random anime characters spawn in group chats based on message activity.
-* **Catching / Guessing**: Collect characters by guessing their names.
-* **Casino Games**: Blackjack, Minesweeper, Coinflip, Slots, Higher-or-Lower, and Wheel of Fortune.
-* **Multiplayer Games**: Real-time Chess (via Mini-App) and Tic-Tac-Toe betting lobbies.
-* **Economy System**: Balances and payments.
-* **Wanted Poster**: Custom One Piece style bounty poster generator.
+- Anime character spawning, guessing and collection management.
+- Character search, favourites, rarity filters and leaderboards.
+- Character gifts, trades, transfers and redeem codes.
+- Economy features, rewards and interactive mini-games.
+- Telegram-based character media storage.
+- MongoDB-backed user and character data.
 
----
+## ✦ Setup
 
-## 🚀 Hosting Guide
+Use Python 3.11 or later.
 
-### Option 1: VPS Deployment (Virtual Private Server)
-
-#### 1. System Prerequisites
-Ensure your VPS has Python, Node.js, and Git installed.
 ```bash
-# Update package lists
-sudo apt update && sudo apt upgrade -y
-
-# Install Git, Python3, and pip
-sudo apt install -y git python3 python3-pip
-
-# Install Node.js (v18.x recommended)
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
+git clone https://github.com/gagancodeX/AniverseCatcherBot.git
+cd AniverseCatcherBot
+python -m venv .venv
 ```
 
-#### 2. Clone the Repository
+Activate the virtual environment, then install dependencies:
+
 ```bash
-git clone https://github.com/MrZyro/WaifuBot.git
-cd WaifuBot
+pip install -r requirements.txt
 ```
 
-#### 3. Install Dependencies
-```bash
-# Install Python packages
-pip3 install -r requirements.txt
+Create your environment file:
 
-# Install Node.js packages
-npm install
-```
-
-#### 4. Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your details:
 ```bash
 cp .env.example .env
-nano .env
 ```
-Fill in the `API_ID`, `API_HASH`, `TOKEN`, `MONGO_URL`, and other settings.
 
-#### 5. Daemonizing (Running in background)
-To keep the bot running 24/7, we recommend using **PM2** (Process Manager 2):
+Fill in the required values in `.env`:
+
+- `API_ID` and `API_HASH` — Telegram API credentials.
+- `TOKEN` — Telegram bot token.
+- `MONGO_URL` — MongoDB connection URI.
+- `BOT_LOGGING` and `DATABASE_ID` — log and character storage chat IDs/usernames.
+- `FORCE_JOIN`, `SUPPORT_CHAT`, `UPDATE_CHAT` and `OWNER_ID` — bot configuration.
+
+`BACKUP_MONGO_URL`, `MUSJ_JOIN` and start media settings are optional. **A Pyrogram SESSION_STRING is not required.**
+
+## ✦ Run
+
 ```bash
-# Install PM2 globally
-sudo npm install -p pm2 -g
-
-# Start the Python bot
-pm2 start "python3 -m TEAMZYRO" --name "waifu-python"
-
-# Start the Node.js bot (for WebApps/Inline)
-pm2 start bot.js --name "waifu-node"
-
-# Save process list to persist on reboot
-pm2 save
-pm2 startup
+python -m TEAMZYRO
 ```
 
----
+The `TEAMZYRO` package name is retained as the project's internal Python entry point for compatibility with existing imports. The bot's public identity and creator credit are Aniverse / Adam.
 
-### Option 2: Docker Deployment
+## ✦ Deployment
 
-If you prefer containerized deployment:
-```bash
-# Build the Docker image
-docker build -t waifubot .
+The repository includes a `Procfile` and `Dockerfile` for supported hosting workflows. Configure the environment variables on your hosting provider before starting the service.
 
-# Run the container
-docker run -d --env-file .env --name waifubot-container waifubot
-```
+## ✦ Project
 
----
-
-### Option 3: Heroku Deployment
-
-Simply click the deployment button below, fill out the environment variables in the Heroku dashboard, and click deploy:
-
-<p align="center">
-  <a href="https://dashboard.heroku.com/new?template=https://github.com/MrZyro/ZyroWaifu">
-    <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku" height="45">
-  </a>
-</p>
-
----
-
-## 📄 License
-This repository is licensed under the [MIT License](file:///h:/myprojet/NEWONE/WaifuBot/LICENSE).
+- Repository: https://github.com/gagancodeX/AniverseCatcherBot
+- License: MIT
+- Creator credit: Adam
