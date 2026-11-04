@@ -18,7 +18,7 @@ from TEAMZYRO import application  # Assuming 'application' is the main bot objec
 from TEAMZYRO.unit.zyro_inline import *
 
 
-all_characters_cache = TTLCache(maxsize=10000, ttl=36000)  # Cache for all characters
+all_characters_cache = TTLCache(maxsize=10000, ttl=300)  # Cache for all characters
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)  # Cache for user collections
 
 
