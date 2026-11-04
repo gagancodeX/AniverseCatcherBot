@@ -137,8 +137,16 @@ async def generate_group_start_message(client):
 # 🔹 Send Media (Helper)
 async def send_media_message(message, media, caption, buttons):
     """Send the start media; an invalid optional button must not break /start."""
-    media_type = media.lower()
     reply_markup = InlineKeyboardMarkup(buttons) if buttons else None
+    if not media:
+        await message.reply_text(
+            caption,
+            parse_mode=enums.ParseMode.HTML,
+            reply_markup=reply_markup
+        )
+        return
+
+    media_type = media.lower()
 
     async def send(markup):
         kwargs = {"caption": caption, "parse_mode": enums.ParseMode.HTML}
@@ -179,7 +187,7 @@ async def start_private_command(client, message):
         await user_collection.insert_one(user_data)
 
     caption, buttons = await generate_start_message(client, message)
-    media = random.choice(START_MEDIA)
+    media = random.choice(START_MEDIA) if START_MEDIA else None
 
     try:
         await app.send_message(
