@@ -23,7 +23,7 @@ async def rank(client, message):
         user_id = user.get('id', 'Unknown')
         first_name = html.escape(user.get('first_name', 'Unknown'))[:15] + '...'
         character_count = len(user.get('characters', []))
-        leaderboard_message += f'{i}. <a href="tg://user?id={user_id}"><b>{first_name}</b></a> ➾ <b>{character_count}</b>\n'
+        leaderboard_message += f'{i:02d} · <a href="tg://user?id={user_id}"><b>{first_name}</b></a>  ✧  <b>{character_count}</b>\n'
 
     buttons = [
         [
@@ -71,7 +71,7 @@ async def top_callback(client, callback_query):
     leaderboard_data.sort(key=lambda x: len(x.get('characters', [])), reverse=True)
     leaderboard_data = leaderboard_data[:10]
 
-    caption = "<b>TOP 10 USERS WITH MOST CHARACTERS</b>\n\n"
+    caption = "<b>ANIVERSE · COLLECTOR RANKINGS</b>\n\n"
     for i, user in enumerate(leaderboard_data, start=1):
         user_id = user.get('id', 'Unknown')
         first_name = html.escape(user.get('first_name', 'Unknown'))[:15] + '...'
@@ -94,7 +94,7 @@ async def top_group_callback(client, callback_query):
     for i, group in enumerate(leaderboard_data, start=1):
         group_name = html.escape(group.get('group_name', 'Unknown'))[:15] + '...'
         count = group['count']
-        caption += f'{i}. <b>{group_name}</b> ➾ <b>{count}</b>\n'
+        caption += f'{i}. <b>{group_name}</b>  ✧  <b>{count}</b>\n'
 
     await update_caption(callback_query, caption, "top_group")
 
