@@ -14,7 +14,7 @@ async def fav_command(client, message):
     user_id = message.from_user.id
 
     if len(message.command) < 2:
-        await message.reply_text("✦ 𝗙𝗔𝗩𝗢𝗨𝗥𝗜𝗧𝗘 𝗦𝗘𝗧𝗨𝗣 ✦\\n\\nProvide a character ID: `/fav 01`")
+        await message.reply_text("✦ 𝗙𝗔𝗩𝗢𝗨𝗥𝗜𝗧𝗘 𝗦𝗘𝗧𝗨𝗣 ✦\n\nProvide a character ID: `/fav 01`")
         return
 
     character_id = message.command[1]
@@ -43,19 +43,19 @@ async def fav_command(client, message):
 
     if media_file_id:
         if media_type == "video":
-            await message.reply_video(media_file_id, caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+            await message.reply_video(media_file_id, caption=f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗙𝗔𝗩𝗢𝗨𝗥𝗜𝗧𝗘\n\n{character['name']}\n\nSet this character as your featured favourite?", reply_markup=keyboard)
         elif media_type == "document":
-            await message.reply_document(media_file_id, caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+            await message.reply_document(media_file_id, caption=f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
         elif media_type == "animation":
-            await message.reply_animation(media_file_id, caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+            await message.reply_animation(media_file_id, caption=f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
         else:
-            await message.reply_photo(media_file_id, caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+            await message.reply_photo(media_file_id, caption=f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
     elif character.get("vid_url"):
-        await message.reply_video(character["vid_url"], caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+        await message.reply_video(character["vid_url"], caption=f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
     elif character.get("img_url"):
-        await message.reply_photo(character["img_url"], caption=f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+        await message.reply_photo(character["img_url"], caption=f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
     else:
-        await message.reply_text(f"✦ FEATURED CHARACTER\\n\\n{character['name']}\\n\\nSet this character as your favourite?", reply_markup=keyboard)
+        await message.reply_text(f"✦ FEATURED CHARACTER\n\n{character['name']}\n\nSet this character as your favourite?", reply_markup=keyboard)
 
 
 # Handle button clicks
