@@ -271,4 +271,4 @@ async def claim_character(client, callback_query):
         },
     )
 
-    await callback_query.answer(f"🎉 You claimed {char['name']}!", True)
+    await callback_query.answer(f"✦ {char['name']} added to your Character Vault!", True)
