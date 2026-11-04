@@ -12,9 +12,13 @@ from TEAMZYRO import (
 
 WRONG_FORMAT_TEXT = """✦ ANIVERSE · CHARACTER UPLOAD ✦
 
-Reply to a character image/video, then use:\n/upload character-name anime-name rarity-number\n\nExample: /upload shinobu-kocho Demon-slayer 3
+Reply to a character image/video, then use:
+/upload character-name anime-name rarity-number
 
-Choose a rarity number from the map below. Use hyphens between words in names.
+Example:
+/upload shinobu-kocho Demon-slayer 3
+
+Use hyphens between words in names. Choose the rarity number from the map below.
 
 rarity_map = {
     1: "⚪️ Common",
@@ -83,7 +87,7 @@ upload_lock = asyncio.Lock()
 @require_power("add")
 async def ul(client, message):
     available_id = await find()
-    await message.reply_text(f"✦ 𝗡𝗘𝗫𝗧 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗜𝗗 ✦\\n\\n🆔 {available_id} is ready for your next upload.")
+    await message.reply_text(f"✦ 𝗡𝗘𝗫𝗧 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗜𝗗 ✦\n\n🆔 {available_id} is ready for your next upload.")
 
 
 @ZYRO.on_message(filters.command("server"))
