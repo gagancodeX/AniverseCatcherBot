@@ -39,7 +39,7 @@ async def valentine(_, message: t.Message):
                 [InlineKeyboardButton("Join Here", url=FORCE_JOIN_LINK)]
             ])
             return await message.reply_text(
-                "🔔 ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴄʟᴀɪᴍ ʏᴏᴜʀ ᴅᴀɪʟʏ ᴄʜᴀʀᴀᴄᴛᴇʀ",
+                "✦ ANIVERSE · EVENT GATE ✦\nJoin the channel to unlock the event character.",
                 reply_markup=join_button
             )
 
@@ -50,7 +50,7 @@ async def valentine(_, message: t.Message):
 
         # Check if today's date is between Feb 7 and Feb 14
         if not (start_date <= today <= end_date):
-            return await message.reply_text("❌ *You can only claim this between 7th and 14th February!*")
+            return await message.reply_text("✦ ANIVERSE · VALENTINE EVENT ✦\n❌ Claims are available from 7–14 February only.")
 
         # Fetch user data from database
         user_data = await user_collection.find_one({'id': user_id})
@@ -67,12 +67,12 @@ async def valentine(_, message: t.Message):
         if last_claimed_date:
             last_claimed_date = last_claimed_date.replace(tzinfo=None)
             if last_claimed_date.year == today.year:
-                return await message.reply_text("❌ *You have already claimed your Valentine character this year!*")
+                return await message.reply_text("✦ ANIVERSE · VALENTINE EVENT ✦\n💝 Your yearly Valentine character has already been claimed.")
 
         # Fetch a unique Valentine character
         valentine_characters = await get_unique_characters(user_id, target_rarities=['💝 Valentine'])
         if not valentine_characters:
-            return await message.reply_text("❌ *No Valentine characters found!*")
+            return await message.reply_text("✦ ANIVERSE · VALENTINE EVENT ✦\nNo unclaimed Valentine characters are available.")
 
         # Update user record
         await user_collection.update_one(
@@ -91,7 +91,7 @@ async def valentine(_, message: t.Message):
                 f"💖 **Rarity**: `{character['rarity']}`  \n"
                 f"📺 **Anime**: `{character['anime']}`  \n"
                 f"🆔 **ID**: `{character['id']}`  \n\n"
-                f"💕 **Come back next Valentine's season for another special character!** 💕"
+                f"💝 **A special addition to your character vault.** 💝"
             )
             media_file_id = character.get("media_file_id")
             media_type = character.get("media_type", "photo")
@@ -114,4 +114,4 @@ async def valentine(_, message: t.Message):
 
     except Exception as e:
         print(f"Error in valentine command: {e}")
-        await message.reply_text("❌ *An unexpected error occurred.*")
+        await message.reply_text("✦ ANIVERSE · SYSTEM NOTICE ✦\nThe event could not be completed right now.")
