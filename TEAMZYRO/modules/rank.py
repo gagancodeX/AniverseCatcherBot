@@ -57,8 +57,8 @@ async def update_caption(callback_query, caption, active_button):
         ],
     ]
 
-    await callback_query.edit_message_caption(
-        caption=caption,
+    await callback_query.edit_message_text(
+        text=caption,
         parse_mode=enums.ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
