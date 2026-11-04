@@ -4,14 +4,12 @@
 # GitHub: https://github.com/MrZyro
 # ==========================================
 
-import os
-import random
 import html
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from TEAMZYRO import (app, PHOTO_URL, OWNER_ID,
+from TEAMZYRO import (app, OWNER_ID,
                       user_collection, top_global_groups_collection, 
                       group_user_totals_collection)
 
@@ -36,9 +34,7 @@ async def global_leaderboard(client: Client, message: Message):
         count = group['count']
         leaderboard_message += f'{i}. <b>{group_name}</b> ➾ <b>{count}</b>\n'
 
-    photo_url = random.choice(PHOTO_URL)
-
-    await message.reply_photo(photo=photo_url, caption=leaderboard_message, parse_mode='html')
+    await message.reply_text(leaderboard_message, parse_mode='html')
 
 # Group Top Users Command
 @app.on_message(filters.command("ctop"))
@@ -64,9 +60,7 @@ async def ctop(client: Client, message: Message):
         character_count = user['character_count']
         leaderboard_message += f'{i}. <a href="https://t.me/{username}"><b>{first_name}</b></a> ➾ <b>{character_count}</b>\n'
 
-    photo_url = random.choice(PHOTO_URL)
-
-    await message.reply_photo(photo=photo_url, caption=leaderboard_message, parse_mode='html')
+    await message.reply_text(leaderboard_message, parse_mode='html')
 
 # Stats Command
 @app.on_message(filters.command("st"))
