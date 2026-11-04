@@ -6,7 +6,7 @@
 
 from TEAMZYRO import *
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, CallbackQuery, Message
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo, CallbackQuery, Message
 from pyrogram.errors import ChatAdminRequired, UserNotParticipant, ChatWriteForbidden
 from itertools import groupby
 import math
@@ -206,7 +206,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
             if image_character:
                 if 'vid_url' in image_character:
                     await callback_query.message.edit_media(
-                        media=InputMediaPhoto(image_character['vid_url'], caption=harem_message),
+                        media=InputMediaVideo(image_character['vid_url'], caption=harem_message),
                         reply_markup=reply_markup
                     )
                 elif 'img_url' in image_character:
