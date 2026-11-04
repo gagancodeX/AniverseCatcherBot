@@ -46,7 +46,7 @@ command_filter = f.create(lambda _, __, message: message.text and message.text.s
 application = Application.builder().token(TOKEN).build()
 os.makedirs(PYROGRAM_WORKDIR, exist_ok=True)
 ZYRO = Client(
-    "Shivu",
+    "ShivuBot",
     api_id=api_id,
     api_hash=api_hash,
     bot_token=TOKEN,
