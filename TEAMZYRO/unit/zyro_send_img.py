@@ -50,6 +50,7 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     all_characters = list(await collection.find({
         "rarity": {"$in": [k for k, v in RARITY_WEIGHTS.items() if v[1]]},
         "$or": [
+            {"media_file_id": {"$exists": True, "$ne": ""}},
             {"img_url": {"$exists": True, "$ne": ""}},
             {"vid_url": {"$exists": True, "$ne": ""}},
         ],
