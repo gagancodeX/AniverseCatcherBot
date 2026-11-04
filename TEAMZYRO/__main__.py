@@ -10,8 +10,6 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from pyrogram.errors import FloodWait
-
 import TEAMZYRO
 from TEAMZYRO import TOKEN, ZYRO, application, LOGGER, FORCE_JOIN, BOT_LOGGING
 from TEAMZYRO.modules import ALL_MODULES
@@ -57,27 +55,9 @@ def load_modules() -> None:
 
 
 def start_pyrogram_client() -> None:
-    """Respect Pyrogram FloodWait timers without exiting the Render process."""
-    logger = LOGGER("ANIVERSE")
-
-    while True:
-        try:
-            ZYRO.start()
-            break
-        except FloodWait as exc:
-            wait_seconds = max(1, int(exc.value)) + 3
-            logger.warning(
-                "Telegram rate-limited Pyrogram authorization. "
-                "Waiting %s seconds before retrying. Keep this Render instance running.",
-                wait_seconds,
-            )
-            try:
-                ZYRO.disconnect()
-            except Exception:
-                pass
-            time.sleep(wait_seconds)
-
-    logger.info("Pyrogram client connected successfully.")
+    """Start Pyrogram once without an application-level FloodWait sleep/retry loop."""
+    ZYRO.start()
+    LOGGER("ANIVERSE").info("Pyrogram client connected successfully.")
 
 
 def main() -> None:
