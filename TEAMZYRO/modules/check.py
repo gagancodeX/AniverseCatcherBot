@@ -15,21 +15,21 @@ import asyncio
 async def check_character(client, message):
     args = message.command
     if len(args) < 2:
-        await message.reply_text("Please provide a Character ID: `/check <character_id>`")
+        await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗟𝗢𝗢𝗞𝗨𝗣 ✦\\n\\nSend a character ID like this:\\n<code>/check 01</code>")
         return
 
     character_id = args[1]
     character = await character_collection.find_one({'id': character_id})
 
     if not character:
-        await message.reply_text("Character not found.")
+        await message.reply_text("🔎 𝗡𝗢 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗙𝗢𝗨𝗡𝗗\\n\\nCheck the ID and try again.")
         return
 
     # Power nikaalo using rarity
 
     # Create the 'Who Have It' button
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Who Have It", callback_data=f"whohaveit_{character_id}")]
+        [InlineKeyboardButton("♛ WHO OWNS THIS?", callback_data=f"whohaveit_{character_id}")]
     ])
 
     # Send character details
@@ -69,7 +69,7 @@ async def who_have_it(client, callback_query):
     users = await user_collection.find({'characters.id': character_id}).to_list(length=10)
 
     if not users:
-        await callback_query.answer("No one owns this character yet!", show_alert=True)
+        await callback_query.answer("No collectors own this character yet.", show_alert=True)
         return
 
     # Generate top 10 owners list with count
