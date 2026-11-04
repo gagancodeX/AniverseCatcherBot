@@ -187,7 +187,7 @@ async def start_private_command(client, message):
         await user_collection.insert_one(user_data)
 
     caption, buttons = await generate_start_message(client, message)
-    media = random.choice(START_MEDIA) if START_MEDIA else None if START_MEDIA else None
+    media = random.choice(START_MEDIA) if START_MEDIA else None
 
     try:
         await app.send_message(
