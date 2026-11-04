@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://files.catbox.moe/gknnju.jpg" alt="Waifu Bot Poster" width="600" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+  <p>Telegram-native anime character catcher bot.</p>
 </p>
 
 <p align="center">
