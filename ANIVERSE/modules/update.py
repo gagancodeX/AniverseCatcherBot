@@ -3,43 +3,137 @@
 # Project: AniverseCatcherBot
 # ==========================================
 
-from pyrogram import Client, filters
+import asyncio
+from pyrogram import Client, filters, enums
 from pyrogram.types import Message
-from pymongo import ReturnDocument
 from ANIVERSE import collection, app, user_collection, require_power, DATABASE_ID
-from ANIVERSE.unit.aniverse_rarity import rarity_map  # Importing rarity_map
+from ANIVERSE.unit.aniverse_rarity import rarity_map
 
+
+def build_database_caption(character):
+    """Build a plain-text archive caption from the latest character record."""
+    caption = (
+        "✦ ANIVERSE · CHARACTER ARCHIVE ✦\n\n"
+        f"✧ Character · {character.get('name', 'Unknown')}\n"
+        f"🎬 Anime · {character.get('anime', 'Unknown')}\n"
+        f"💎 Rarity · {character.get('rarity', 'Unknown')}\n"
+        f"🆔 ID · {character.get('id', 'Unknown')}"
+    )
+    # Telegram media captions are limited to 1024 characters.
+    return caption[:1024]
+
+
+async def sync_database_channel_post(client, character):
+    """
+    Keep the archive entry in DATABASE_ID in sync with MongoDB.
+    Existing Telegram posts are edited; legacy records without a message
+    reference receive a new archive post.
+    """
+    caption = build_database_caption(character)
+    archive_chat_id = character.get("media_chat_id") or DATABASE_ID
+    archive_message_id = character.get("media_message_id")
+
+    if archive_message_id:
+        try:
+            await client.edit_message_caption(
+                chat_id=archive_chat_id,
+                message_id=archive_message_id,
+                caption=caption,
+                parse_mode=enums.ParseMode.DISABLED,
+            )
+            return "updated existing channel post"
+        except Exception as exc:
+            return f"could not edit saved channel post: {str(exc)[:120]}"
+
+    try:
+        media_file_id = character.get("media_file_id")
+        media_type = character.get("media_type", "photo")
+
+        if media_file_id:
+            senders = {
+                "photo": ("send_photo", "photo"),
+                "video": ("send_video", "video"),
+                "document": ("send_document", "document"),
+                "animation": ("send_animation", "animation"),
+            }
+            method_name, argument_name = senders.get(
+                media_type, ("send_photo", "photo")
+            )
+            sender = getattr(client, method_name)
+            saved_message = await sender(
+                chat_id=DATABASE_ID,
+                **{argument_name: media_file_id},
+                caption=caption,
+                parse_mode=enums.ParseMode.DISABLED,
+            )
+        elif character.get("vid_url"):
+            saved_message = await client.send_video(
+                chat_id=DATABASE_ID,
+                video=character["vid_url"],
+                caption=caption,
+                parse_mode=enums.ParseMode.DISABLED,
+            )
+        elif character.get("img_url"):
+            saved_message = await client.send_photo(
+                chat_id=DATABASE_ID,
+                photo=character["img_url"],
+                caption=caption,
+                parse_mode=enums.ParseMode.DISABLED,
+            )
+        else:
+            saved_message = await client.send_message(
+                chat_id=DATABASE_ID,
+                text=caption,
+                parse_mode=enums.ParseMode.DISABLED,
+            )
+
+        media_fields = {
+            "media_chat_id": DATABASE_ID,
+            "media_message_id": saved_message.id,
+        }
+        for kind in ("photo", "video", "document", "animation"):
+            media = getattr(saved_message, kind, None)
+            if media:
+                media_fields["media_type"] = kind
+                media_fields["media_file_id"] = media.file_id
+                break
+
+        await collection.update_one(
+            {"id": character["id"]},
+            {"$set": media_fields},
+        )
+        return "new channel archive post created"
+    except Exception as exc:
+        return f"channel sync failed: {str(exc)[:120]}"
+
+
+# Delete a character and remove it from users' collections.
 @app.on_message(filters.command("gdelete"))
 @require_power("del")
 async def delete_handler(client, message):
     try:
-        # Extract arguments from the command
         args = message.text.split()
         if len(args) != 2:
-            await message.reply_text("Incorrect format... Please use: /gdelete ID")
-            return
+            return await message.reply_text("Incorrect format. Use: /gdelete ID")
 
         character_id = args[1]
-
-        # Find and delete the character from the main collection
-        character = await collection.find_one_and_delete({'id': character_id})
+        character = await collection.find_one_and_delete({"id": character_id})
         if character:
-            # Remove the character from all users' collections
             update_result = await user_collection.update_many(
-                {'characters.id': character_id},
-                {'$pull': {'characters': {'id': character_id}}}
+                {"characters.id": character_id},
+                {"$pull": {"characters": {"id": character_id}}},
             )
-
             await message.reply_text(
-                f"Character with ID {character_id} deleted successfully from the database.\n"
+                f"Character {character_id} deleted successfully.\n"
                 f"Removed from {update_result.modified_count} user collections."
             )
         else:
-            await message.reply_text(f"Character with ID {character_id} not found in the database.")
-    except Exception as e:
-        await message.reply_text(f"Error: {str(e)}")
+            await message.reply_text(
+                f"Character with ID {character_id} was not found."
+            )
+    except Exception as exc:
+        await message.reply_text(f"Error: {str(exc)}")
 
-import asyncio
 
 @app.on_message(filters.command("gupdate"))
 @require_power("up")
@@ -47,71 +141,89 @@ async def update(client: Client, message: Message):
     try:
         args = message.text.split()
         if len(args) != 4:
-            await message.reply_text('Incorrect format. Please use: /gupdate id field new_value')
-            return
+            return await message.reply_text(
+                "Incorrect format. Use: /gupdate id field new_value"
+            )
 
         character_id = args[1]
         field_to_update = args[2]
         new_value = args[3]
 
-        # Validate field
-        valid_fields = ['name', 'anime', 'rarity']
+        valid_fields = ["name", "anime", "rarity"]
         if field_to_update not in valid_fields:
-            await message.reply_text(f'Invalid field. Please use one of the following: {", ".join(valid_fields)}')
-            return
+            return await message.reply_text(
+                f"Invalid field. Choose: {', '.join(valid_fields)}"
+            )
 
-        # Process the new value
-        if field_to_update in ['name', 'anime']:
-            new_value = new_value.replace('-', ' ').title()
-        elif field_to_update == 'rarity':
+        if field_to_update in ["name", "anime"]:
+            new_value = new_value.replace("-", " ").title()
+        else:
             try:
-                new_value = rarity_map[int(new_value)]  # Use rarity_map
+                new_value = rarity_map[int(new_value)]
             except (KeyError, ValueError):
-                await message.reply_text('Invalid rarity. Please use a valid number between 1-12 for rarity.')
-                return
+                return await message.reply_text(
+                    "Invalid rarity. Use a valid rarity number from the rarity map."
+                )
 
-        # Update the character in the main collection
-        result = await collection.update_one({'id': character_id}, {'$set': {field_to_update: new_value}})
-        if result.modified_count == 0:
-            await message.reply_text('Character not found or no changes made.')
-            return
+        result = await collection.update_one(
+            {"id": character_id},
+            {"$set": {field_to_update: new_value}},
+        )
+        if result.matched_count == 0:
+            return await message.reply_text(
+                f"Character ID {character_id} was not found."
+            )
 
-        # Fetch users who have the character
-        users_cursor = user_collection.find({'characters.id': character_id})
-        total_users = await user_collection.count_documents({'characters.id': character_id})
+        updated_character = await collection.find_one({"id": character_id})
+        channel_status = await sync_database_channel_post(
+            client, updated_character
+        )
+
+        users_cursor = user_collection.find(
+            {"characters.id": character_id}
+        )
+        total_users = await user_collection.count_documents(
+            {"characters.id": character_id}
+        )
 
         if total_users == 0:
-            await message.reply_text('sᴜᴄᴄᴇssғᴜʟʟʏ ᴜᴘᴅᴀᴛᴇ ✅')
-            return
+            return await message.reply_text(
+                "✦ CHARACTER UPDATE COMPLETE ✦\n"
+                f"Character ID: {character_id}\n"
+                "User collections: no copies to update\n"
+                f"Database channel: {channel_status}"
+            )
 
-        # Send initial message for progress
-        progress_message = await message.reply_text('Updating: 0% completed...')
+        progress_message = await message.reply_text(
+            "Updating user collections: 0% completed..."
+        )
         updated_count = 0
-        progress_threshold = 10  # Show progress every 10%
-        next_progress_update = progress_threshold
+        next_progress_update = 10
 
         async for user in users_cursor:
             await user_collection.update_one(
-                {'_id': user['_id'], 'characters.id': character_id},
-                {'$set': {f'characters.$.{field_to_update}': new_value}}
+                {"_id": user["_id"], "characters.id": character_id},
+                {"$set": {f"characters.$.{field_to_update}": new_value}},
             )
             updated_count += 1
 
-            # Show progress at every 10% interval
             progress = (updated_count / total_users) * 100
             if progress >= next_progress_update:
-                await progress_message.edit_text(f'Updating: {int(progress)}% completed...')
-                next_progress_update += progress_threshold
-                await asyncio.sleep(1)  # Add a 1-second delay
+                await progress_message.edit_text(
+                    f"Updating user collections: {int(progress)}% completed..."
+                )
+                next_progress_update += 10
+                await asyncio.sleep(0.2)
 
-        # Final message with the total count
-        await progress_message.edit_text('Updating: 100% completed.')
-        await message.reply_text(f'sᴜᴄᴄᴇssғᴜʟʟʏ ᴜᴘᴅᴀᴛᴇ ✅ \nTotal users updated: {updated_count}/{total_users}')
+        await progress_message.edit_text(
+            "✦ CHARACTER UPDATE COMPLETE ✦\n"
+            f"Character ID: {character_id}\n"
+            f"User collections: {updated_count}/{total_users}\n"
+            f"Database channel: {channel_status}"
+        )
+    except Exception as exc:
+        await message.reply_text(f"Error: {str(exc)}")
 
-    except Exception as e:
-        await message.reply_text(f'Error: {str(e)}')
-
-import time
 
 @app.on_message(filters.command("maxupdate"))
 @require_power("up")
@@ -119,73 +231,91 @@ async def update_multiple(client: Client, message: Message):
     try:
         args = message.text.split()
         if len(args) < 4:
-            await message.reply_text('Incorrect format. Use: /maxupdate id1,id2,id3 field new_value')
-            return
+            return await message.reply_text(
+                "Incorrect format. Use: /maxupdate id1,id2,id3 field new_value"
+            )
 
-        # Parse multiple character IDs
-        character_ids = args[1].split(',')
+        character_ids = [item.strip() for item in args[1].split(",") if item.strip()]
+        if not character_ids:
+            return await message.reply_text("Please provide at least one character ID.")
+
         field_to_update = args[2]
-        new_value = ' '.join(args[3:])
+        new_value = " ".join(args[3:])
 
-        # Validate field
-        valid_fields = ['name', 'anime', 'rarity']
+        valid_fields = ["name", "anime", "rarity"]
         if field_to_update not in valid_fields:
-            await message.reply_text(f'Invalid field. Use one of: {", ".join(valid_fields)}')
-            return
+            return await message.reply_text(
+                f"Invalid field. Choose: {', '.join(valid_fields)}"
+            )
 
-        # Process the new value
-        if field_to_update in ['name', 'anime']:
-            new_value = new_value.replace('-', ' ').title()
-        elif field_to_update == 'rarity':
+        if field_to_update in ["name", "anime"]:
+            new_value = new_value.replace("-", " ").title()
+        else:
             try:
-                new_value = rarity_map[int(new_value)]  # Use rarity_map
+                new_value = rarity_map[int(new_value)]
             except (KeyError, ValueError):
-                await message.reply_text('Invalid rarity. Use a valid number between 1-12 for rarity.')
-                return
+                return await message.reply_text(
+                    "Invalid rarity. Use a valid rarity number from the rarity map."
+                )
 
-        # Track total updates
         total_characters = len(character_ids)
         updated_characters = 0
         total_users_updated = 0
+        channel_synced = 0
+        channel_failed = 0
 
-        # Initial progress message
-        progress_message = await message.reply_text('Updating: 0% completed...')
-        next_progress_update = 10  # Update progress every 10%
-
-        for i, character_id in enumerate(character_ids, start=1):
-            # Update the character in the main collection
-            result = await collection.update_one({'id': character_id}, {'$set': {field_to_update: new_value}})
-            if result.modified_count == 0:
-                continue
-
-            # Fetch users with the character
-            users_cursor = user_collection.find({'characters.id': character_id})
-            async for user in users_cursor:
-                await user_collection.update_one(
-                    {'_id': user['_id'], 'characters.id': character_id},
-                    {'$set': {f'characters.$.{field_to_update}': new_value}}
-                )
-                total_users_updated += 1
-
-            updated_characters += 1
-
-            # Update progress percentage
-            progress = (i / total_characters) * 100
-            if progress >= next_progress_update:
-                await progress_message.edit_text(f'Updating: {int(progress)}% completed...')
-                next_progress_update += 10
-                await asyncio.sleep(1)
-
-        # Final update after all characters
-        await progress_message.edit_text('Updating: 100% completed.')
-        await message.reply_text(
-            f'sᴜᴄᴄᴇssғᴜʟʟʏ ᴜᴘᴅᴀᴛᴇ ✅ \nTotal characters updated: {updated_characters}/{total_characters}. '
-            f'Total users updated: {total_users_updated}.'
+        progress_message = await message.reply_text(
+            "Updating characters: 0% completed..."
         )
+        next_progress_update = 10
 
-    except Exception as e:
-        await message.reply_text(f'Error: {str(e)}')
+        for index, character_id in enumerate(character_ids, start=1):
+            result = await collection.update_one(
+                {"id": character_id},
+                {"$set": {field_to_update: new_value}},
+            )
 
+            if result.matched_count:
+                updated_character = await collection.find_one(
+                    {"id": character_id}
+                )
+                channel_status = await sync_database_channel_post(
+                    client, updated_character
+                )
+                if channel_status.startswith("channel sync failed") or channel_status.startswith("could not edit"):
+                    channel_failed += 1
+                else:
+                    channel_synced += 1
+
+                users_cursor = user_collection.find(
+                    {"characters.id": character_id}
+                )
+                async for user in users_cursor:
+                    await user_collection.update_one(
+                        {"_id": user["_id"], "characters.id": character_id},
+                        {"$set": {f"characters.$.{field_to_update}": new_value}},
+                    )
+                    total_users_updated += 1
+
+                updated_characters += 1
+
+            progress = (index / total_characters) * 100
+            if progress >= next_progress_update:
+                await progress_message.edit_text(
+                    f"Updating characters: {int(progress)}% completed..."
+                )
+                next_progress_update += 10
+                await asyncio.sleep(0.2)
+
+        await progress_message.edit_text(
+            "✦ BULK UPDATE COMPLETE ✦\n"
+            f"Characters updated: {updated_characters}/{total_characters}\n"
+            f"User copies updated: {total_users_updated}\n"
+            f"Database channel synced: {channel_synced}\n"
+            f"Channel sync failed: {channel_failed}"
+        )
+    except Exception as exc:
+        await message.reply_text(f"Error: {str(exc)}")
 
 
 # Replace a character's media with a Telegram-hosted copy.
@@ -216,15 +346,14 @@ async def update_character_media(client: Client, message: Message):
             caption=f"Character media archive | ID: {character_id} | {character.get('name', '')}",
         )
 
-        if saved.photo:
-            media_type, file_id = "photo", saved.photo.file_id
-        elif saved.video:
-            media_type, file_id = "video", saved.video.file_id
-        elif saved.document:
-            media_type, file_id = "document", saved.document.file_id
-        elif saved.animation:
-            media_type, file_id = "animation", saved.animation.file_id
-        else:
+        media_type = None
+        file_id = None
+        for kind in ("photo", "video", "document", "animation"):
+            media = getattr(saved, kind, None)
+            if media:
+                media_type, file_id = kind, media.file_id
+                break
+        if not file_id:
             raise ValueError("Telegram did not return a supported media reference.")
 
         await collection.update_one(
@@ -248,6 +377,8 @@ async def update_character_media(client: Client, message: Message):
             array_filters=[{"character.id": character_id}],
         )
 
-        await status.edit_text(f"✅ Character {character_id} media updated and stored on Telegram.")
+        await status.edit_text(
+            f"✅ Character {character_id} media updated and stored on Telegram."
+        )
     except Exception as exc:
         await status.edit_text(f"❌ Media update failed: {exc}")
