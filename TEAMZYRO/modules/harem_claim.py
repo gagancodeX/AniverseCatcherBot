@@ -89,18 +89,33 @@ async def mclaim(_, message: t.Message):
             {'$push': {'characters': {'$each': unique_characters}}, '$set': {'last_daily_reward': datetime.utcnow()}}
         )
 
-        # Send the character's image and info
+        # Send character media from Telegram file_id, with legacy URL fallback.
         for character in unique_characters:
-            await message.reply_photo(
-                photo=character['img_url'],
-                caption=(
-                    f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕ𝕊 {mention}! 🎉\n"
-                    f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
-                    f"🌈 𝐑𝐚𝐫𝐢𝐭𝐲 : {character['rarity']}\n"
-                    f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
-                    f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
-                )
+            caption = (
+                f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕ𝕊 {mention}! 🎉\n"
+                f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
+                f"🌈 𝐑𝐚𝐫𝐢𝐭𝐲 : {character['rarity']}\n"
+                f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
+                f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
             )
+            media_file_id = character.get("media_file_id")
+            media_type = character.get("media_type", "photo")
+
+            if media_file_id:
+                if media_type == "video":
+                    await message.reply_video(media_file_id, caption=caption)
+                elif media_type == "document":
+                    await message.reply_document(media_file_id, caption=caption)
+                elif media_type == "animation":
+                    await message.reply_animation(media_file_id, caption=caption)
+                else:
+                    await message.reply_photo(media_file_id, caption=caption)
+            elif character.get("vid_url"):
+                await message.reply_video(character["vid_url"], caption=caption)
+            elif character.get("img_url"):
+                await message.reply_photo(character["img_url"], caption=caption)
+            else:
+                await message.reply_text(caption)
 
     except Exception as e:
         print(f"Error in mclaim command: {e}")
