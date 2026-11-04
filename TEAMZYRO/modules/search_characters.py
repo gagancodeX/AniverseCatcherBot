@@ -15,7 +15,7 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         if not query:
             args = message.command
             if len(args) < 2:
-                await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗦𝗘𝗔𝗥𝗖𝗛 ✦\\n\\nTry: `/sips Gojo`\\nSearch by character name to explore the vault.")
+                await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗦𝗘𝗔𝗥𝗖𝗛 ✦\n\nTry: `/sips Gojo`\nSearch by character name to explore the vault.")
                 return
             query = " ".join(args[1:]).strip()
 
@@ -26,20 +26,20 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         total_characters = await collection.count_documents({"name": {"$regex": query, "$options": "i"}})
 
         if total_characters == 0:
-            await message.reply_text(f"🔎 𝗡𝗢 𝗠𝗔𝗧𝗖𝗛𝗘𝗦 𝗙𝗢𝗨𝗡𝗗\\n\\nNo characters matched `{query}`. Try another name.")
+            await message.reply_text(f"🔎 𝗡𝗢 𝗠𝗔𝗧𝗖𝗛𝗘𝗦 𝗙𝗢𝗨𝗡𝗗\n\nNo characters matched `{query}`. Try another name.")
             return
 
         # Fetch the characters for the current page
         characters = await collection.find({"name": {"$regex": query, "$options": "i"}}).skip(skip).limit(per_page).to_list(length=per_page)
 
         # Create response message
-        response = f"**Total Characters Found:** {total_characters}\n\n"
+        response = f"✦ **ANIVERSE SEARCH ARCHIVE** ✦\n**{total_characters}** character(s) found\n\n"
         for index, character in enumerate(characters, start=1 + skip):
             rarity_emoji = rarity_map.get(character['rarity'], "❓")  # Default to ❓ if rarity is not found
             response += (
-                f"◈⌠{rarity_emoji}⌡ **{index}** {character['name']}\n"
-                f"Anime: {character['anime']}\n"
-                f"ID: {character['id']}\n\n"
+                f"{rarity_emoji} **{index}. {character['name']}**\n"
+                f"🎬 Anime · {character['anime']}\n"
+                f"🆔 ID · {character['id']}\n\n"
             )
 
         # Create pagination buttons
