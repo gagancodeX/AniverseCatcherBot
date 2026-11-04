@@ -6,13 +6,10 @@
 
 from pyrogram import Client, filters, enums  
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-import random
 import asyncio
 import html
 from TEAMZYRO import app as Client
 from TEAMZYRO import user_collection, top_global_groups_collection
-
-PHOTO_URL = ["https://files.catbox.moe/20xca5.jpg"]  
 
 @Client.on_message(filters.command("rank"))
 async def rank(client, message):
@@ -39,12 +36,14 @@ async def rank(client, message):
         ],
     ]
 
-    await message.reply_photo(
-        photo=random.choice(PHOTO_URL),
-        caption=leaderboard_message,
+    await message.reply_text(
+        leaderboard_message,
         parse_mode=enums.ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
+
+
+
 
 async def update_caption(callback_query, caption, active_button):
     buttons = [
