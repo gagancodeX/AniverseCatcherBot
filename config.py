@@ -62,12 +62,5 @@ MUSJ_JOIN = os.getenv("MUSJ_JOIN", "")
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 
 # Optional start media URLs. Leave them unset to use a text-only /start.
-START_MEDIA = [
-    value.strip()
-    for value in (os.getenv("START_MEDIA_1", ""), os.getenv("START_MEDIA_2", ""))
-    if value and value.strip()
-]
-
-# Optional legacy decorative media URLs (not used by character uploads).
-PHOTO_URL = [value.strip() for value in (os.getenv("PHOTO_URL_1", ""), os.getenv("PHOTO_URL_2", "")) if value and value.strip()]
-STATS_IMG = [value.strip() for value in (os.getenv("STATS_IMG", ""),) if value and value.strip()]
+# Start command uses text/buttons only; no external media host is required.
+START_MEDIA = []
