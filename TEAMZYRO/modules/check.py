@@ -41,10 +41,24 @@ async def check_character(client, message):
         f"💎 Rarity: {character['rarity']}\n"
     )
 
-    if 'vid_url' in character:
+    media_file_id = character.get('media_file_id')
+    media_type = character.get('media_type', 'photo')
+
+    if media_file_id:
+        if media_type == 'video':
+            await message.reply_video(media_file_id, caption=text, reply_markup=keyboard)
+        elif media_type == 'document':
+            await message.reply_document(media_file_id, caption=text, reply_markup=keyboard)
+        elif media_type == 'animation':
+            await message.reply_animation(media_file_id, caption=text, reply_markup=keyboard)
+        else:
+            await message.reply_photo(media_file_id, caption=text, reply_markup=keyboard)
+    elif 'vid_url' in character:
         await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard)
-    else:
+    elif 'img_url' in character:
         await message.reply_photo(character['img_url'], caption=text, reply_markup=keyboard)
+    else:
+        await message.reply_text(text, reply_markup=keyboard)
 
 
 @app.on_callback_query(filters.regex("^whohaveit_"))
