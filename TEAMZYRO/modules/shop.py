@@ -100,7 +100,7 @@ async def shop_menu(client, message):
         keyboard.append([InlineKeyboardButton(rarity, callback_data=f"xeno_{list(RARITY_PRICE.keys()).index(rarity)}")])
 
     await message.reply_text(
-        "🌟 **Choose a rarity to browse the Bazaar!**",
+        "🌟 **✦ ANIVERSE CHARACTER BAZAAR ✦\nChoose a rarity to explore the collection.**",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -118,7 +118,7 @@ async def show_rarity_list(client, callback_query):
 
     characters = await collection.find({"rarity": rarity}).to_list(None)
     if not characters:
-        return await callback_query.answer("No characters found!", show_alert=True)
+        return await callback_query.answer("No characters in this rarity yet. Try another tier.", show_alert=True)
 
     random.shuffle(characters)
 
@@ -143,20 +143,20 @@ async def show_character(client, msg, user_id):
     discounted_price = int(price * (100 - discount) / 100)
 
     caption = (
-        f"💎 <b>{char['name']}</b>\n"
-        f"🏯 <b>Anime:</b> {char['anime']}\n"
-        f"⭐ <b>Rarity:</b> {char['rarity']}\n"
-        f"💰 <b>Price:</b> {discounted_price} Star Coins ({discount}% off!)\n"
-        f"🆔 ID: <code>{char['id']}</code>"
+        f"✦ <b>ANIVERSE · CHARACTER BAZAAR</b> ✦\n\n💎 <b>{char['name']}</b>\n"
+        f"🎬 <b>Anime</b> · {char['anime']}\n"
+        f"💠 <b>Rarity</b> · {char['rarity']}\n"
+        f"🪙 <b>Price</b> · {discounted_price} Star Coins ({discount}% off!)\n"
+        f"🆔 <b>Character ID</b> · <code>{char['id']}</code>"
     )
 
     keyboard = [
         [
-            InlineKeyboardButton("⬅️ Prev", callback_data="prev_char"),
-            InlineKeyboardButton("🪄 Claim", callback_data=f"claim_{data['index']}"),
-            InlineKeyboardButton("➡️ Next", callback_data="next_char"),
+            InlineKeyboardButton("‹ PREVIOUS", callback_data="prev_char"),
+            InlineKeyboardButton("✦ BUY CHARACTER", callback_data=f"claim_{data['index']}"),
+            InlineKeyboardButton("NEXT ›", callback_data="next_char"),
         ],
-        [InlineKeyboardButton("🔄 Refresh (5000💫)", callback_data="refresh_chars")]
+        [InlineKeyboardButton("↻ REFRESH PICKS · 5000", callback_data="refresh_chars")]
     ]
 
     await msg.delete()
@@ -193,10 +193,10 @@ async def next_character(client, callback_query):
     state = user_shop_state.get(user_id)
 
     if not state:
-        return await callback_query.answer("Start from /shop again!", True)
+        return await callback_query.answer("Open the Character Bazaar again with /shop.", True)
 
     if state["index"] >= len(state["characters"]) - 1:
-        return await callback_query.answer("No more heroes!", True)
+        return await callback_query.answer("You have reached the end of these picks.", True)
 
     state["index"] += 1
     await show_character(client, callback_query.message, user_id)
@@ -209,10 +209,10 @@ async def prev_character(client, callback_query):
     state = user_shop_state.get(user_id)
 
     if not state:
-        return await callback_query.answer("Start from /shop again!", True)
+        return await callback_query.answer("Open the Character Bazaar again with /shop.", True)
 
     if state["index"] <= 0:
-        return await callback_query.answer("Already at first hero!", True)
+        return await callback_query.answer("You are already viewing the first pick.", True)
 
     state["index"] -= 1
     await show_character(client, callback_query.message, user_id)
@@ -229,20 +229,20 @@ async def claim_character(client, callback_query):
     state = user_shop_state.get(user_id)
 
     if not state:
-        return await callback_query.answer("Open shop again!", True)
+        return await callback_query.answer("Open the Character Bazaar again with /shop.", True)
 
     char = state["characters"][int(index_str)]
     user = await user_collection.find_one({"id": user_id})
 
     if not user:
-        return await callback_query.answer("Register first!", True)
+        return await callback_query.answer("Open /start first to create your collector profile.", True)
 
     price = RARITY_PRICE.get(char["rarity"], 1000)
     discount = await get_active_discount()
     discounted_price = int(price * (100 - discount) / 100)
 
     if user.get("balance", 0) < discounted_price:
-        return await callback_query.answer("Not enough Star Coins!", True)
+        return await callback_query.answer("Not enough Star Coins for this character.", True)
 
     owned_character = {
         "_id": ObjectId(),
