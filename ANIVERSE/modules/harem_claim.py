@@ -53,6 +53,10 @@ async def mclaim(_, message: t.Message):
     try:
         # Ensure the user is in the correct chat
         if str(message.chat.id) != str(chat):
+            if not FORCE_JOIN_LINK:
+                return await message.reply_text(
+                    "⚠️ The required join link is not configured. Please contact the bot administrator."
+                )
             join_button = InlineKeyboardMarkup([[InlineKeyboardButton("✦ JOIN TO CLAIM", url=FORCE_JOIN_LINK)]])
             return await message.reply_text(
                 "✦ 𝗗𝗔𝗜𝗟𝗬 𝗗𝗥𝗢𝗣 𝗟𝗢𝗖𝗞𝗘𝗗 ✦\n\nJoin our required channel, then return here to claim your daily character.",
