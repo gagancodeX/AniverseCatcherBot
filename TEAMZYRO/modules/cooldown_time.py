@@ -38,24 +38,24 @@ async def set_ctime(client, message):
         is_admin_user = await is_admin(client, chat_id, user_id)
 
     if not (is_owner or is_admin_user):
-        await message.reply("⚠️ Only group admins!")
+        await message.reply("✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗔𝗗𝗠𝗜𝗡 𝗢𝗡𝗟𝗬 ✦\\n<blockquote>⚠️ This setting is reserved for group admins.</blockquote>")
         return
 
     # Parse command argument
     try:
         ctime = int(message.command[1])
     except (IndexError, ValueError):
-        await message.reply("⚠️ Please provide a number (e.g., /ctime 80).")
+        await message.reply("✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗦𝗘𝗧𝗨𝗣 ✦\\n<blockquote>Enter a number, for example: /ctime 80</blockquote>")
         return
 
     # Validate ctime based on permissions
     if is_owner:
         if not 1 <= ctime <= 200:
-            await message.reply("⚠️ Bot owner can set ctime between 1 and 200.")
+            await message.reply("✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗦𝗘𝗧𝗨𝗣 ✦\\n<blockquote>Owner range: 1–200.</blockquote>")
             return
     else:
         if not 80 <= ctime <= 200:
-            await message.reply("⚠️ Admins can set ctime between 80 and 200.")
+            await message.reply("✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗦𝗘𝗧𝗨𝗣 ✦\\n<blockquote>Admin range: 80–200.</blockquote>")
             return
 
     # Update ctime in MongoDB
@@ -65,4 +65,4 @@ async def set_ctime(client, message):
         upsert=True
     )
 
-    await message.reply(f"✅ Message count threshold set to {ctime} for this group.")
+    await message.reply(f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 · 𝗦𝗘𝗧𝗨𝗣 𝗦𝗔𝗩𝗘𝗗 ✦\\n<blockquote>🎯 Capture threshold · {ctime} messages</blockquote>")
