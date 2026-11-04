@@ -24,7 +24,13 @@ PYROGRAM_WORKDIR = os.getenv("PYROGRAM_WORKDIR", "/var/data").strip() or "/var/d
 
 # Logging & Logs Channel
 BOT_LOGGING = os.getenv("BOT_LOGGING", "")
-DATABASE_ID = os.getenv("DATABASE_ID", "")
+_database_id = os.getenv("DATABASE_ID", "").strip()
+# Pyrogram treats string chat IDs as usernames. Convert numeric channel IDs
+# (including -100...) to integers before passing them to Telegram methods.
+try:
+    DATABASE_ID = int(_database_id) if _database_id else ""
+except ValueError:
+    DATABASE_ID = _database_id
 FORCE_JOIN = os.getenv("FORCE_JOIN", "")
 
 # Database configuration
