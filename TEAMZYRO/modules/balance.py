@@ -214,13 +214,13 @@ async def kill_handler(client, message):
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
     else:
-        await message.reply_text("Please reply to a user's message to use the /kill command.")
+        await message.reply_text("✦ ADMIN ACTION · Reply to the user's message before using /kill.")
         return
 
     command_args = message.text.split()
 
     if len(command_args) < 2:
-        await message.reply_text("Please specify an option: `c` to delete character, `f` to delete full data, or `b` to delete balance.")
+        await message.reply_text("✦ ADMIN ACTION GUIDE\nUse /kill c <character_id>, /kill f, or /kill b <amount> while replying to the user.")
         return
 
     option = command_args[1]
@@ -229,12 +229,12 @@ async def kill_handler(client, message):
         if option == 'f':
             # Delete full user data
             await user_collection.delete_one({"id": user_id})
-            await message.reply_text("The full data of the user has been deleted.")
+            await message.reply_text("✦ USER DATA CLEARED\nThe selected user's profile data was removed.")
 
         elif option == 'c':
             # Delete specific character from the user's collection
             if len(command_args) < 3:
-                await message.reply_text("Please specify a character ID to remove.")
+                await message.reply_text("✦ CHARACTER REMOVAL\nProvide the character ID you want to remove.")
                 return
 
             char_id = command_args[2]
@@ -245,25 +245,25 @@ async def kill_handler(client, message):
                 updated_characters = [c for c in characters if c.get('id') != char_id]
 
                 if len(updated_characters) == len(characters):
-                    await message.reply_text(f"No character with ID {char_id} found in the user's collection.")
+                    await message.reply_text(f"🔎 Character ID {char_id} was not found in this user's vault.")
                     return
 
                 # Update user collection
                 await user_collection.update_one({"id": user_id}, {"$set": {"characters": updated_characters}})
-                await message.reply_text(f"Character with ID {char_id} has been removed from the user's collection.")
+                await message.reply_text(f"✦ CHARACTER REMOVED\nID {char_id} has been removed from the user's vault.")
             else:
-                await message.reply_text(f"No characters found in the user's collection.")
+                await message.reply_text(f"This user's Character Vault is empty.")
 
         elif option == 'b':
             # Check if amount is provided
             if len(command_args) < 3:
-                await message.reply_text("Please specify an amount to deduct from balance.")
+                await message.reply_text("✦ WALLET ADJUSTMENT\nProvide the number of coins to deduct.")
                 return
 
             try:
                 amount = int(command_args[2])
             except ValueError:
-                await message.reply_text("Invalid amount. Please enter a valid number.")
+                await message.reply_text("⚠️ Enter a valid whole-number coin amount.")
                 return
 
             # Fetch user balance
@@ -273,13 +273,13 @@ async def kill_handler(client, message):
                 new_balance = max(0, current_balance - amount)  # Ensure balance doesn't go negative
                 
                 await user_collection.update_one({"id": user_id}, {"$set": {"balance": new_balance}})
-                await message.reply_text(f"{amount} has been deducted from the user's balance. New balance: {new_balance}")
+                await message.reply_text(f"✦ WALLET UPDATED\n🪙 Deducted · {amount}\n💳 New balance · {new_balance}")
             else:
-                await message.reply_text("The user has no balance to deduct from.")
+                await message.reply_text("This user's wallet has no coins to deduct.")
 
         else:
-            await message.reply_text("Invalid option. Use `c` for character, `f` for full data, or `b {amount}` to deduct balance.")
+            await message.reply_text("⚠️ Invalid admin option. Use c, f, or b <amount>.")
 
     except Exception as e:
         print(f"Error in /kill command: {e}")
-        await message.reply_text("An error occurred while processing the request. Please try again later.")
+        await message.reply_text("⚠️ The admin action could not be completed. Please try again.")
