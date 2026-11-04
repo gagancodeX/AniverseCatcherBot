@@ -103,6 +103,19 @@ async def guess(client: Client, message: Message):
                 },
                 upsert=True
             )
+            await group_user_totals_collection.update_one(
+                {'group_id': str(chat_id), 'user_id': user_id},
+                {
+                    '$set': {
+                        'group_id': str(chat_id),
+                        'user_id': user_id,
+                        'username': message.from_user.username,
+                        'first_name': message.from_user.first_name,
+                    },
+                    '$inc': {'count': 1},
+                },
+                upsert=True
+            )
 
         await react_to_message(chat_id, message.id)
 
