@@ -1,7 +1,6 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: Adam
+# Project: AniverseCatcherBot
 # ==========================================
 
 # TEAMZYRO/commands/jackpot.py
