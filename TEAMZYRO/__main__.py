@@ -45,12 +45,26 @@ def main() -> None:
 
     ZYRO.start()
 
-    # Verify FORCE_JOIN admin permissions and get/generate invite link.
-    # Numeric channel IDs must be present in the MTProto peer cache before
-    # Kurigram/Pyrogram can resolve them. Loading dialogs first fixes fresh
-    # Render containers where the local session starts with an empty cache.
+    # Verify FORCE_JOIN using the official Telegram Bot API.
+    # MTProto messages.GetDialogs is not available to bot accounts.
     import sys
+    import requests
     import TEAMZYRO
+
+    def telegram_api(method, payload=None):
+        response = requests.post(
+            "https://api.telegram.org/bot" + TOKEN + "/" + method,
+            json=payload or {},
+            timeout=20,
+        )
+        try:
+            result = response.json()
+        except ValueError:
+            raise RuntimeError("Telegram returned a non-JSON response.")
+        if not response.ok or not result.get("ok"):
+            description = result.get("description", "Unknown Telegram API error")
+            raise RuntimeError(f"{method} failed: {description}")
+        return result["result"]
 
     try:
         force_join_value = str(FORCE_JOIN or "").strip()
@@ -63,43 +77,53 @@ def main() -> None:
             .replace("\ufeff", "")
         )
         if not force_join_value:
-            raise ValueError("FORCE_JOIN is empty. Set it to the channel ID or @username.")
+            raise ValueError("FORCE_JOIN is empty. Set a channel ID or @username.")
 
         try:
             chat_target = int(force_join_value)
         except ValueError:
             chat_target = force_join_value
+            if not chat_target.startswith("@"):
+                chat_target = "@" + chat_target
 
-        if isinstance(chat_target, int):
-            chat_found = False
-            for dialog in ZYRO.get_dialogs():
-                if dialog.chat.id == chat_target:
-                    chat_found = True
-                    break
+        chat_info = telegram_api("getChat", {"chat_id": chat_target})
+        me = telegram_api("getMe")
+        bot_member = telegram_api(
+            "getChatMember",
+            {"chat_id": chat_target, "user_id": me["id"]},
+        )
 
-            if not chat_found:
-                raise RuntimeError(
-                    f"Chat ID {chat_target} was not found in the bot's Telegram dialogs. "
-                    "Check the FORCE_JOIN value and make sure the bot has been added to that chat."
-                )
+        if bot_member.get("status") not in ("administrator", "creator"):
+            raise RuntimeError(
+                "The bot is not an administrator in the FORCE_JOIN channel. "
+                "Promote it to admin in Telegram."
+            )
 
-        chat_obj = ZYRO.get_chat(chat_target)
-        invite_link = chat_obj.invite_link
+        invite_link = chat_info.get("invite_link")
+        if not invite_link and chat_info.get("username"):
+            invite_link = "https://t.me/" + chat_info["username"]
+
         if not invite_link:
-            invite = ZYRO.create_chat_invite_link(chat_target)
-            invite_link = invite.invite_link
+            if not bot_member.get("can_invite_users", False):
+                raise RuntimeError(
+                    "The channel is private and the bot lacks the 'Invite Users' admin permission."
+                )
+            invite = telegram_api(
+                "createChatInviteLink",
+                {"chat_id": chat_target},
+            )
+            invite_link = invite["invite_link"]
 
         TEAMZYRO.FORCE_JOIN_LINK = invite_link
-        LOGGER("TEAMZYRO").info("FORCE_JOIN chat verified successfully.")
+        LOGGER("TEAMZYRO").info("FORCE_JOIN channel verified successfully.")
     except Exception as e:
         LOGGER("TEAMZYRO").error(
-            "\n"
-            "=======================================================================\n"
-            "❌ FORCE_JOIN CONFIGURATION ERROR:\n"
-            f"Could not verify FORCE_JOIN ({FORCE_JOIN!r}).\n"
-            "Check that the chat ID/@username is correct, the bot is a member/admin, "
-            "and it has permission to create invite links when needed.\n"
-            f"Details: {e}\n"
+            "\\n"
+            "=======================================================================\\n"
+            "❌ FORCE_JOIN CONFIGURATION ERROR:\\n"
+            f"Could not verify FORCE_JOIN ({FORCE_JOIN!r}).\\n"
+            "Check the chat ID/@username and ensure the bot is an admin.\\n"
+            f"Details: {e}\\n"
             "======================================================================="
         )
         try:
