@@ -7,7 +7,7 @@
 import asyncio
 from pyrogram import filters, enums
 from TEAMZYRO import (
-    ZYRO, DATABASE_ID, collection, db, rarity_map, require_power
+    ZYRO, DATABASE_ID, collection, rarity_map, require_power
 )
 
 WRONG_FORMAT_TEXT = """Wrong ❌ format...  eg. /upload reply to photo muzan-kibutsuji Demon-slayer 3
