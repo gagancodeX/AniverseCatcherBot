@@ -61,9 +61,6 @@ MUSJ_JOIN = os.getenv("MUSJ_JOIN", "")
 # Admin user configurations
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 
-# ImgBB API Key
-IMGBB_API_KEY = os.getenv("IMGBB_API_KEY", "")
-
 # Media Configurations
 START_MEDIA = [
     os.getenv("START_MEDIA_1", "https://files.catbox.moe/zufhkk.mp4"),
