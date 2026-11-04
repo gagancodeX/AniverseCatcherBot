@@ -70,7 +70,7 @@ async def valentine(_, message: t.Message):
                 return await message.reply_text("❌ *You have already claimed your Valentine character this year!*")
 
         # Fetch a unique Valentine character
-        valentine_characters = await get_unique_characters(user_id, target_rarities=['💖 Valentine'])
+        valentine_characters = await get_unique_characters(user_id, target_rarities=['💝 Valentine'])
         if not valentine_characters:
             return await message.reply_text("❌ *No Valentine characters found!*")
 
