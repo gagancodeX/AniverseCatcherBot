@@ -18,7 +18,7 @@ async def rarity_count(client, message):
             await message.reply_text("⚠️ No rarities found in the database.")
             return
         
-        response_message = "✨ Character Count by Rarity ✨\n\n"
+        response_message = "✦ ANIVERSE · RARITY INDEX ✦\n<blockquote>Explore the character universe by rarity</blockquote>\n"
         total_count = 0  # total character counter
         
         # Loop through each rarity and count the number of characters
@@ -28,9 +28,9 @@ async def rarity_count(client, message):
             response_message += f"◈ {rarity} — {count} character(s)\n"
         
         # Add total count at the end
-        response_message += f"\n💠 Total Characters: {total_count}"
+        response_message += f"\n\n✧ <b>UNIVERSE TOTAL</b> · <code>{total_count:,}</code>"
         
-        await message.reply_text(response_message)
+        await message.reply_text(response_message, parse_mode=enums.ParseMode.HTML)
     
     except Exception as e:
-        await message.reply_text(f"⚠️ Error: {str(e)}")
+        await message.reply_text("✦ <b>ANIVERSE · SYSTEM NOTICE</b> ✦\\n<blockquote>Unable to load the rarity index right now.</blockquote>", parse_mode=enums.ParseMode.HTML)
