@@ -64,4 +64,10 @@ async def message_counter(update: Update, context: CallbackContext) -> None:
             await send_image(update, context)
             normal_message_counts[chat_id] = 0  # Reset count
 
-application.add_handler(MessageHandler(~filters.COMMAND, message_counter, block=False))
+application.add_handler(
+    MessageHandler(
+        filters.ChatType.GROUPS & filters.TEXT & ~filters.COMMAND,
+        message_counter,
+        block=False,
+    )
+)
