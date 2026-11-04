@@ -35,6 +35,7 @@ def LOGGER(name: str) -> logging.Logger:
 from config import (
     api_id, api_hash, TOKEN, BOT_LOGGING, DATABASE_ID, FORCE_JOIN,
     mongo_url, backup_mongo_url, DB_NAME, SUPPORT_CHAT, UPDATE_CHAT, OWNER_ID,
+    SESSION_STRING, PYROGRAM_WORKDIR,
     MUSJ_JOIN, IMGBB_API_KEY, START_MEDIA, PHOTO_URL, STATS_IMG
 ) 
 
@@ -43,7 +44,15 @@ FORCE_JOIN_LINK = "https://t.me/oneforall_support"  # Updated dynamically on bot
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
 application = Application.builder().token(TOKEN).build()
-ZYRO = Client("Shivu", api_id=api_id, api_hash=api_hash, bot_token=TOKEN)
+os.makedirs(PYROGRAM_WORKDIR, exist_ok=True)
+ZYRO = Client(
+    "Shivu",
+    api_id=api_id,
+    api_hash=api_hash,
+    bot_token=TOKEN,
+    session_string=SESSION_STRING or None,
+    workdir=PYROGRAM_WORKDIR,
+)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 # -------------------------- DATABASE SETUP ------------------------------
