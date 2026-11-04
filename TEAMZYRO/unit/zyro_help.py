@@ -3,7 +3,7 @@
 # Project: AniverseCatcherBot
 # ==========================================
 
-# TEAMZYRO/help.py
+# ANIVERSE/help.py
 
 HELP_DATA = {
     "balance": {
