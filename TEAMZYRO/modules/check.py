@@ -15,14 +15,14 @@ import asyncio
 async def check_character(client, message):
     args = message.command
     if len(args) < 2:
-        await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗟𝗢𝗢𝗞𝗨𝗣 ✦\\n\\nSend a character ID like this:\\n<code>/check 01</code>")
+        await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗟𝗢𝗢𝗞𝗨𝗣 ✦\n\nSend a character ID like this:\n<code>/check 01</code>")
         return
 
     character_id = args[1]
     character = await character_collection.find_one({'id': character_id})
 
     if not character:
-        await message.reply_text("🔎 𝗡𝗢 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗙𝗢𝗨𝗡𝗗\\n\\nCheck the ID and try again.")
+        await message.reply_text("🔎 𝗡𝗢 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗙𝗢𝗨𝗡𝗗\n\nCheck the ID and try again.")
         return
 
     # Power nikaalo using rarity
@@ -34,11 +34,11 @@ async def check_character(client, message):
 
     # Send character details
     text = (
-        f"🌟 **Character Info**\n"
+        f"✦ **ANIVERSE CHARACTER FILE** ✦\n\n"
         f"🆔 ID: `{character_id}`\n"
-        f"📛 Name: {character['name']}\n"
-        f"📺 Anime: {character['anime']}\n"
-        f"💎 Rarity: {character['rarity']}\n"
+        f"✧ **Name:** {character['name']}\n"
+        f"🎬 **Anime:** {character['anime']}\n"
+        f"💠 **Rarity:** {character['rarity']}\n"
     )
 
     media_file_id = character.get('media_file_id')
@@ -73,7 +73,7 @@ async def who_have_it(client, callback_query):
         return
 
     # Generate top 10 owners list with count
-    owner_text = "**🏆 Top 10 Users Who Own This Character:**\n\n"
+    owner_text = "**♛ CHARACTER OWNERS · TOP 10**\n\n"
     for i, user in enumerate(users, 1):
         user_name = user.get('first_name', 'Unknown')  # Use 'Unknown' if missing
         count = sum(1 for char in user.get("characters", []) if char["id"] == character_id)
