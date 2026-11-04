@@ -51,21 +51,78 @@ def start_health_server() -> None:
 
 
 def telegram_api(method: str, payload=None):
-    """Call Telegram Bot API and return its result or a useful error."""
-    response = requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/{method}",
-        json=payload or {},
-        timeout=20,
-    )
-    try:
-        result = response.json()
-    except ValueError as exc:
-        raise RuntimeError(f"Telegram {method} returned a non-JSON response") from exc
+    """
+    Call Telegram Bot API and honor Telegram's flood-control timer.
 
-    if not response.ok or not result.get("ok"):
-        description = result.get("description", "Unknown Telegram API error")
-        raise RuntimeError(f"Telegram {method} failed: {description}")
-    return result["result"]
+    A 429 response is not a fatal startup error: Telegram supplies
+    parameters.retry_after, so keep this single Render process alive and retry
+    only after that interval instead of crashing into a restart loop.
+    """
+    logger = LOGGER("ANIVERSE")
+
+    while True:
+        try:
+            response = requests.post(
+                f"https://api.telegram.org/bot{TOKEN}/{method}",
+                json=payload or {},
+                timeout=(10, 30),
+            )
+        except requests.RequestException as exc:
+            logger.warning(
+                "Temporary network error calling Telegram %s: %s. Retrying in 10 seconds.",
+                method,
+                exc,
+            )
+            time.sleep(10)
+            continue
+
+        try:
+            result = response.json()
+        except ValueError:
+            if response.status_code == 429:
+                retry_header = response.headers.get("Retry-After", "60")
+                try:
+                    retry_after = max(1, int(float(retry_header)))
+                except (TypeError, ValueError):
+                    retry_after = 60
+                logger.warning(
+                    "Telegram rate-limited %s. Retrying in %s seconds.",
+                    method,
+                    retry_after + 2,
+                )
+                time.sleep(retry_after + 2)
+                continue
+            raise RuntimeError(
+                f"Telegram {method} returned HTTP {response.status_code} with a non-JSON response"
+            )
+
+        error_code = result.get("error_code", response.status_code)
+        if error_code == 429 or response.status_code == 429:
+            parameters = result.get("parameters") or {}
+            retry_after = parameters.get("retry_after")
+            if retry_after is None:
+                retry_after = response.headers.get("Retry-After", 60)
+            try:
+                retry_after = max(1, int(float(retry_after)))
+            except (TypeError, ValueError):
+                retry_after = 60
+
+            wait_seconds = retry_after + 2
+            logger.warning(
+                "Telegram rate-limited %s (retry_after=%s). "
+                "Keeping Render alive and retrying in %s seconds; do not redeploy.",
+                method,
+                retry_after,
+                wait_seconds,
+            )
+            time.sleep(wait_seconds)
+            continue
+
+        if not response.ok or not result.get("ok"):
+            description = result.get("description", "Unknown Telegram API error")
+            raise RuntimeError(f"Telegram {method} failed: {description}")
+
+        return result["result"]
 
 
 def normalise_chat_target(value: str):
@@ -147,24 +204,27 @@ def load_modules() -> None:
 
 
 def start_pyrogram_client() -> None:
-    """Respect Telegram's FloodWait instead of crashing/restarting in a loop."""
-    try:
-        ZYRO.start()
-    except FloodWait as exc:
-        wait_seconds = max(1, int(exc.value)) + 3
-        LOGGER("ANIVERSE").warning(
-            "Telegram rate-limited Pyrogram authorization. "
-            "Waiting %s seconds once before retrying. Keep this Render instance running.",
-            wait_seconds,
-        )
-        try:
-            ZYRO.disconnect()
-        except Exception:
-            pass
-        time.sleep(wait_seconds)
-        ZYRO.start()
+    """Respect Pyrogram FloodWait timers without exiting the Render process."""
+    logger = LOGGER("ANIVERSE")
 
-    LOGGER("ANIVERSE").info("Pyrogram client connected successfully.")
+    while True:
+        try:
+            ZYRO.start()
+            break
+        except FloodWait as exc:
+            wait_seconds = max(1, int(exc.value)) + 3
+            logger.warning(
+                "Telegram rate-limited Pyrogram authorization. "
+                "Waiting %s seconds before retrying. Keep this Render instance running.",
+                wait_seconds,
+            )
+            try:
+                ZYRO.disconnect()
+            except Exception:
+                pass
+            time.sleep(wait_seconds)
+
+    logger.info("Pyrogram client connected successfully.")
 
 
 def main() -> None:
