@@ -36,7 +36,7 @@ from config import (
     api_id, api_hash, TOKEN, BOT_LOGGING, DATABASE_ID, FORCE_JOIN,
     mongo_url, backup_mongo_url, DB_NAME, SUPPORT_CHAT, UPDATE_CHAT, OWNER_ID,
     SESSION_STRING, PYROGRAM_WORKDIR,
-    MUSJ_JOIN, IMGBB_API_KEY, START_MEDIA, PHOTO_URL, STATS_IMG
+    MUSJ_JOIN, START_MEDIA, PHOTO_URL, STATS_IMG
 ) 
 
 FORCE_JOIN_LINK = "https://t.me/oneforall_support"  # Updated dynamically on bot startup
