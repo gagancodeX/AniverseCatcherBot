@@ -40,7 +40,7 @@ async def delete_handler(client, message):
     except Exception as e:
         await message.reply_text(f"Error: {str(e)}")
 
-import time
+import asyncio
 
 @app.on_message(filters.command("gupdate"))
 @require_power("up")
@@ -103,7 +103,7 @@ async def update(client: Client, message: Message):
             if progress >= next_progress_update:
                 await progress_message.edit_text(f'Updating: {int(progress)}% completed...')
                 next_progress_update += progress_threshold
-                time.sleep(1)  # Add a 1-second delay
+                await asyncio.sleep(1)  # Add a 1-second delay
 
         # Final message with the total count
         await progress_message.edit_text('Updating: 100% completed.')
@@ -175,7 +175,7 @@ async def update_multiple(client: Client, message: Message):
             if progress >= next_progress_update:
                 await progress_message.edit_text(f'Updating: {int(progress)}% completed...')
                 next_progress_update += 10
-                time.sleep(1)
+                await asyncio.sleep(1)
 
         # Final update after all characters
         await progress_message.edit_text('Updating: 100% completed.')
