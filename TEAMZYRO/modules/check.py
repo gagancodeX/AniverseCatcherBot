@@ -15,7 +15,7 @@ import asyncio
 async def check_character(client, message):
     args = message.command
     if len(args) < 2:
-        await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗟𝗢𝗢𝗞𝗨𝗣 ✦\n\nSend a character ID like this:\n<code>/check 01</code>")
+        await message.reply_text("✦ 𝗖𝗛𝗔𝗥𝗔𝗖𝗧𝗘𝗥 𝗟𝗢𝗢𝗞𝗨𝗣 ✦\n\nSend a character ID like this:\n`/check 01`")
         return
 
     character_id = args[1]
