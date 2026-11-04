@@ -18,4 +18,4 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "-m", "TEAMZYRO"]
+CMD ["python", "-m", "ANIVERSE"]
