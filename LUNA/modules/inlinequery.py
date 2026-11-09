@@ -1,12 +1,14 @@
 import re
 import time
+import os
 import asyncio
 from html import escape
 from cachetools import TTLCache
 from telegram import (
     Update, InlineQueryResultPhoto, InlineQueryResultVideo,
     InlineQueryResultCachedPhoto, InlineQueryResultCachedVideo,
-    InlineQueryResultCachedDocument,
+    InlineQueryResultCachedDocument, InlineQueryResultArticle,
+    InputTextMessageContent, InlineQueryResultsButton, WebAppInfo,
 )
 from telegram.ext import InlineQueryHandler, CallbackContext
 from LUNA import application, bot_client, DATABASE_ID, db
@@ -113,6 +115,39 @@ async def _prepare_inline_watermark(index, character):
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     query = update.inline_query.query
+
+    # Inline Mini App launcher for the Luna arcade. The Mini App URL is supplied
+    # by the static-site host through GAMEZONE_URL; normal character search is
+    # unchanged for every other inline query.
+    if query.strip().lower() in {"game", "games", "gamezone", "arcade", "play"}:
+        gamezone_url = os.getenv("GAMEZONE_URL", "").strip()
+        if gamezone_url.startswith("https://"):
+            await update.inline_query.answer(
+                results=[],
+                button=InlineQueryResultsButton(
+                    text="☾ OPEN LUNA GAMEZONE",
+                    web_app=WebAppInfo(url=gamezone_url),
+                ),
+                cache_time=2,
+                is_personal=True,
+            )
+        else:
+            await update.inline_query.answer(
+                results=[
+                    InlineQueryResultArticle(
+                        id="luna_gamezone_setup",
+                        title="☾ LUNA GAMEZONE",
+                        description="Arcade files are ready; public HTTPS hosting is not connected yet.",
+                        input_message_content=InputTextMessageContent(
+                            "✦ LUNA GAMEZONE ✦\\n\\n"
+                            "The arcade is built, but its public HTTPS URL has not been connected to the bot yet."
+                        ),
+                    )
+                ],
+                cache_time=2,
+                is_personal=True,
+            )
+        return
     offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
     # Check if query is for a user's collection
