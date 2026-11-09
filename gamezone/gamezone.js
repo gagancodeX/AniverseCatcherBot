@@ -4,6 +4,43 @@
   const canvas = $('gameCanvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
+
+  // Unified 16-bit pixel-art render pass for every game scene.
+  // Draw at a compact resolution, limit the palette, then scale up with
+  // nearest-neighbour sampling so each game shares the same crisp pixel grid.
+  const pixelBuffer = document.createElement('canvas');
+  pixelBuffer.width = 180;
+  pixelBuffer.height = 250;
+  const pixelCtx = pixelBuffer.getContext('2d', { willReadFrequently: true });
+  const pixelBayer = [-8,0,-6,2,4,-4,6,-2,-5,3,-7,1,7,-1,5,-3];
+  function finishPixelFrame() {
+    pixelCtx.imageSmoothingEnabled = true;
+    pixelCtx.clearRect(0, 0, pixelBuffer.width, pixelBuffer.height);
+    pixelCtx.drawImage(canvas, 0, 0, pixelBuffer.width, pixelBuffer.height);
+
+    const frame = pixelCtx.getImageData(0, 0, pixelBuffer.width, pixelBuffer.height);
+    for (let y = 0; y < pixelBuffer.height; y++) {
+      for (let x = 0; x < pixelBuffer.width; x++) {
+        const i = (y * pixelBuffer.width + x) * 4;
+        const dither = pixelBayer[(y & 3) * 4 + (x & 3)] * 1.15;
+        for (let channel = 0; channel < 3; channel++) {
+          frame.data[i + channel] = Math.max(0, Math.min(255,
+            Math.round((frame.data[i + channel] + dither) / 51) * 51));
+        }
+      }
+    }
+    pixelCtx.putImageData(frame, 0, 0);
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.filter = 'none';
+    ctx.clearRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(pixelBuffer, 0, 0, W, H);
+    ctx.restore();
+  }
   const screen = $('gameScreen');
   const overlay = $('gameOverlay');
   const scoreValue = $('scoreValue');
@@ -39,7 +76,7 @@
     records.coins=Number(records.coins||0)+coins;
     storage.write(records); refreshStats();
   }
-  function setScore(value){score=Math.max(0,Math.floor(value));scoreValue.textContent=score.toLocaleString()}
+  function setScore(value){score=Math.max(0,Math.floor(value));scoreValue.textContent=score.toLocaleString();if(current&&$('bestValue'))$('bestValue').textContent=Math.max(bestOf(current),score).toLocaleString()}
   function tone(freq,duration=.06){
     if(!soundOn)return;
     try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(.045,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration)}catch(_){}
@@ -50,7 +87,7 @@
     $('gameTitle').textContent=games[id].title;$('controlHint').textContent=games[id].hint;$('overlaySymbol').textContent=games[id].symbol;
     $('overlayTitle').textContent='READY TO PLAY?';$('overlayText').textContent=games[id].start;$('overlayEyebrow').textContent='LUNA ARCADE · '+id.toUpperCase();
     $('startButton').innerHTML='START GAME <span>→</span>';overlay.classList.remove('hidden');
-    setScore(0);coins=0;distance=0;initGame(id);draw();
+    setScore(0);coins=0;distance=0;initGame(id);$('bestValue').textContent=bestOf(id).toLocaleString();draw();finishPixelFrame();
     if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.expand();Telegram.WebApp.requestFullscreen&&Telegram.WebApp.requestFullscreen();Telegram.WebApp.HapticFeedback.impactOccurred('light')}catch(_){}}
   }
   function closeGame(){
@@ -125,7 +162,7 @@
   function loop(now){
     if(state!=='playing')return;
     const dt=Math.min(.033,(now-lastTime)/1000||0);lastTime=now;game.time+=dt;
-    update(dt);draw();raf=requestAnimationFrame(loop);
+    update(dt);draw();finishPixelFrame();raf=requestAnimationFrame(loop);
   }
   function update(dt){
     if(current==='flappy')updateFlappy(dt);
@@ -218,7 +255,7 @@
   document.querySelectorAll('[data-game]').forEach(card=>card.addEventListener('click',()=>openGame(card.dataset.game)));
   $('startButton').addEventListener('click',startGame);$('restartButton').addEventListener('click',()=>{if(current)openGame(current)});$('backButton').addEventListener('click',closeGame);
   soundToggle.addEventListener('click',()=>{soundOn=!soundOn;soundToggle.innerHTML=(soundOn?'♫':'♪')+' <span>Sound '+(soundOn?'ON':'OFF')+'</span>';if(soundOn)tone(640)});
-  window.addEventListener('resize',()=>{if(current&&state!=='playing')draw()});
+  window.addEventListener('resize',()=>{if(current&&state!=='playing'){draw();finishPixelFrame()}});
   if(window.Telegram&&Telegram.WebApp){
     try{Telegram.WebApp.ready();Telegram.WebApp.setHeaderColor('#090817');Telegram.WebApp.setBackgroundColor('#090817');Telegram.WebApp.BackButton.show();Telegram.WebApp.BackButton.onClick(closeGame);const user=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;if(user&&user.first_name)$('welcomeText').textContent='Hey '+user.first_name+' — your next high score is waiting.';}catch(_){}
   }
