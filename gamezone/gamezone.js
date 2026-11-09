@@ -577,4 +577,140 @@
     setScore(Math.floor(distance)+coins*10);
   }
 
+
+  // Classic side-scrolling pixel-art presentation for Flappy Luna.
+  // Original sprites and scenery are drawn from simple pixel blocks.
+  function drawFlappyBackdrop(){
+    const unit=4;
+    ctx.save();
+    ctx.scale(unit,unit);
+    const w=W/unit,h=H/unit;
+    ctx.fillStyle='#70c5ce';ctx.fillRect(0,0,w,h);
+
+    // Distant blocky clouds.
+    const cloud=(x,y,s=1)=>{
+      x=Math.round(x);y=Math.round(y);
+      ctx.fillStyle='#f4fbf5';
+      const blocks=[[-11,3,7,3],[-7,0,7,5],[-1,-3,8,8],[5,0,8,5],[10,3,7,3]];
+      blocks.forEach(([a,b,c,d])=>ctx.fillRect(x+Math.round(a*s),y+Math.round(b*s),Math.round(c*s),Math.round(d*s)));
+      ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(x-5*s,y-1*s,9*s,2*s);
+    };
+    cloud(27,37,.75);cloud(128,56,.9);cloud(73,125,1.1);cloud(155,139,.8);
+
+    // Pale city silhouette with small square windows.
+    ctx.fillStyle='#9ddce0';
+    const buildings=[
+      [0,163,9,26],[10,155,8,34],[20,158,12,31],[35,149,10,40],
+      [47,157,8,32],[57,146,12,43],[72,155,8,34],[82,150,13,39],
+      [98,158,9,31],[110,148,12,41],[126,155,9,34],[138,150,10,39],
+      [151,158,9,31],[164,151,10,38],[175,160,5,29]
+    ];
+    buildings.forEach(([x,y,bw,bh])=>{
+      ctx.fillRect(x,y,bw,bh);
+      ctx.fillStyle='#70c5ce';
+      for(let wy=y+5;wy<y+bh-3;wy+=7)for(let wx=x+2;wx<x+bw-1;wx+=4)ctx.fillRect(wx,wy,2,3);
+      ctx.fillStyle='#9ddce0';
+    });
+
+    // Rolling green hills in the familiar flat, pixel-era palette.
+    ctx.fillStyle='#8bd15a';
+    ctx.fillRect(0,177,w,52);
+    [[0,174,28,7],[21,169,30,11],[48,175,32,7],[78,168,34,12],[111,174,30,8],[139,166,31,14],[163,173,25,8]]
+      .forEach(([x,y,bw,bh])=>ctx.fillRect(x,y,bw,bh));
+    ctx.fillStyle='#74c94f';
+    ctx.fillRect(0,185,w,44);
+    [[0,181,35,8],[32,178,31,9],[66,184,33,6],[100,177,36,10],[138,181,30,8],[165,179,15,8]]
+      .forEach(([x,y,bw,bh])=>ctx.fillRect(x,y,bw,bh));
+
+    // Ground: grass lip, dark soil line and sandy lower band.
+    ctx.fillStyle='#ded895';ctx.fillRect(0,229,w,21);
+    ctx.fillStyle='#78c94c';ctx.fillRect(0,225,w,5);
+    ctx.fillStyle='#4ba83e';ctx.fillRect(0,225,w,2);
+    ctx.fillStyle='#8c6b43';ctx.fillRect(0,230,w,2);
+    ctx.fillStyle='#f1df9a';ctx.fillRect(0,233,w,17);
+    ctx.fillStyle='rgba(255,255,226,.65)';ctx.fillRect(0,234,w,2);
+    // Small blades on the turf edge.
+    ctx.fillStyle='#5ab746';
+    for(let x=2;x<w;x+=9){ctx.fillRect(x,222,2,4);ctx.fillRect(x+3,224,1,3)}
+    ctx.restore();
+  }
+
+  function drawGateColumn(x,y,h,flip=false){
+    // Retained as a compatibility helper; classic pipes are drawn below.
+    const px=Math.round(x/4),py=Math.round(y/4),ph=Math.max(0,Math.round(h/4));
+    ctx.save();ctx.scale(4,4);
+    ctx.fillStyle='#236b36';ctx.fillRect(px-1,py,24,ph);
+    ctx.fillStyle='#69d54c';ctx.fillRect(px+2,py,5,ph);
+    ctx.fillStyle='#35a83e';ctx.fillRect(px+7,py,10,ph);
+    ctx.fillStyle='#18793b';ctx.fillRect(px+17,py,5,ph);
+    ctx.restore();
+  }
+
+  function drawLunaMascot(x,y,rotation=0,scale=1){
+    // Original tiny yellow bird, inspired by the classic arcade silhouette.
+    const px=Math.round(x/4),py=Math.round(y/4);
+    ctx.save();ctx.scale(4,4);ctx.translate(px,py);ctx.rotate(rotation*.55);ctx.scale(scale,scale);
+    const rect=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)};
+    // Tail feathers and outline.
+    rect(-10,-2,3,5,'#4a392c');rect(-12,-1,3,3,'#4a392c');
+    rect(-9,-3,3,5,'#f5b83f');rect(-11,-2,3,3,'#f5b83f');
+    // Body silhouette.
+    rect(-8,-6,13,12,'#4a392c');rect(-6,-8,10,14,'#4a392c');rect(-3,-9,7,13,'#4a392c');
+    rect(-7,-6,11,10,'#ffdf4f');rect(-5,-8,8,12,'#ffdf4f');rect(-2,-9,5,11,'#ffdf4f');
+    // Soft underside and small wing that flaps.
+    rect(-5,2,8,2,'#eebd3e');rect(-7,-1,6,5,'#edbd42');
+    const wingY=Math.round(Math.sin(game.time*16)*2);
+    rect(-6,wingY,6,3,'#fff0a4');rect(-4,wingY+1,4,2,'#f6d76d');
+    // Eye and beak.
+    rect(2,-6,4,5,'#fffdf2');rect(4,-5,2,3,'#2e2a28');rect(4,-6,1,1,'#fff');
+    rect(5,-1,6,4,'#56362d');rect(6,0,6,3,'#e64c35');rect(7,0,4,1,'#ff8b45');
+    // Tiny feet.
+    rect(-1,6,2,2,'#c77b35');rect(3,6,2,2,'#c77b35');
+    ctx.restore();
+  }
+
+  function drawFlappy(){
+    drawFlappyBackdrop();
+    const s=4;
+    // Pixel-perfect green pipes with black outlines, bright edge highlights
+    // and a wide cap at the opening.
+    game.pipes.forEach(p=>{
+      const x=Math.round(p.x/s),top=Math.round((p.center-p.gap/2)/s),bottom=Math.round((p.center+p.gap/2)/s);
+      const pipe=(px,py,pw,ph,capAtBottom)=>{
+        if(ph<=0)return;
+        ctx.save();ctx.scale(s,s);
+        // Body: deep outline, bright vertical gradient bands.
+        ctx.fillStyle='#174c2b';ctx.fillRect(px-1,py,pw+2,ph);
+        ctx.fillStyle='#228b3d';ctx.fillRect(px,py,pw,ph);
+        ctx.fillStyle='#6ee45a';ctx.fillRect(px+3,py,5,ph);
+        ctx.fillStyle='#42c84a';ctx.fillRect(px+8,py,8,ph);
+        ctx.fillStyle='#24993e';ctx.fillRect(px+16,py,5,ph);
+        ctx.fillStyle='#177332';ctx.fillRect(px+21,py,2,ph);
+        ctx.fillStyle='rgba(255,255,255,.38)';ctx.fillRect(px+4,py,2,ph);
+        // Cap has a dark outline and a raised pale green rim.
+        const cy=capAtBottom?py+ph-7:py;
+        ctx.fillStyle='#174c2b';ctx.fillRect(px-3,cy-1,29,10);
+        ctx.fillStyle='#2ca346';ctx.fillRect(px-2,cy,27,7);
+        ctx.fillStyle='#79e85e';ctx.fillRect(px,cy,6,3);
+        ctx.fillStyle='#4ecb4a';ctx.fillRect(px+6,cy,13,3);
+        ctx.fillStyle='#248c3a';ctx.fillRect(px+19,cy,5,6);
+        ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillRect(px+2,cy+1,2,4);
+        ctx.fillStyle='#174c2b';ctx.fillRect(px-2,cy+7,27,2);
+        ctx.restore();
+      };
+      // Upper pipe extends down to its cap; lower pipe starts at its cap.
+      pipe(x,0,23,top-3,true);
+      pipe(x,bottom+3,23,250-(bottom+3),false);
+    });
+
+    // The classic fixed-score position remains visible inside the playfield.
+    ctx.save();ctx.scale(4,4);
+    ctx.font='bold 13px monospace';ctx.textAlign='center';ctx.lineJoin='round';
+    ctx.lineWidth=3;ctx.strokeStyle='#31515a';ctx.strokeText(String(score),90,24);
+    ctx.fillStyle='#fff';ctx.fillText(String(score),90,24);
+    ctx.restore();
+
+    drawLunaMascot(game.player.x,game.player.y,game.player.rot,1);
+  }
+
 })();
