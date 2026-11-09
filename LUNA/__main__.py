@@ -3,11 +3,13 @@
 # ==========================================
 
 import importlib
+import json
 import logging
 import os
 import sys
 import threading
 import time
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import LUNA
@@ -16,6 +18,82 @@ from LUNA.modules import ALL_MODULES
 
 
 BOT_READY = False
+
+BOT_PROFILE_SETTINGS = [
+    ("setMyName", {"name": "Luna | Anime Catcher 🌙"}),
+    (
+        "setMyShortDescription",
+        {
+            "short_description": (
+                "Catch, collect and trade anime characters. "
+                "Build your collection and claim daily rewards! 🌙"
+            )
+        },
+    ),
+    (
+        "setMyDescription",
+        {
+            "description": (
+                "Welcome to Luna, your anime character catcher! 🌙\n\n"
+                "✨ Discover mystery anime characters.\n"
+                "💖 Build your personal collection and save favorites.\n"
+                "🎁 Gift characters to friends and explore the shop.\n"
+                "💰 Collect coins and climb the collector rankings.\n\n"
+                "Use /start to begin or /privacy to read how Luna handles your data."
+            )
+        },
+    ),
+    (
+        "setMyCommands",
+        {
+            "commands": [
+                {"command": "start", "description": "Start your Luna adventure"},
+                {"command": "guess", "description": "Guess the mystery character"},
+                {"command": "harem", "description": "View your character collection"},
+                {"command": "check", "description": "Check character details"},
+                {"command": "sips", "description": "Search the character archive"},
+                {"command": "fav", "description": "Save a favorite character"},
+                {"command": "claim", "description": "Claim your daily character"},
+                {"command": "balance", "description": "Check your coin balance"},
+                {"command": "daily", "description": "Collect your daily coins"},
+                {"command": "weekly", "description": "Collect your weekly coins"},
+                {"command": "pay", "description": "Send coins to another user"},
+                {"command": "gift", "description": "Gift a character to a friend"},
+                {"command": "shop", "description": "Browse the character shop"},
+                {"command": "rank", "description": "View collector rankings"},
+                {"command": "bounty", "description": "Create a character bounty poster"},
+                {"command": "transfer", "description": "Transfer characters (VIP)"},
+                {"command": "addchar", "description": "Request a character for the archive"},
+                {"command": "total", "description": "View the archive character count"},
+                {"command": "privacy", "description": "Read Luna's privacy policy"},
+            ]
+        },
+    ),
+]
+
+
+def sync_bot_profile() -> None:
+    """Apply Luna's public profile text and command menu through the Telegram Bot API."""
+    for method, payload in BOT_PROFILE_SETTINGS:
+        request = urllib.request.Request(
+            f"https://api.telegram.org/bot{TOKEN}/{method}",
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            if not result.get("ok"):
+                raise RuntimeError(result.get("description", "Telegram rejected the request"))
+            LOGGER("LUNA").info("Telegram bot profile setting applied: %s", method)
+        except Exception as exc:
+            # A profile-sync failure should never prevent the catcher bot from starting.
+            LOGGER("LUNA").warning(
+                "Could not apply Telegram profile setting %s: %s",
+                method,
+                type(exc).__name__,
+            )
 
 
 def start_health_server() -> None:
@@ -47,7 +125,6 @@ def start_health_server() -> None:
     LOGGER("LUNA").info("Render health endpoint listening on port %s", port)
 
 
-
 def load_modules() -> None:
     for module_name in ALL_MODULES:
         importlib.import_module(f"LUNA.modules.{module_name}")
@@ -75,6 +152,8 @@ def main() -> None:
         raise RuntimeError("FORCE_JOIN is missing in Render environment variables.")
     if not BOT_LOGGING:
         raise RuntimeError("BOT_LOGGING is missing in Render environment variables.")
+
+    sync_bot_profile()
 
     # Start the bot directly; skip the extra Bot API getMe/getChat preflight.
     load_modules()
