@@ -1132,8 +1132,9 @@
     game.pickups.filter(o=>o.type!=='coin'&&o.type!=='super').sort((a,b)=>a.z-b.z).forEach(runDrawPickup);
     game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(runDrawObstacle);
     const lane=game.laneVisual===undefined?1:game.laneVisual;
-    const heroY=845-(game.jump||0)*.85-(game.runnerEffects.jet>0?125:0)-(game.rideT>0?105:0);
-    runDrawHero(game.heroIndex,360+(lane-1)*170,heroY,1.02,game.time*14,game.slide>0,game.jump>30);
+    const heroTrack=runProject(lane,.965);
+    const heroY=heroTrack.y-9-(game.jump||0)*.85-(game.runnerEffects.jet>0?125:0)-(game.rideT>0?105:0);
+    runDrawHero(game.heroIndex,heroTrack.x,heroY,1.02,game.time*14,game.slide>0,game.jump>30);
     runDrawHUD();
     // Distance and active district ribbon
     ctx.fillStyle='rgba(10,22,39,.52)';ctx.beginPath();ctx.roundRect(245,110,230,34,10);ctx.fill();
