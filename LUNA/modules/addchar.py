@@ -151,7 +151,7 @@ async def request_upload(client, message):
         await processing_message.edit(f"⚠️ 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗙𝗔𝗜𝗟𝗘𝗗\nPlease try again. Details: {str(exc)}")
 
 
-@bot_client.on_callback_query(filters.create(lambda _, __, q: q.data.startswith("cancel_")))
+@bot_client.on_callback_query(filters.create(lambda _, __, q: isinstance(getattr(q, "data", None), str) and q.data.startswith("cancel_")))
 @require_power("add")
 async def handle_cancel(client, callback_query):
     try:
@@ -171,7 +171,7 @@ async def handle_cancel(client, callback_query):
         await callback_query.answer("The request could not be cancelled. Try again.", show_alert=True)
 
 
-@bot_client.on_callback_query(filters.create(lambda _, __, q: q.data.startswith("rarity_")))
+@bot_client.on_callback_query(filters.create(lambda _, __, q: isinstance(getattr(q, "data", None), str) and q.data.startswith("rarity_")))
 @require_power("app")
 async def handle_callback(client, callback_query):
     try:
