@@ -8,6 +8,7 @@ from pyrogram import filters, enums
 from LUNA import (
     bot_client, DATABASE_ID, collection, rarity_map, require_power
 )
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 WRONG_FORMAT_TEXT = """✦ LUNA · CHARACTER UPLOAD ✦
 
@@ -146,13 +147,25 @@ async def ul_main(client, message):
 
             # Copy directly inside Telegram. The returned file_id belongs to this bot
             # and can be reused by Pyrogram and python-telegram-bot.
-            saved_message = await client.copy_message(
-                chat_id=DATABASE_ID,
-                from_chat_id=reply.chat.id,
-                message_id=reply.id,
-                caption=database_caption,
-                parse_mode=enums.ParseMode.MARKDOWN,
+            watermarked_photo = (
+                await get_watermarked_photo(client, reply.photo.file_id)
+                if reply.photo else None
             )
+            if watermarked_photo:
+                saved_message = await client.send_photo(
+                    chat_id=DATABASE_ID,
+                    photo=watermarked_photo,
+                    caption=database_caption,
+                    parse_mode=enums.ParseMode.MARKDOWN,
+                )
+            else:
+                saved_message = await client.copy_message(
+                    chat_id=DATABASE_ID,
+                    from_chat_id=reply.chat.id,
+                    message_id=reply.id,
+                    caption=database_caption,
+                    parse_mode=enums.ParseMode.MARKDOWN,
+                )
             media_type, media_file_id = extract_media_reference(saved_message)
 
             character = {
@@ -164,6 +177,7 @@ async def ul_main(client, message):
                 "media_type": media_type,
                 "media_chat_id": DATABASE_ID,
                 "media_message_id": saved_message.id,
+                "watermarked": bool(watermarked_photo),
             }
             await collection.insert_one(character)
 
