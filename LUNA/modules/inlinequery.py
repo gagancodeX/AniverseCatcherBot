@@ -11,6 +11,7 @@ from telegram import (
     InputTextMessageContent, InlineQueryResultsButton, WebAppInfo, InlineQueryResultGame,
 )
 from telegram.ext import InlineQueryHandler, CallbackContext, BaseHandler
+from telegram.error import BadRequest
 from LUNA import application, bot_client, DATABASE_ID, db
 from LUNA.unit.luna_watermark import get_watermarked_photo
 from LUNA.unit.luna_inline import *
@@ -135,17 +136,43 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             ("luna_neon_racer", "NEON RACER"),
         ]
         if native_games_enabled:
-            await update.inline_query.answer(
-                results=[
-                    InlineQueryResultGame(
-                        id=f"luna_native_{index}",
-                        game_short_name=short_name,
+            try:
+                await update.inline_query.answer(
+                    results=[
+                        InlineQueryResultGame(
+                            id=f"luna_native_{index}",
+                            game_short_name=short_name,
+                        )
+                        for index, (short_name, _title) in enumerate(native_games, start=1)
+                    ],
+                    cache_time=0,
+                    is_personal=True,
+                )
+            except BadRequest as exc:
+                # Keep the arcade accessible while a BotFather short name is
+                # being corrected. Telegram rejects the entire result set if
+                # even one game_short_name is unknown for this bot.
+                if "game_invalid" not in str(exc).lower():
+                    raise
+                from LUNA import LOGGER
+                LOGGER("LUNA.INLINE").warning(
+                    "Telegram rejected one or more native game short names; "
+                    "falling back to the GameZone Mini App: %s",
+                    str(exc)[:200],
+                )
+                gamezone_url = os.getenv("GAMEZONE_URL", "").strip()
+                if gamezone_url.startswith("https://"):
+                    await update.inline_query.answer(
+                        results=[],
+                        button=InlineQueryResultsButton(
+                            text="☾ OPEN LUNA GAMEZONE",
+                            web_app=WebAppInfo(url=gamezone_url),
+                        ),
+                        cache_time=0,
+                        is_personal=True,
                     )
-                    for index, (short_name, _title) in enumerate(native_games, start=1)
-                ],
-                cache_time=0,
-                is_personal=True,
-            )
+                else:
+                    raise
             return
 
         gamezone_url = os.getenv("GAMEZONE_URL", "").strip()
