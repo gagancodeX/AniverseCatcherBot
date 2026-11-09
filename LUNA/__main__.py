@@ -273,6 +273,10 @@ ADMIN_COMMANDS = [
     {
         "command": "u",
         "description": "⬆️ Upload a character directly (admin)"
+    },
+    {
+        "command": "kill",
+        "description": "🧹 Remove a user's saved character data (VIP)"
     }
 ]
 ALL_OWNER_COMMANDS = USER_COMMANDS + ADMIN_COMMANDS
@@ -347,11 +351,23 @@ def sync_bot_profile() -> None:
         ({"type": "all_chat_administrators"}, ALL_OWNER_COMMANDS, "group administrators"),
     ]
     for scope, commands, label in command_scopes:
-        try:
-            _apply_command_scope(scope, commands)
-            LOGGER("LUNA").info("Telegram command menu synced: %s (%s commands)", label, len(commands))
-        except Exception as exc:
-            LOGGER("LUNA").warning("Could not sync command menu for %s: %s", label, exc)
+        language_codes = ("", "en", "hi") if scope.get("type") == "default" else ("",)
+        for language_code in language_codes:
+            try:
+                _apply_command_scope(scope, commands, language_code)
+                LOGGER("LUNA").info(
+                    "Telegram command menu synced: %s (%s commands, language=%r)",
+                    label,
+                    len(commands),
+                    language_code or "default",
+                )
+            except Exception as exc:
+                LOGGER("LUNA").warning(
+                    "Could not sync command menu for %s (%r): %s",
+                    label,
+                    language_code or "default",
+                    exc,
+                )
 
     # Give the configured bot owner the complete command list in the private bot chat.
     if getattr(LUNA, "OWNER_ID", 0):
