@@ -258,6 +258,7 @@ async def claim_character(client, callback_query):
         "media_type",
         "media_chat_id",
         "media_message_id",
+        "watermarked",
         "img_url",
         "vid_url",
         "thum_url",
