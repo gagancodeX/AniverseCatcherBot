@@ -52,12 +52,12 @@ async def check_character(client, message):
         elif media_type == 'animation':
             await message.reply_animation(media_file_id, caption=text, reply_markup=keyboard)
         else:
-            watermarked_photo = await get_watermarked_photo(client, media_file_id)
+            watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
             await message.reply_photo(watermarked_photo or media_file_id, caption=text, reply_markup=keyboard)
     elif 'vid_url' in character:
         await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard)
     elif 'img_url' in character:
-        watermarked_photo = await get_watermarked_photo(client, character['img_url'])
+        watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, character['img_url'])
         await message.reply_photo(watermarked_photo or character['img_url'], caption=text, reply_markup=keyboard)
     else:
         await message.reply_text(text, reply_markup=keyboard)
