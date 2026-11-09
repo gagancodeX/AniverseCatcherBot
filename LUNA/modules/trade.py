@@ -142,7 +142,7 @@ async def trade(client, message):
     # Start auto-cancel task
     asyncio.create_task(auto_cancel_trade(trade_id, sender_id, receiver_id))
 
-@bot_client.on_callback_query(filters.create(lambda _, __, query: query.data.startswith(("confirm_trade_", "cancel_trade_"))))
+@bot_client.on_callback_query(filters.create(lambda _, __, query: isinstance(getattr(query, "data", None), str) and query.data.startswith(("confirm_trade_", "cancel_trade_"))))
 async def on_trade_callback(client, callback_query):
     user_id = callback_query.from_user.id
     data = callback_query.data
