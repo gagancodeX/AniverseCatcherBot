@@ -326,9 +326,9 @@
 .game-screen.active #gameCanvas {
   display: block;
   width: 100%;
-  height: 100%;
-  max-height: none;
-  aspect-ratio: auto;
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 720 / 1000;
   object-fit: contain;
 }
 
