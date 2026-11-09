@@ -105,9 +105,14 @@ async def request_upload(client, message):
             "Choose a rarity to approve the character, or cancel this request:"
         )
 
+        image_file_id = (
+            reply.photo.file_id if reply.photo
+            else reply.document.file_id if reply.document
+            else None
+        )
         watermarked_photo = (
-            await get_watermarked_photo(client, reply.photo.file_id)
-            if reply.photo else None
+            await get_watermarked_photo(client, image_file_id)
+            if image_file_id else None
         )
         if watermarked_photo:
             saved_message = await client.send_photo(
