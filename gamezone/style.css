@@ -29,3 +29,26 @@
  .runner-pad button{min-height:40px;font-size:10px}
  .game-screen.runner-active #gameCanvas{max-height:calc(100dvh - 265px)}
 }
+
+
+/* Subway Hero Run control deck */
+.game-screen.runner-active .game-shell{width:min(480px,100%);gap:8px}
+.game-screen.runner-active .game-stage{border-radius:18px;border-color:rgba(155,226,202,.32);box-shadow:0 18px 55px rgba(0,0,0,.42),0 0 28px rgba(62,185,190,.08)}
+.runner-tools button,.runner-pad button{font-family:'Bungee',Impact,'Arial Black',sans-serif;letter-spacing:.3px;border-radius:14px;padding:12px 5px;box-shadow:0 5px 0 rgba(0,0,0,.28);transition:transform .07s,box-shadow .07s,filter .15s}
+.runner-tools button:active,.runner-pad button:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.28);filter:brightness(1.12)}
+.runner-pad button{min-height:48px;font-size:12px}
+.runner-pad #runnerLeft,.runner-pad #runnerRight{background:linear-gradient(135deg,#12d6a0,#0a8bd6);border-color:rgba(126,242,216,.4)}
+.runner-pad #runnerJump{background:linear-gradient(135deg,#00c2ff,#7a4dff);border-color:rgba(157,205,255,.45)}
+.runner-pad #runnerRoll{background:linear-gradient(135deg,#ff7a18,#ff2f7d);border-color:rgba(255,174,135,.4)}
+.runner-tools #runnerHeroBtn{background:linear-gradient(135deg,#253e61,#394d78)}
+.runner-tools #runnerPauseBtn{background:linear-gradient(135deg,#6f5630,#9b6b36);color:#fff0c9}
+.runner-tools #runnerSoundBtn{background:linear-gradient(135deg,#34445c,#4d416b)}
+.runner-controls p{font-size:9px;letter-spacing:.45px}
+@media(max-width:520px){
+ .game-screen.runner-active{padding:8px}
+ .game-screen.runner-active .game-shell{gap:7px}
+ .runner-tools{gap:7px}
+ .runner-tools button{padding:10px 3px;font-size:8px}
+ .runner-pad{gap:7px}
+ .runner-pad button{min-height:45px;font-size:10px}
+}
