@@ -14,6 +14,7 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import LUNA
+from telegram import Update
 from LUNA import TOKEN, bot_client, application, LOGGER, FORCE_JOIN, BOT_LOGGING
 from LUNA.modules import ALL_MODULES
 
@@ -485,6 +486,7 @@ def main() -> None:
         # for group message counting, inline queries and a few utility commands.
         application.run_polling(
             drop_pending_updates=True,
+            allowed_updates=Update.ALL_TYPES,
             close_loop=False,
         )
     finally:
