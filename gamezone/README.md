@@ -5,11 +5,11 @@ A mobile-first Telegram Mini App with six original canvas arcade games:
 - **Flappy Luna** — one-touch flight through moon gates.
 - **Luna Run** — three-lane endless runner with swipe, jump and slide controls.
 - **Sky Jumper** — endless vertical platform jumper.
-- **Star Blaster** — touch-controlled space shooter.
+- **Star Defender** — guide a small starship and protect your shield.
 - **Neon Breaker** — paddle-and-ball block breaker.
 - **Neon Racer** — three-lane arcade racer.
 
-All artwork is drawn with Canvas/CSS. No Subway Surfers, Flappy Bird, or other third-party game assets are included. Personal bests and play counts are stored locally on the player's device in this first release.
+The lobby art is a set of original hand-authored SVG illustrations. In-game environments, characters, gates, traffic, collectibles and effects are rendered with custom Canvas drawing code; the build uses no generated image packs or third-party game sprites. No Subway Surfers, Flappy Bird, or other third-party game assets are included. Personal bests and play counts are stored locally on the player's device in this first release.
 
 ## Host the Mini App
 
