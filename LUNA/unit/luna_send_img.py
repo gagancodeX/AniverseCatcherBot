@@ -9,6 +9,8 @@ import asyncio
 import time
 from telegram import Update
 from telegram.ext import CallbackContext
+from LUNA import bot_client
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 log = "-1002155818429"
 
@@ -118,8 +120,9 @@ async def send_image(update: Update, context: CallbackContext) -> None:
                 caption=caption, parse_mode="Markdown"
             )
         else:
+            watermarked_photo = await get_watermarked_photo(bot_client, media_file_id)
             sent_message = await context.bot.send_photo(
-                chat_id=chat_id, photo=media_file_id,
+                chat_id=chat_id, photo=watermarked_photo or media_file_id,
                 caption=caption, parse_mode="Markdown"
             )
     elif selected_character.get("vid_url"):
@@ -128,8 +131,10 @@ async def send_image(update: Update, context: CallbackContext) -> None:
             caption=caption, parse_mode="Markdown"
         )
     else:
+        image_reference = selected_character.get("img_url")
+        watermarked_photo = await get_watermarked_photo(bot_client, image_reference)
         sent_message = await context.bot.send_photo(
-            chat_id=chat_id, photo=selected_character["img_url"],
+            chat_id=chat_id, photo=watermarked_photo or image_reference,
             caption=caption, parse_mode="Markdown"
         )
 
