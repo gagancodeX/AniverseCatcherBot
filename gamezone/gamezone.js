@@ -70,7 +70,7 @@
   function initGame(id){
     game={time:0,particles:[],stars:Array.from({length:65},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,a:Math.random()*.65+.2,s:Math.random()*.6+.15}))};
     if(id==='flappy'){game.player={x:190,y:470,vy:0,r:28,rot:0};game.pipes=[];game.spawn=0;game.passed=0;game.pipes.push(makePipe(900));}
-    if(id==='runner'){game.lane=1;game.targetLane=1;game.laneVisual=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;game.runnerMode='select';game.heroIndex=runRead('hero',0);game.runnerDistance=0;game.runnerStage=0;game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};game.runnerKeys=1;game.runnerInvul=0;game.runnerSaved=false;game.runnerBest=bestOf('runner');try{game.runnerKeys=runRead('keys',1)}catch(_){}}if(id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
+    if(id==='runner'){game.lane=1;game.targetLane=1;game.laneVisual=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;game.runnerMode='select';game.heroIndex=runRead('hero',0);game.runnerDistance=0;game.runnerStage=0;game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};game.runnerKeys=1;game.runnerInvul=0;game.rideT=0;game.runnerSaved=false;game.runnerBest=bestOf('runner');try{game.runnerKeys=runRead('keys',1)}catch(_){}}if(id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
     if(id==='jumper'){game.player={x:360,y:790,vx:0,vy:-620,r:23};game.platforms=[];for(let i=0;i<9;i++)game.platforms.push({x:70+Math.random()*530,y:860-i*105,w:110+Math.random()*55});game.camera=0;game.left=false;game.right=false;}
     if(id==='space'){game.player={x:360,y:840};game.bullets=[];game.enemies=[];game.spawn=0;game.fire=0;game.drag=false;game.lives=3;game.scoreTime=0;}
     if(id==='brick'){game.paddle={x:360,y:915,w:150};game.ball={x:360,y:870,vx:220,vy:-480,r:12,stuck:true};game.bricks=[];for(let row=0;row<6;row++)for(let col=0;col<8;col++)game.bricks.push({x:43+col*80,y:145+row*48,w:69,h:25,hp:row<2?2:1,alive:true,hue:(row*35+col*9)%360});game.lives=3;}
@@ -862,6 +862,8 @@
   // Hero select, changing rail districts, trains, ramps, coin trails,
   // power-ups, revive keys, pause and tactile controls.
   // -----------------------------------------------------------------------
+  games.runner.start='Pick your hero, then dash through changing rail districts. Dodge trains, jump barriers, roll under signs and collect coins and power-ups.';
+  games.runner.over='The last train caught up. Choose a new runner and beat your best distance.';
   const RUN_HEROES=[
     {name:'LUNA',tag:'MOONLIGHT SPRINTER',body:'#9069b8',shine:'#d8b8f0',dark:'#302746',scarf:'#f1c58b',hair:'#28233c',skin:'#e8b99c',pack:'#5c9f9d',accent:'#ffe3a6'},
     {name:'RONIN',tag:'NIGHT TRACK RUNNER',body:'#315b9a',shine:'#89b9ee',dark:'#18243d',scarf:'#f07870',hair:'#292438',skin:'#dca27f',pack:'#a54d60',accent:'#ffb18e'},
@@ -1130,7 +1132,7 @@
     game.pickups.filter(o=>o.type!=='coin'&&o.type!=='super').sort((a,b)=>a.z-b.z).forEach(runDrawPickup);
     game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(runDrawObstacle);
     const lane=game.laneVisual===undefined?1:game.laneVisual;
-    const heroY=845-(game.jump||0)*.85-(game.runnerEffects.jet>0?125:0);
+    const heroY=845-(game.jump||0)*.85-(game.runnerEffects.jet>0?125:0)-(game.rideT>0?105:0);
     runDrawHero(game.heroIndex,360+(lane-1)*170,heroY,1.02,game.time*14,game.slide>0,game.jump>30);
     runDrawHUD();
     // Distance and active district ribbon
@@ -1176,7 +1178,7 @@
   function runRetry(){
     runSaveResult();
     game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};
-    game.runnerKeys=runRead('keys',game.runnerKeys);
+    game.runnerKeys=runRead('keys',game.runnerKeys);game.rideT=0;
     game.runnerMode='select';game.runnerSaved=false;
     game.obstacles=[];game.pickups=[];game.runnerDistance=0;game.speed=430;game.spawn=0;
     game.jump=0;game.jumpV=0;game.slide=0;setScore(0);coins=0;
@@ -1211,7 +1213,8 @@
     if(game.spawn>Math.max(.78,1.32-game.speed/1900)){
       const lane=Math.floor(Math.random()*3),r=Math.random();
       const type=r<.23?'train':r<.61?'barrier':r<.83?'overhead':'ramp';
-      game.obstacles.push({lane,z:.015,type});
+      if(type==='ramp'){game.obstacles.push({lane,z:.015,type:'ramp'});game.obstacles.push({lane,z:.255,type:'train'});game.pickups.push({lane,z:.24,type:'super',raised:true});}
+      else game.obstacles.push({lane,z:.015,type});
       // Each sequence leaves at least one readable path.
       const safeLane=(lane+1+Math.floor(Math.random()*2))%3;
       for(let i=0;i<6;i++)game.pickups.push({lane:safeLane,z:-.12+i*.105,type:i%4===3?'super':'coin'});
@@ -1224,7 +1227,7 @@
     }
     game.obstacles.forEach(o=>o.z+=travel);
     game.pickups.forEach(o=>o.z+=travel);
-    game.runnerInvul=Math.max(0,game.runnerInvul-dt);
+    game.runnerInvul=Math.max(0,game.runnerInvul-dt);game.rideT=Math.max(0,(game.rideT||0)-dt);
     Object.keys(game.runnerEffects).forEach(k=>game.runnerEffects[k]=Math.max(0,game.runnerEffects[k]-dt));
     game.laneVisual+=(game.targetLane-game.laneVisual)*Math.min(1,dt*12);
     if(game.jump>0||game.jumpV>0){
@@ -1252,7 +1255,8 @@
         if(Math.abs(o.lane-game.laneVisual)>.34||o.z<.91||o.z>1.035)continue;
         if(o.type==='barrier'&&game.jump>78)continue;
         if(o.type==='overhead'&&game.slide>0)continue;
-        if(o.type==='ramp'&&game.jump>55)continue;
+        if(o.type==='ramp'){game.rideT=2.7;game.jump=Math.max(game.jump,70);game.jumpV=0;continue;}
+        if(o.type==='train'&&game.rideT>0)continue;
         runCrash();return;
       }
     }
@@ -1285,7 +1289,7 @@
     if((e.key==='Enter'||e.key===' ')&&game.runnerMode==='select'){e.preventDefault();runStart()}
     else if((e.key==='p'||e.key==='P'||e.key==='Escape')&&game.runnerMode==='run'){e.preventDefault();game.runnerMode='paused'}
     else if((e.key==='Enter'||e.key===' ')&&game.runnerMode==='paused'){e.preventDefault();game.runnerMode='run'}
-    else if((e.key==='r'||e.key==='R')&&game.runnerMode==='over'){e.preventDefault();runRetry()}
+    else if((e.key==='r'||e.key==='R')&&game.runnerMode==='over'){e.preventDefault();if(game.runnerKeys>0)runContinue();else runRetry()}
   });
   // Touch deck shown only while Luna Run is open.
   $('runnerLeft').addEventListener('click',()=>action(-1,0));
@@ -1295,5 +1299,6 @@
   $('runnerHeroBtn').addEventListener('click',()=>{if(current==='runner'&&state==='playing')game.runnerMode='select'});
   $('runnerPauseBtn').addEventListener('click',()=>{if(current==='runner'&&state==='playing')game.runnerMode=game.runnerMode==='paused'?'run':'paused';$('runnerPauseBtn').textContent=game.runnerMode==='paused'?'▶ RESUME':'Ⅱ PAUSE'});
   $('runnerSoundBtn').addEventListener('click',()=>{soundOn=!soundOn;$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';if(soundOn)tone(540)});
+  $('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';
 
 })();
