@@ -89,7 +89,7 @@ async def on_new_chat_members(client: Client, message: Message):
 @app.on_message(filters.left_chat_member)
 async def on_left_chat_member(client: Client, message: Message):
     """Log when Luna is removed from a group or supergroup."""
-    if not message.chat or message.chat.type not in ("group", "supergroup"):
+    if not message.chat or message.chat.type not in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
         return
 
     bot_user = await client.get_me()
