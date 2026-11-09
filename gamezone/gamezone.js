@@ -22,7 +22,7 @@
     runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Change lanes, jump over barriers and collect moon coins.',over:'The run is over. Ready for another dash?',color:'#f4c98b'},
     jumper:{title:'SKY JUMPER',symbol:'✧',hint:'TAP LEFT / RIGHT SIDE · ARROW KEYS',start:'Keep bouncing upward. Land on platforms and keep climbing.',over:'You reached the clouds. Try to climb higher!',color:'#9ce9ff'},
     space:{title:'STAR DEFENDER',symbol:'✦',hint:'DRAG TO MOVE · AUTO FIRE',start:'Slide your ship across the sky and dodge the incoming swarm.',over:'The stars are quiet again. Launch another mission?',color:'#9ce9ff'},
-    brick:{title:'NEON BREAKER',symbol:'▰',hint:'DRAG OR MOVE TO CONTROL THE PADDLE',start:'Keep the energy orb alive and clear every glowing block.',over:'The orb slipped away. Reset and try again.',color:'#f4a9df'},
+    brick:{title:'NEON BREAKER',symbol:'▰',hint:'TAP TO LAUNCH · DRAG TO MOVE THE PADDLE',start:'Tap the playfield to launch the orb, then drag to guide the paddle and clear every glowing block.',over:'The orb slipped away. Reset and try again.',color:'#f4a9df'},
     racer:{title:'NEON RACER',symbol:'◈',hint:'SWIPE LEFT / RIGHT · ARROW KEYS',start:'Three lanes. Endless neon. Avoid traffic and collect stars.',over:'The road ends here. Can you beat your record?',color:'#f4a9df'}
   };
   const keys = Object.create(null);
@@ -199,14 +199,44 @@
     if(pointerDown){p.x+=(pointerX-p.x)*Math.min(1,dt*12)}p.x=Math.max(45,Math.min(W-45,p.x));
   }
   function updateBrick(dt){
-    const p=game.paddle,b=game.ball;if(pointerDown)p.x+=(pointerX-p.x)*Math.min(1,dt*14);p.x=Math.max(p.w/2+8,Math.min(W-p.w/2-8,p.x));
+    const p=game.paddle,b=game.ball;
+    if(pointerDown)p.x+=(pointerX-p.x)*Math.min(1,dt*14);
+    p.x=Math.max(p.w/2+8,Math.min(W-p.w/2-8,p.x));
     if(b.stuck){b.x=p.x;b.y=p.y-35;return}
+
     b.x+=b.vx*dt;b.y+=b.vy*dt;
-    if(b.x<b.r||b.x>W-b.r){b.vx*=-1;tone(300)}if(b.y<b.r+25){b.vy=Math.abs(b.vy);tone(300)}
-    if(b.y>p.y-10&&b.y<p.y+18&&b.x>p.x-p.w/2&&b.x<p.x+p.w/2&&b.vy>0){b.vy=-Math.abs(b.vy);b.vx+=(b.x-p.x)/p.w*260;tone(540)}
-    for(const brick of game.bricks){if(brick.alive&&b.x>brick.x-b.r&&b.x<brick.x+brick.w+b.r&&b.y>brick.y-b.r&&b.y<brick.y+brick.h+b.r){brick.hp--;if(brick.hp<=0){brick.alive=false;setScore(score+5);coins+=1}b.vy*=-1;tone(470);break}}
-    if(game.bricks.every(br=>!br.alive)){game.bricks.forEach(br=>{br.alive=true;br.hp=1});b.vy=-Math.abs(b.vy);setScore(score+100)}
-    if(b.y>H+20){game.lives--;if(game.lives<=0){endGame();return}b.stuck=true;b.vx=220;b.vy=-480}
+    if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx);tone(300)}
+    else if(b.x>W-b.r){b.x=W-b.r;b.vx=-Math.abs(b.vx);tone(300)}
+    if(b.y<b.r+25){b.y=b.r+25;b.vy=Math.abs(b.vy);tone(300)}
+
+    if(b.y>p.y-10&&b.y<p.y+18&&b.x>p.x-p.w/2&&b.x<p.x+p.w/2&&b.vy>0){
+      b.y=p.y-b.r;
+      b.vy=-Math.max(260,Math.abs(b.vy));
+      b.vx=Math.max(-440,Math.min(440,b.vx+(b.x-p.x)/p.w*260));
+      tone(540);
+    }
+
+    for(const brick of game.bricks){
+      if(!brick.alive||b.x<=brick.x-b.r||b.x>=brick.x+brick.w+b.r||b.y<=brick.y-b.r||b.y>=brick.y+brick.h+b.r)continue;
+      const incomingY=b.vy;
+      brick.hp--;
+      if(brick.hp<=0){brick.alive=false;setScore(score+5);coins+=1}
+      b.y=incomingY>0?brick.y-b.r:brick.y+brick.h+b.r;
+      b.vy=-incomingY;
+      tone(470);
+      break;
+    }
+
+    if(game.bricks.every(br=>!br.alive)){
+      game.bricks.forEach(br=>{br.alive=true;br.hp=1});
+      b.vy=-Math.max(260,Math.abs(b.vy));
+      setScore(score+100);
+    }
+    if(b.y>H+20){
+      game.lives--;
+      if(game.lives<=0){endGame();return}
+      b.stuck=true;b.vx=220;b.vy=-480;
+    }
   }
   function flap(){if(current!=='flappy')return;if(state==='ready'){startGame();}if(state==='playing'){game.player.vy=-480;game.player.rot=-.45;tone(510)}}
   function action(dx,dy){
