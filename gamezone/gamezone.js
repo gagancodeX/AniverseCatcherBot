@@ -55,6 +55,7 @@
   }
   function openGame(id){
     if(!games[id])return;
+    if(id==='racer'){window.location.href='/racer.html';return;}
     current=id;state='ready';const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('runner-3d-active');screen.classList.add('active');screen.classList.toggle('runner-active',id==='runner');screen.setAttribute('aria-hidden','false');$('runnerControls').hidden=id!=='runner';
     if(id==='runner'){$('runnerPauseBtn').textContent='Ⅱ PAUSE';$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';}
     $('gameTitle').textContent=games[id].title;$('controlHint').textContent=games[id].hint;$('overlaySymbol').textContent=games[id].symbol;
@@ -2089,7 +2090,9 @@
     const requestedGame = Object.prototype.hasOwnProperty.call(games, rawGame)
       ? rawGame
       : TELEGRAM_GAME_ALIASES[rawGame];
-    if (requestedGame) {
+    if (requestedGame === 'racer') {
+      window.location.replace('/racer.html');
+    } else if (requestedGame) {
       openGame(requestedGame);
       startGame();
     }
