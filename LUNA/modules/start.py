@@ -228,13 +228,16 @@ async def start_private_command(client, message):
 
     try:
         log_chat_id = normalize_logging_chat_id(BOT_LOGGING)
-        await client.send_message(
+        # Use the Bot API client here; Pyrogram can attempt MTProto contact
+        # resolution for string peers, which Telegram does not allow bots to call.
+        await application.bot.send_message(
             chat_id=log_chat_id,
             text=(
                 f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\\n\\n"
                 f"<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\\n"
                 f"<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username or 'N/A'}"
             ),
+            parse_mode="HTML",
         )
     except ValueError as exc:
         LOGGER("LUNA").warning("Could not send /start log message: invalid BOT_LOGGING: %s", exc)
