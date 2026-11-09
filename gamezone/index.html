@@ -3,111 +3,118 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#090817">
-  <meta name="description" content="Luna GameZone — a collection of original neon arcade mini-games.">
-  <title>Luna GameZone · Arcade</title>
+  <meta name="theme-color" content="#0c1424">
+  <meta name="description" content="Luna GameZone — six original arcade games, made for quick breaks and high scores.">
+  <title>Luna GameZone — After Hours Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="ambient ambient-a"></div>
-  <div class="ambient ambient-b"></div>
+  <div class="grain" aria-hidden="true"></div>
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Luna GameZone home">
-        <span class="brand-mark">☾</span>
-        <span><b>LUNA</b><small>GAMEZONE</small></span>
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M24.9 5.3a13.6 13.6 0 1 0 5.8 23.4A14.9 14.9 0 0 1 24.9 5.3Z" fill="currentColor"/><path d="m9 8 1.4 3.5L14 13l-3.6 1.4L9 18l-1.4-3.6L4 13l3.6-1.5L9 8Z" fill="#f4c96f"/></svg></span>
+        <span class="brand-name"><b>LUNA</b><small>AFTER HOURS ARCADE</small></span>
       </a>
       <div class="top-actions">
-        <span class="live-pill"><i></i> ARCADE ONLINE</span>
-        <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">♪ <span>Sound</span></button>
+        <span class="online-tag"><i></i> ARCADE OPEN</span>
+        <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound"><span class="sound-glyph">♪</span><span id="soundLabel">SOUND OFF</span></button>
       </div>
     </header>
 
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow"><span>✦</span> YOUR NEXT HIGH SCORE STARTS HERE</p>
-        <h1>PLAY BEYOND<br><em>THE STARS.</em></h1>
-        <p class="hero-sub" id="welcomeText">A little arcade magic, made for your Luna universe.</p>
-        <div class="hero-meta">
-          <span>✧ 6 MINI GAMES</span><span>•</span><span>⚡ INSTANT PLAY</span><span>•</span><span>☾ MOBILE READY</span>
+        <p class="eyebrow"><span class="eyebrow-mark">01</span> THE LUNA SIDE QUEST</p>
+        <h1>AFTER HOURS.<br><em>HIGH SCORES.</em></h1>
+        <p class="hero-sub" id="welcomeText">Six little worlds. One more round is never just one.</p>
+        <div class="hero-bottom">
+          <span class="hero-count"><b>06</b> ORIGINAL GAMES</span>
+          <span class="hero-line"></span>
+          <span class="hero-note">PICK UP & PLAY</span>
         </div>
       </div>
-      <div class="hero-orbit" aria-hidden="true">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <div class="planet"><span>☾</span></div>
-        <i class="spark spark-one">✦</i><i class="spark spark-two">✧</i><i class="spark spark-three">✦</i>
-      </div>
+      <div class="hero-art"><img src="assets/hero-arcade.svg" alt="Original Luna arcade mascot illustration" fetchpriority="high"><span class="art-stamp">LUNA<br>CLUB <b>✦</b></span></div>
+      <span class="hero-index">LZ / 001</span>
     </section>
 
     <section class="stats-row" aria-label="Your arcade stats">
-      <div class="stat-card"><span class="stat-icon">🏆</span><div><small>PERSONAL BEST</small><b id="bestOverall">0</b></div></div>
-      <div class="stat-card"><span class="stat-icon">🎮</span><div><small>GAMES PLAYED</small><b id="gamesPlayed">0</b></div></div>
-      <div class="stat-card"><span class="stat-icon">🪙</span><div><small>ARCADE COINS</small><b id="arcadeCoins">0</b></div></div>
+      <div class="stat-card"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6L2.5 9l6.6-.9L12 2Z"/></svg></span><div><small>PERSONAL BEST</small><b id="bestOverall">0</b></div></div>
+      <div class="stat-card"><span class="stat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h4M9 7v4M15.5 9.5h.01M18 12h.01"/></svg></span><div><small>GAMES PLAYED</small><b id="gamesPlayed">0</b></div></div>
+      <div class="stat-card"><span class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5c-.6-.6-1.6-1-3-1-1.7 0-2.8.8-2.8 2s1.1 1.8 2.8 2 2.9.8 2.9 2-1.2 2-3 2c-1.3 0-2.4-.4-3.2-1.2M12 5.5v13"/></svg></span><div><small>ARCADE COINS</small><b id="arcadeCoins">0</b></div></div>
     </section>
 
     <div class="section-heading">
-      <div><p class="eyebrow">✦ CHOOSE YOUR ADVENTURE</p><h2>THE ARCADE <span>COLLECTION</span></h2></div>
-      <span class="section-count">01 / 06</span>
+      <div><p class="eyebrow"><span class="eyebrow-mark">02</span> CHOOSE YOUR GAME</p><h2>THE ARCADE <span>LINE-UP</span></h2></div>
+      <span class="section-count">VOL. 01 <i>—</i> 06</span>
     </div>
 
     <section class="game-grid" id="gameGrid">
-      <button class="game-card featured-card" data-game="flappy">
-        <span class="card-tag">FEATURED</span><span class="card-art art-flappy"><span class="art-moon">☾</span><span class="art-bird">✦</span><span class="art-cloud cloud-a"></span><span class="art-cloud cloud-b"></span></span>
-        <span class="card-info"><span><b>FLAPPY LUNA</b><small>Tap, fly & weave through the gates</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ SKILL · TIMING</span><span class="best-label" data-best="flappy">BEST 0</span></span>
+      <button class="game-card featured-card" data-game="flappy" aria-label="Play Flappy Luna">
+        <span class="card-topline"><span class="card-tag">01 / FEATURED</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/flappy-luna.svg" alt="Flappy Luna game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>FLAPPY LUNA</b><small>One tap. One more try.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>SKILL / TIMING</span><span class="best-label" data-best="flappy">BEST 0</span></span>
       </button>
-      <button class="game-card featured-card" data-game="runner">
-        <span class="card-tag tag-gold">HOT RUN</span><span class="card-art art-runner"><span class="run-sun"></span><span class="run-track"></span><span class="run-player">◆</span><span class="run-star">✦</span></span>
-        <span class="card-info"><span><b>LUNA RUN</b><small>Dodge, dash & collect moon coins</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ ARCADE · REFLEX</span><span class="best-label" data-best="runner">BEST 0</span></span>
+      <button class="game-card featured-card" data-game="runner" aria-label="Play Luna Run">
+        <span class="card-topline"><span class="card-tag tag-coral">02 / ENDLESS RUN</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/luna-run.svg" alt="Luna Run game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>LUNA RUN</b><small>Keep moving. Find your flow.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>REFLEX / RUN</span><span class="best-label" data-best="runner">BEST 0</span></span>
       </button>
-      <button class="game-card" data-game="jumper">
-        <span class="card-art art-jumper"><span class="jump-platform p-one"></span><span class="jump-platform p-two"></span><span class="jump-gem">✧</span><span class="jump-star">✦</span></span>
-        <span class="card-info"><span><b>SKY JUMPER</b><small>Keep climbing, don't look down</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ ENDLESS · JUMP</span><span class="best-label" data-best="jumper">BEST 0</span></span>
+      <button class="game-card" data-game="jumper" aria-label="Play Sky Jumper">
+        <span class="card-topline"><span class="card-tag">03 / VERTICAL</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/sky-jumper.svg" alt="Sky Jumper game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>SKY JUMPER</b><small>Chase the next cloud.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>ENDLESS / JUMP</span><span class="best-label" data-best="jumper">BEST 0</span></span>
       </button>
-      <button class="game-card" data-game="space">
-        <span class="card-art art-space"><span class="space-ship">▲</span><span class="space-laser"></span><span class="space-star s-one">✦</span><span class="space-star s-two">✧</span><span class="space-star s-three">✦</span></span>
-        <span class="card-info"><span><b>STAR BLASTER</b><small>Defend the galaxy from the swarm</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ SHOOTER · SURVIVAL</span><span class="best-label" data-best="space">BEST 0</span></span>
+      <button class="game-card" data-game="space" aria-label="Play Star Defender">
+        <span class="card-topline"><span class="card-tag">04 / COSMIC</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/star-blaster.svg" alt="Star Defender game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>STAR DEFENDER</b><small>Keep the little stars safe.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>ARCADE / DODGE</span><span class="best-label" data-best="space">BEST 0</span></span>
       </button>
-      <button class="game-card" data-game="brick">
-        <span class="card-art art-brick"><span class="brick-ball"></span><span class="brick-row"><i></i><i></i><i></i><i></i></span><span class="brick-row row-two"><i></i><i></i><i></i></span><span class="brick-paddle"></span></span>
-        <span class="card-info"><span><b>NEON BREAKER</b><small>Smash the blocks, save the ball</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ CLASSIC · PRECISION</span><span class="best-label" data-best="brick">BEST 0</span></span>
+      <button class="game-card" data-game="brick" aria-label="Play Neon Breaker">
+        <span class="card-topline"><span class="card-tag">05 / CLASSIC</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/neon-breaker.svg" alt="Neon Breaker game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>NEON BREAKER</b><small>Clean lines. Clear the board.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>CLASSIC / PRECISION</span><span class="best-label" data-best="brick">BEST 0</span></span>
       </button>
-      <button class="game-card" data-game="racer">
-        <span class="card-art art-racer"><span class="race-road"></span><span class="race-car">▰</span><span class="race-line line-a"></span><span class="race-line line-b"></span></span>
-        <span class="card-info"><span><b>NEON RACER</b><small>Pick a lane and outrun the night</small></span><span class="play-arrow">↗</span></span>
-        <span class="card-footer"><span>✦ SPEED · REFLEX</span><span class="best-label" data-best="racer">BEST 0</span></span>
+      <button class="game-card" data-game="racer" aria-label="Play Neon Racer">
+        <span class="card-topline"><span class="card-tag tag-coral">06 / NIGHT DRIVE</span><span class="card-dot"></span></span>
+        <span class="card-art"><img src="assets/neon-racer.svg" alt="Neon Racer game artwork" loading="lazy"></span>
+        <span class="card-info"><span><b>NEON RACER</b><small>Three lanes. No wrong turn.</small></span><span class="play-arrow">↗</span></span>
+        <span class="card-footer"><span>SPEED / REFLEX</span><span class="best-label" data-best="racer">BEST 0</span></span>
       </button>
     </section>
 
-    <footer class="footer"><span>☾ LUNA GAMEZONE</span><span>MADE FOR THE NIGHT OWLS ✦</span></footer>
+    <footer class="footer"><span><b>☾ LUNA</b> GAMEZONE</span><span>BUILT FOR THE IN-BETWEEN <i>✦</i></span><span class="footer-code">LZ-2026</span></footer>
   </main>
 
   <div class="game-screen" id="gameScreen" aria-hidden="true">
     <div class="game-shell">
       <header class="game-topbar">
         <button class="icon-btn" id="backButton" aria-label="Back to games">←</button>
-        <div class="game-title-wrap"><small>NOW PLAYING</small><b id="gameTitle">FLAPPY LUNA</b></div>
+        <div class="game-title-wrap"><small>NOW PLAYING / LUNA ARCADE</small><b id="gameTitle">FLAPPY LUNA</b></div>
         <div class="score-box"><small>SCORE</small><b id="scoreValue">0</b></div>
       </header>
       <div class="game-stage">
         <canvas id="gameCanvas" width="720" height="1000" aria-label="Arcade game area"></canvas>
         <div class="game-overlay" id="gameOverlay">
           <div class="overlay-card">
-            <div class="overlay-symbol" id="overlaySymbol">☾</div>
+            <div class="overlay-symbol" id="overlaySymbol">✦</div>
             <p class="eyebrow" id="overlayEyebrow">READY PLAYER ONE</p>
-            <h2 id="overlayTitle">LET'S FLY.</h2>
-            <p id="overlayText">Tap anywhere to flap through the moon gates.</p>
+            <h2 id="overlayTitle">LET'S PLAY.</h2>
+            <p id="overlayText">Your next high score is waiting.</p>
             <button class="primary-button" id="startButton">START GAME <span>→</span></button>
           </div>
         </div>
       </div>
       <div class="game-bottom">
-        <div class="control-hint" id="controlHint">TAP TO FLY · SPACE TO FLAP</div>
+        <div class="control-hint" id="controlHint">TAP TO PLAY</div>
         <button class="restart-mini" id="restartButton">↻ RESTART</button>
       </div>
     </div>
