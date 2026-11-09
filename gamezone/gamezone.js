@@ -84,7 +84,7 @@
   }
   function openGame(id){
     if(!games[id])return;
-    current=id;state='ready';screen.classList.add('active');screen.classList.toggle('runner-active',id==='runner');screen.setAttribute('aria-hidden','false');$('runnerControls').hidden=id!=='runner';
+    current=id;state='ready';const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('runner-3d-active');screen.classList.add('active');screen.classList.toggle('runner-active',id==='runner');screen.setAttribute('aria-hidden','false');$('runnerControls').hidden=id!=='runner';
     $('gameTitle').textContent=games[id].title;$('controlHint').textContent=games[id].hint;$('overlaySymbol').textContent=games[id].symbol;
     $('overlayTitle').textContent='READY TO PLAY?';$('overlayText').textContent=games[id].start;$('overlayEyebrow').textContent='LUNA ARCADE · '+id.toUpperCase();
     $('startButton').innerHTML='START GAME <span>→</span>';overlay.classList.remove('hidden');
@@ -92,7 +92,7 @@
     if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.expand();Telegram.WebApp.requestFullscreen&&Telegram.WebApp.requestFullscreen();Telegram.WebApp.HapticFeedback.impactOccurred('light')}catch(_){}}
   }
   function closeGame(){
-    state='menu';current=null;cancelAnimationFrame(raf);screen.classList.remove('active','runner-active');$('runnerControls').hidden=true;screen.setAttribute('aria-hidden','true');
+    state='menu';current=null;cancelAnimationFrame(raf);const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('active','runner-active','runner-3d-active');$('runnerControls').hidden=true;screen.setAttribute('aria-hidden','true');
     if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.exitFullscreen&&Telegram.WebApp.exitFullscreen();Telegram.WebApp.BackButton.hide()}catch(_){}}
   }
   function endGame(){
