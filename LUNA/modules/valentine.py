@@ -100,7 +100,11 @@ async def valentine(_, message: t.Message):
                 if media_type == "video":
                     await message.reply_video(media_file_id, caption=caption)
                 elif media_type == "document":
-                    await message.reply_document(media_file_id, caption=caption)
+                    watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(bot, media_file_id)
+                    if watermarked_photo:
+                        await message.reply_photo(watermarked_photo, caption=caption)
+                    else:
+                        await message.reply_document(media_file_id, caption=caption)
                 elif media_type == "animation":
                     await message.reply_animation(media_file_id, caption=caption)
                 else:
