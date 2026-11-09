@@ -209,11 +209,17 @@ async def balance(client: Client, message: Message):
     else:
         target_data = await user_collection.find_one({"id": target_id}, projection)
 
-    user_balance = target_data.get("balance", 0) if target_data else 0
-    user_tokens = target_data.get("tokens", 0) if target_data else 0
-    safe_name = html.escape(str(target_name))
+    try:
+        user_balance = int((target_data or {}).get("balance", 0) or 0)
+    except (TypeError, ValueError):
+        user_balance = 0
 
-    heading = "COLLECTOR WALLET" if is_other_user else "YOUR LUNA WALLET"
+    try:
+        user_tokens = int((target_data or {}).get("tokens", 0) or 0)
+    except (TypeError, ValueError):
+        user_tokens = 0
+
+    safe_name = html.escape(str(target_name))
     response = (
         f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 𝗪𝗔𝗟𝗟𝗘𝗧 ✦\n\n"
         f"👤 {safe_name}\n"
