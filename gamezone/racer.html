@@ -35,23 +35,30 @@
   #instructions{position:absolute;z-index:4;top:105px;left:50%;transform:translateX(-50%);padding:6px 11px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,16,29,.52);color:#f0e8da;font-size:8px;font-weight:850;letter-spacing:.8px;white-space:nowrap;pointer-events:none;backdrop-filter:blur(8px)}
   .desktop-instructions{display:none}
   .race-mobile-controls{position:absolute;z-index:6;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-between;padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right));pointer-events:none}
+  .race-mobile-controls:before{content:"";position:absolute;z-index:-1;left:8px;right:8px;bottom:-10px;height:150px;border-radius:30px;background:linear-gradient(180deg,transparent,rgba(4,13,26,.2) 22%,rgba(4,13,26,.62));filter:blur(8px);pointer-events:none}
   .steer-cluster{display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:auto}
-  .steer-pad{position:relative;display:grid;place-items:center;width:116px;height:116px;padding:0;border:1px solid rgba(255,255,255,.32);border-radius:50%;background:radial-gradient(circle at 36% 26%,rgba(77,111,139,.82),rgba(7,20,37,.88) 66%);box-shadow:0 12px 30px rgba(0,0,0,.32),inset 0 2px 10px rgba(255,255,255,.14);touch-action:none;color:#ecfff9}
-  .steer-pad:before{content:"";position:absolute;inset:9px;border:1px solid rgba(120,242,211,.42);border-radius:50%;box-shadow:inset 0 0 0 7px rgba(255,255,255,.025)}
-  .wheel-rotor{position:relative;display:grid;place-items:center;width:70px;height:70px;border:7px solid rgba(229,240,240,.86);border-radius:50%;box-shadow:0 0 0 4px rgba(5,16,28,.52),inset 0 0 0 3px rgba(6,19,32,.9);font-size:22px;color:var(--mint);transition:transform .06s linear}
-  .wheel-rotor:before{content:"";position:absolute;top:-7px;left:50%;width:6px;height:24px;transform:translateX(-50%);border-radius:5px;background:var(--mint);box-shadow:0 0 10px rgba(120,242,211,.7)}
-  .steer-caption,.pedal-caption{color:rgba(247,250,246,.7);font-size:8px;font-weight:900;letter-spacing:1.5px;text-shadow:0 2px 5px #06101c}
-  .pedal-cluster{position:relative;display:flex;align-items:flex-end;gap:8px;padding-top:60px;pointer-events:auto}
-  .pedal,.nitro-control{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(255,255,255,.22);color:#fff;font-weight:950;letter-spacing:.7px;touch-action:none;box-shadow:0 9px 24px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.18)}
-  .pedal{width:62px;height:90px;border-radius:20px;background:linear-gradient(155deg,rgba(63,80,97,.95),rgba(9,22,39,.96));font-size:8px}
-  .pedal-symbol{font-size:23px;line-height:1}
-  .pedal-gas{width:76px;height:116px;border-radius:23px;background:linear-gradient(155deg,#15bd91,#075d58);border-color:rgba(125,255,220,.48);color:#effff9}
-  .pedal-gas .pedal-symbol{font-size:29px}
-  .pedal-brake{background:linear-gradient(155deg,#b86654,#682d3a);border-color:rgba(255,181,160,.44)}
-  .nitro-control{position:absolute;top:0;left:0;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#c6a6ff,#6942bd 72%);border-color:rgba(225,205,255,.65);font-size:8px;box-shadow:0 0 0 4px rgba(107,70,189,.18),0 8px 22px rgba(0,0,0,.3)}
-  .nitro-control .nitro-icon{font-size:19px;line-height:1}
-  .nitro-control small{font-size:8px;color:#f7efff}
-  .pedal.is-down,.nitro-control.is-down,.steer-pad.is-down{filter:brightness(1.25);transform:translateY(2px) scale(.97)}
+  .steer-pad{position:relative;display:grid;place-items:center;width:122px;height:122px;padding:0;border:1px solid rgba(255,255,255,.36);border-radius:50%;background:radial-gradient(circle at 32% 24%,rgba(93,130,153,.92),rgba(20,43,61,.96) 48%,rgba(5,15,29,.98) 76%);box-shadow:0 13px 30px rgba(0,0,0,.38),inset 0 2px 12px rgba(255,255,255,.18),inset 0 -8px 18px rgba(0,0,0,.28);touch-action:none;color:#ecfff9}
+  .steer-pad:before{content:"";position:absolute;inset:7px;border:2px solid rgba(120,242,211,.55);border-radius:50%;box-shadow:inset 0 0 0 6px rgba(255,255,255,.035),0 0 14px rgba(120,242,211,.12)}
+  .steer-pad:after{content:"";position:absolute;top:14px;left:50%;width:2px;height:10px;transform:translateX(-50%);border-radius:4px;background:var(--gold);box-shadow:0 0 9px rgba(255,209,138,.7)}
+  .wheel-rotor{position:relative;z-index:1;display:grid;place-items:center;width:78px;height:78px;border:8px solid rgba(225,237,239,.94);border-radius:50%;background:radial-gradient(circle at 35% 28%,#456578,#142a3d 78%);box-shadow:0 0 0 3px rgba(5,16,28,.7),inset 0 0 0 2px rgba(6,19,32,.9),0 3px 10px rgba(0,0,0,.35);transition:transform .06s linear}
+  .wheel-rotor:before{content:"";position:absolute;top:50%;left:12%;width:76%;height:6px;transform:translateY(-50%);border-radius:8px;background:linear-gradient(90deg,#879da7,#eff7f2 50%,#879da7);box-shadow:0 1px 4px rgba(0,0,0,.45)}
+  .wheel-rotor:after{content:"";position:absolute;top:50%;left:50%;width:6px;height:76%;transform:translate(-50%,-50%);border-radius:8px;background:linear-gradient(180deg,#dfeae6,#758b95);box-shadow:0 1px 4px rgba(0,0,0,.42)}
+  .wheel-hub{position:relative;z-index:2;width:23px;height:23px;border:2px solid rgba(240,255,250,.7);border-radius:50%;background:radial-gradient(circle at 35% 28%,#79f2d3,#146e69 72%);box-shadow:0 0 12px rgba(120,242,211,.35)}
+  .steer-caption,.pedal-caption{color:rgba(247,250,246,.82);font-size:8px;font-weight:950;letter-spacing:1.6px;text-shadow:0 2px 7px #06101c}
+  .pedal-cluster{position:relative;display:flex;align-items:flex-end;gap:9px;padding-top:66px;pointer-events:auto}
+  .pedal,.nitro-control{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;border:1px solid rgba(255,255,255,.25);color:#fff;font-weight:950;letter-spacing:1px;touch-action:none;box-shadow:0 9px 24px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.22),inset 0 -5px 10px rgba(0,0,0,.2);transition:transform .09s,filter .12s,box-shadow .12s}
+  .pedal:before{content:"";position:absolute;z-index:-1;inset:8px;border:1px solid rgba(255,255,255,.18);border-radius:inherit;background:repeating-linear-gradient(135deg,rgba(255,255,255,.11) 0 3px,transparent 3px 9px);opacity:.8}
+  .pedal:after{content:"";position:absolute;top:5px;left:22%;width:56%;height:3px;border-radius:9px;background:rgba(255,255,255,.48);box-shadow:0 0 8px rgba(255,255,255,.25)}
+  .pedal{width:64px;height:94px;border-radius:19px;background:linear-gradient(155deg,#5b7180 0%,#283f52 48%,#101e30 100%);font-size:8px;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+  .pedal-symbol{font-size:24px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .pedal-gas{width:78px;height:122px;border-radius:22px;background:linear-gradient(155deg,#24d8a3 0%,#0c927d 48%,#07534f 100%);border-color:rgba(125,255,220,.62);color:#effff9;box-shadow:0 10px 25px rgba(0,0,0,.35),0 0 18px rgba(38,220,173,.16),inset 0 1px rgba(255,255,255,.3),inset 0 -5px 10px rgba(0,0,0,.2)}
+  .pedal-gas .pedal-symbol{font-size:30px}
+  .pedal-brake{background:linear-gradient(155deg,#dc806a 0%,#a74c50 50%,#612a3b 100%);border-color:rgba(255,181,160,.58)}
+  .nitro-control{position:absolute;top:0;left:0;width:62px;height:62px;border-radius:50%;background:radial-gradient(circle at 32% 23%,#e3d0ff 0%,#a57bfa 35%,#7048cf 72%,#39226e 100%);border-color:rgba(237,223,255,.82);font-size:8px;box-shadow:0 0 0 4px rgba(107,70,189,.2),0 8px 22px rgba(0,0,0,.34),inset 0 2px 7px rgba(255,255,255,.48),inset 0 -5px 9px rgba(0,0,0,.24)}
+  .nitro-control:before{content:"";position:absolute;inset:5px;border:1px solid rgba(255,255,255,.42);border-radius:50%;pointer-events:none}
+  .nitro-control .nitro-icon{font-size:21px;line-height:1;text-shadow:0 2px 5px rgba(49,23,94,.45)}
+  .nitro-control small{font-size:8px;color:#fff}
+  .pedal.is-down,.nitro-control.is-down,.steer-pad.is-down{filter:brightness(1.22);transform:translateY(3px) scale(.97);box-shadow:0 3px 8px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.16)}
   .race-credit{position:absolute;z-index:5;right:13px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 128px);color:rgba(255,255,255,.48);font-size:7px;font-weight:800;letter-spacing:1.1px;pointer-events:none;text-shadow:0 2px 5px rgba(0,0,0,.6)}
   #fps,.hidden-tweaks,#music,#mute{display:none!important}
   @media (hover:hover) and (pointer:fine){.touch-instructions{display:none}.desktop-instructions{display:block}}
@@ -102,7 +109,7 @@
     <div class="race-mobile-controls" aria-label="Mobile racing controls">
       <div class="steer-cluster">
         <button type="button" id="steerPad" class="steer-pad" aria-label="Drag to steer left or right">
-          <span id="steerWheel" class="wheel-rotor">✦</span>
+          <span id="steerWheel" class="wheel-rotor"><i class="wheel-hub"></i></span>
         </button>
         <span class="steer-caption">STEERING</span>
       </div>
