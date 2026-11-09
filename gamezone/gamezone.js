@@ -1239,7 +1239,13 @@
     if(game.spawn>Math.max(.78,1.32-game.speed/1900)){
       const lane=Math.floor(Math.random()*3),r=Math.random();
       const type=r<.23?'train':r<.61?'barrier':r<.83?'overhead':'ramp';
-      if(type==='ramp'){game.obstacles.push({lane,z:.015,type:'ramp'});game.obstacles.push({lane,z:.255,type:'train'});game.pickups.push({lane,z:.24,type:'super',raised:true});}
+      if(type==='ramp'){
+         // The ramp must arrive before the train so the ride window is active
+         // when the train reaches the player.
+         game.obstacles.push({lane,z:.015,type:'ramp'});
+         game.obstacles.push({lane,z:-.22,type:'train'});
+         game.pickups.push({lane,z:.11,type:'super',raised:true});
+       }
       else game.obstacles.push({lane,z:.015,type});
       // Each sequence leaves at least one readable path.
       const safeLane=(lane+1+Math.floor(Math.random()*2))%3;
