@@ -121,6 +121,10 @@ USER_COMMANDS = [
         "description": "🏆 View collector rankings"
     },
     {
+        "command": "bounty",
+        "description": "📜 Create a wanted-style bounty poster"
+    },
+    {
         "command": "topgroups",
         "description": "🌐 See the top capture groups"
     },
