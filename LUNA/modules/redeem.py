@@ -126,7 +126,11 @@ async def redeem_character(client, message):
         if media_type == "video":
             await message.reply_video(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
         elif media_type == "document":
-            await message.reply_document(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+            watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
+            if watermarked_photo:
+                await message.reply_photo(watermarked_photo, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+            else:
+                await message.reply_document(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
         elif media_type == "animation":
             await message.reply_animation(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
         else:
