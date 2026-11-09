@@ -4,6 +4,7 @@ from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+import aiohttp
 
 
 WATERMARK_TEXT = "@LunaWaifuBot"
@@ -92,13 +93,19 @@ async def get_watermarked_photo(client, media_reference):
 
     downloaded = None
     try:
-        downloaded = await client.download_media(media_reference, in_memory=True)
-        if downloaded is None:
-            return None
-        if isinstance(downloaded, bytes):
-            source = BytesIO(downloaded)
+        if isinstance(media_reference, str) and media_reference.lower().startswith(("http://", "https://")):
+            timeout = aiohttp.ClientTimeout(total=20)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(media_reference) as response:
+                    response.raise_for_status()
+                    content = await response.read()
+            source = BytesIO(content)
         else:
-            source = downloaded
+            downloaded = await client.download_media(media_reference, in_memory=True)
+            if downloaded is None:
+                return None
+            source = BytesIO(downloaded) if isinstance(downloaded, bytes) else downloaded
+
         source.seek(0)
         return _watermark_image(source)
     except Exception as exc:
