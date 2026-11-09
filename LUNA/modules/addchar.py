@@ -7,6 +7,7 @@ from bson.objectid import ObjectId
 from pyrogram import filters, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from LUNA import app as bot_client, DATABASE_ID, db, collection, require_power, rarity_map
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 
 WRONG_FORMAT_TEXT = """✦ LUNA · CHARACTER REQUEST ✦
@@ -104,14 +105,27 @@ async def request_upload(client, message):
             "Choose a rarity to approve the character, or cancel this request:"
         )
 
-        saved_message = await client.copy_message(
-            chat_id=DATABASE_ID,
-            from_chat_id=reply.chat.id,
-            message_id=reply.id,
-            caption=database_caption,
-            parse_mode=enums.ParseMode.MARKDOWN,
-            reply_markup=keyboard,
+        watermarked_photo = (
+            await get_watermarked_photo(client, reply.photo.file_id)
+            if reply.photo else None
         )
+        if watermarked_photo:
+            saved_message = await client.send_photo(
+                chat_id=DATABASE_ID,
+                photo=watermarked_photo,
+                caption=database_caption,
+                parse_mode=enums.ParseMode.MARKDOWN,
+                reply_markup=keyboard,
+            )
+        else:
+            saved_message = await client.copy_message(
+                chat_id=DATABASE_ID,
+                from_chat_id=reply.chat.id,
+                message_id=reply.id,
+                caption=database_caption,
+                parse_mode=enums.ParseMode.MARKDOWN,
+                reply_markup=keyboard,
+            )
         media_type, media_file_id = extract_media_reference(saved_message)
 
         await upload_collection.update_one(
@@ -121,6 +135,7 @@ async def request_upload(client, message):
                 "media_type": media_type,
                 "media_chat_id": DATABASE_ID,
                 "media_message_id": saved_message.id,
+                "watermarked": bool(watermarked_photo),
             }},
         )
 
@@ -174,6 +189,7 @@ async def handle_callback(client, callback_query):
             "rarity": new_rarity_text,
             "media_file_id": request["media_file_id"],
             "media_type": request.get("media_type", "photo"),
+            "watermarked": bool(request.get("watermarked", False)),
             "media_chat_id": request.get("media_chat_id", DATABASE_ID),
             "media_message_id": request.get("media_message_id"),
         }
