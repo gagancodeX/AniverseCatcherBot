@@ -7,6 +7,7 @@ from LUNA import *
 from pyrogram import Client, filters
 from pyrogram.types import Message
 import html
+import re
 import time
 from datetime import datetime, timedelta
 
@@ -119,19 +120,107 @@ async def weekly_gift(client: Client, message: Message):
 
 @app.on_message(filters.command("balance"))
 async def balance(client: Client, message: Message):
-    user_id = message.from_user.id
-    
-    if user_id in lock and time.time() - lock[user_id] < 2:  # 2 second cooldown
+    if not message.from_user:
+        await message.reply_text("⚠️ I could not identify your Telegram account. Please send this command from a user account.")
         return
-    
-    lock[user_id] = time.time()
-    
-    user_balance, user_tokens = await get_balance(user_id)
-    response = (
-        f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 𝗪𝗔𝗟𝗟𝗘𝗧 ✦\n\n👤 {html.escape(message.from_user.first_name)}\n╭ 🪙 Coins · {user_balance}\n"
-        f"╰ 🎟 Tokens · {user_tokens}"
+
+    projection = {
+        "id": 1,
+        "balance": 1,
+        "tokens": 1,
+        "first_name": 1,
+        "username": 1,
+    }
+    args = message.command or []
+    target_data = None
+    target_id = message.from_user.id
+    target_name = message.from_user.first_name or "Collector"
+    is_other_user = False
+
+    # Replying to a user's message checks that user's wallet.
+    replied_user = (
+        message.reply_to_message.from_user
+        if message.reply_to_message
+        else None
     )
-    await message.reply_text(response, reply_to_message_id=False)
+    if replied_user:
+        target_id = replied_user.id
+        target_name = replied_user.first_name or "Collector"
+        is_other_user = target_id != message.from_user.id
+        target_data = await user_collection.find_one({"id": target_id}, projection)
+
+    # Also support the username and user-ID formats shown in /help.
+    elif len(args) > 1:
+        target = args[1].strip()
+        if target.startswith("@"):
+            username = target[1:].strip()
+            if not username:
+                await message.reply_text("Usage: /balance or /balance @username or /balance user_id")
+                return
+
+            target_data = await user_collection.find_one(
+                {
+                    "username": {
+                        "$regex": f"^{re.escape(username)}$",
+                        "$options": "i",
+                    }
+                },
+                projection,
+            )
+            if not target_data:
+                await message.reply_text(
+                    "🔎 Collector not found. Ask them to start Luna first, then try again."
+                )
+                return
+
+            target_id = target_data["id"]
+            target_name = (
+                target_data.get("first_name")
+                or target_data.get("username")
+                or str(target_id)
+            )
+            is_other_user = target_id != message.from_user.id
+
+        else:
+            try:
+                target_id = int(target)
+                if target_id <= 0:
+                    raise ValueError
+            except ValueError:
+                await message.reply_text(
+                    "Usage: /balance or /balance @username or /balance user_id"
+                )
+                return
+
+            target_data = await user_collection.find_one({"id": target_id}, projection)
+            if not target_data:
+                await message.reply_text(
+                    "🔎 Collector not found. Ask them to start Luna first, then try again."
+                )
+                return
+
+            target_name = (
+                target_data.get("first_name")
+                or target_data.get("username")
+                or str(target_id)
+            )
+            is_other_user = target_id != message.from_user.id
+
+    else:
+        target_data = await user_collection.find_one({"id": target_id}, projection)
+
+    user_balance = target_data.get("balance", 0) if target_data else 0
+    user_tokens = target_data.get("tokens", 0) if target_data else 0
+    safe_name = html.escape(str(target_name))
+
+    heading = "COLLECTOR WALLET" if is_other_user else "YOUR LUNA WALLET"
+    response = (
+        f"✦ 𝗔𝗡𝗜𝗩𝗘𝗥𝗦𝗘 𝗪𝗔𝗟𝗟𝗘𝗧 ✦\n\n"
+        f"👤 {safe_name}\n"
+        f"╭ 🪙 Coins · {user_balance:,}\n"
+        f"╰ 🎟 Tokens · {user_tokens:,}"
+    )
+    await message.reply_text(response)
 
 @app.on_message(filters.command("pay"))
 async def pay(client: Client, message: Message):
