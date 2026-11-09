@@ -10,7 +10,7 @@ from telegram import (
     InlineQueryResultCachedDocument, InlineQueryResultArticle,
     InputTextMessageContent, InlineQueryResultsButton, WebAppInfo, InlineQueryResultGame,
 )
-from telegram.ext import InlineQueryHandler, CallbackContext
+from telegram.ext import InlineQueryHandler, CallbackContext, BaseHandler
 from LUNA import application, bot_client, DATABASE_ID, db
 from LUNA.unit.luna_watermark import get_watermarked_photo
 from LUNA.unit.luna_inline import *
@@ -123,7 +123,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         # Native Telegram Games are enabled only after all six titles have been
         # registered through @BotFather with the matching short names below.
         # Until then, retain the existing Mini App launcher so the arcade remains usable.
-        native_games_enabled = os.getenv("LUNA_NATIVE_GAMES_ENABLED", "").strip().lower() in {
+        native_games_enabled = os.getenv("LUNA_NATIVE_GAMES_ENABLED", "1").strip().lower() in {
             "1", "true", "yes", "on"
         }
         native_games = [
@@ -355,5 +355,60 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
     # Send the results with pagination
     await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
     
-# Add the handler to your bot's application
+
+# Native Telegram Games: map each BotFather short name to the hosted HTML5 game.
+# Telegram opens this URL in its in-app game view after the user taps Play.
+NATIVE_GAME_ROUTES = {
+    "luna_flappy": "flappy",
+    "luna_run": "runner",
+    "luna_sky_jumper": "jumper",
+    "luna_star_defender": "space",
+    "luna_neon_breaker": "brick",
+    "luna_neon_racer": "racer",
+}
+
+
+async def game_callback_query(update: Update, context: CallbackContext) -> None:
+    """Answer game callbacks with the matching hosted game URL."""
+    callback_query = update.callback_query
+    if callback_query is None or not callback_query.game_short_name:
+        return
+
+    game_slug = NATIVE_GAME_ROUTES.get(callback_query.game_short_name)
+    gamezone_url = os.getenv("GAMEZONE_URL", "").strip()
+    if not game_slug:
+        await callback_query.answer(
+            text="This Luna game is not configured yet.",
+            show_alert=True,
+        )
+        return
+
+    if not gamezone_url.startswith("https://"):
+        await callback_query.answer(
+            text="Luna GameZone is temporarily unavailable. Please try again later.",
+            show_alert=True,
+        )
+        return
+
+    game_url = f"{gamezone_url.rstrip('/')}/?game={game_slug}"
+    await callback_query.answer(url=game_url)
+
+
+class GameCallbackHandler(BaseHandler):
+    """PTB 20.6 handler for game_short_name callbacks.
+
+    PTB 20.6's CallbackQueryHandler only matches callback_data. Game callbacks
+    carry game_short_name instead, so check that field explicitly.
+    """
+
+    def check_update(self, update):
+        if not isinstance(update, Update):
+            return False
+        callback_query = update.callback_query
+        return bool(callback_query and callback_query.game_short_name)
+
+
+# Add handlers to the bot application.
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
+application.add_handler(GameCallbackHandler(game_callback_query))
+
