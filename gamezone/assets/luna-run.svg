@@ -1,55 +1,62 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420">
 <defs>
- <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#50c9ed"/><stop offset=".56" stop-color="#bde9df"/><stop offset="1" stop-color="#d9e9ba"/></linearGradient>
- <linearGradient id="track" x2="0" y2="1"><stop stop-color="#7e8580"/><stop offset="1" stop-color="#3f5051"/></linearGradient>
- <linearGradient id="train" x2="1"><stop stop-color="#1d7088"/><stop offset=".45" stop-color="#62c5c0"/><stop offset="1" stop-color="#246c7b"/></linearGradient>
- <linearGradient id="jacket" x2="0" y2="1"><stop stop-color="#83ddd0"/><stop offset="1" stop-color="#126b85"/></linearGradient>
- <linearGradient id="coin" x2="1" y2="1"><stop stop-color="#fff8b5"/><stop offset=".5" stop-color="#ffc83e"/><stop offset="1" stop-color="#dc8527"/></linearGradient>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#332365"/><stop offset=".48" stop-color="#c66d91"/><stop offset="1" stop-color="#f5bd80"/></linearGradient>
+ <linearGradient id="rail" x2="0" y2="1"><stop stop-color="#7b7f7a"/><stop offset="1" stop-color="#303f4b"/></linearGradient>
+ <linearGradient id="train" x2="1"><stop stop-color="#1d627e"/><stop offset=".42" stop-color="#61c3bd"/><stop offset="1" stop-color="#20556d"/></linearGradient>
+ <linearGradient id="coat" x2="0" y2="1"><stop stop-color="#d6a9e8"/><stop offset="1" stop-color="#72569c"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#fff6b8"/><stop offset=".5" stop-color="#ffc94a"/><stop offset="1" stop-color="#d9812c"/></linearGradient>
 </defs>
 <rect width="720" height="420" fill="url(#sky)"/>
-<circle cx="590" cy="83" r="43" fill="#fff3b0" opacity=".75"/>
-<g fill="#fff" opacity=".83"><path d="M64 83c-22-29 21-51 43-25 16-30 62-13 58 18 28-2 33 35 5 38H69c-25-1-30-27-5-31Z"/><path d="M430 120c-15-18 13-34 29-18 12-22 42-10 39 12 21-2 24 25 3 26h-57c-18 0-22-17-4-20Z"/></g>
-<g fill="#75b8b0"><path d="M0 208V132h48v76H0zm55 0V101h62v107H55zm68 0v-56h47v56h-47zm54 0V119h72v89h-72zm78 0v-72h45v72h-45zm53 0V95h60v113h-60zm67 0v-54h48v54h-48zm55 0V113h66v95h-66zm73 0v-69h50v69h-50zm57 0V104h66v104h-66zm73 0v-81h50v81h-50z"/></g>
-<g fill="#e7f4d2" opacity=".7"><path d="M68 119h8v13h-8zm19 0h8v13h-8zm-19 23h8v13h-8zm-19 0h8v13h-8zm108 24h7v12h-7zm63-36h8v13h-8zm19 0h8v13h-8zm81-17h8v13h-8zm19 0h8v13h-8zm83 42h8v13h-8zm18 0h8v13h-8zm98-28h8v13h-8zm18 0h8v13h-8z"/></g>
-<path d="M0 210h720v210H0z" fill="#7dbb70"/>
-<path d="M250 196 470 196 795 420H-75Z" fill="url(#track)"/>
-<path d="M330 198 390 198 505 420H215Z" fill="#737d77" opacity=".8"/>
-<!-- Three railway beds and converging rails -->
+<circle cx="565" cy="82" r="43" fill="#ffedb4" opacity=".8"/>
+<g fill="#fff" opacity=".37"><path d="M45 93c-20-22 10-42 29-25 15-24 49-13 47 12 22-1 27 24 7 27H57c-21 0-28-12-12-14Z"/><path d="M390 135c-14-17 8-29 24-16 10-19 36-10 34 9 18-1 21 20 3 22h-48c-17 0-24-10-13-15Z"/></g>
+<!-- layered station skyline -->
+<g fill="#64547d"><path d="M0 206v-66h53v66zm60 0V105h49v101zm56 0v-81h60v81zm67 0V126h53v80zm61 0V91h68v115zm75 0v-76h52v76zm59 0V105h60v101zm67 0v-69h53v69zm60 0V94h61v112zm69 0v-87h57v87zm64 0v-61h48v61z"/></g>
+<g fill="#f5d59e" opacity=".55"><path d="M72 122h7v12h-7zm18 0h7v12h-7zm-18 24h7v12h-7zm79-9h7v12h-7zm18 0h7v12h-7zm87-25h7v12h-7zm18 0h7v12h-7zm91 39h7v12h-7zm18 0h7v12h-7zm88-23h7v12h-7zm18 0h7v12h-7z"/></g>
+<!-- outer embankments -->
+<path d="M0 210h720v210H0z" fill="#4e8c69"/>
+<path d="M265 204 455 204 790 420H-70Z" fill="url(#rail)"/>
+<path d="M315 205 405 205 545 420H175Z" fill="#80857a" opacity=".53"/>
+<!-- three converging track beds -->
 <g fill="none" stroke-linecap="round">
- <path d="M286 200 30 420M320 200 160 420M360 200 360 420M400 200 560 420M434 200 690 420" stroke="#344e50" stroke-width="10"/>
- <path d="M286 200 30 420M320 200 160 420M360 200 360 420M400 200 560 420M434 200 690 420" stroke="#d2ded1" stroke-width="4"/>
+ <path d="M278 207 18 420M312 207 165 420M360 207 360 420M408 207 555 420M442 207 702 420" stroke="#263f49" stroke-width="11"/>
+ <path d="M278 207 18 420M312 207 165 420M360 207 360 420M408 207 555 420M442 207 702 420" stroke="#d9dfd2" stroke-width="4"/>
 </g>
-<g stroke="#94745a" stroke-width="7" opacity=".95"><path d="M270 225h180M243 255h234M206 290h308M153 332h414M90 378h540"/></g>
-<!-- Trackside trees -->
-<g fill="#39895d"><circle cx="64" cy="220" r="28"/><circle cx="111" cy="220" r="23"/><circle cx="656" cy="221" r="28"/><circle cx="610" cy="218" r="23"/></g>
-<g fill="#765d48"><path d="M60 220h8v43h-8zm592 0h8v43h-8z"/></g>
-<!-- Approaching original teal train -->
-<g transform="translate(522 208) scale(.65)">
- <path d="M-76 0q0-22 20-22h112q20 0 20 22v104h-152Z" fill="url(#train)" stroke="#e4f0dc" stroke-width="5"/>
- <rect x="-56" y="5" width="112" height="50" rx="9" fill="#193e55"/>
- <rect x="-48" y="11" width="96" height="37" rx="6" fill="#a9dfdd"/>
- <path d="M0 11v37" stroke="#edf5dd" stroke-width="3"/>
- <path d="M-43 81h86" stroke="#e9bb64" stroke-width="6"/>
- <circle cx="-48" cy="92" r="7" fill="#fff2b7"/><circle cx="48" cy="92" r="7" fill="#fff2b7"/>
+<g stroke="#9a795c" stroke-width="7" opacity=".9"><path d="M260 233h200M237 263h246M198 301h324M148 344h424M86 391h548"/></g>
+<!-- distant lamps -->
+<g fill="#ffe3a0"><circle cx="262" cy="202" r="4"/><circle cx="458" cy="202" r="4"/></g>
+<!-- teal train approaching on one line -->
+<g transform="translate(520 195) scale(.78)">
+ <path d="M-75 7q0-29 22-29h106q22 0 22 29v126H-75Z" fill="url(#train)" stroke="#e7f0db" stroke-width="5"/>
+ <rect x="-54" y="5" width="108" height="57" rx="8" fill="#1e4058"/>
+ <rect x="-47" y="11" width="94" height="44" rx="5" fill="#a9ded9"/>
+ <path d="M0 11v44" stroke="#edf6df" stroke-width="3"/>
+ <path d="M-45 88h90" stroke="#f5c86e" stroke-width="7"/>
+ <circle cx="-48" cy="111" r="8" fill="#fff2b9"/><circle cx="48" cy="111" r="8" fill="#fff2b9"/>
 </g>
-<!-- Jump barrier -->
-<g transform="translate(225 273)"><path d="M-26 3-34 44m60-41 8 41" stroke="#454f4c" stroke-width="8" stroke-linecap="round"/><rect x="-50" y="-7" width="100" height="25" rx="4" fill="#f5c74c" stroke="#905f3c" stroke-width="3"/><path d="m-34-5 16 21m3-23 16 22m4-22 16 22" stroke="#e36d42" stroke-width="8"/></g>
-<!-- Coin trail -->
-<g fill="url(#coin)" stroke="#fff1a6" stroke-width="3"><circle cx="360" cy="221" r="13"/><circle cx="360" cy="265" r="16"/><circle cx="360" cy="316" r="19"/></g>
-<g fill="#fff6c8"><path d="m360 211 3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="m360 253 4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/><path d="m360 301 4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/></g>
-<!-- Original courier seen from behind -->
-<g transform="translate(360 330)">
- <path d="M-14-51q-50-5-64 18l36 18 30-15Z" fill="#f17a42"/>
- <path d="M-17 35-27 75m44-40 12 40" stroke="#263b4e" stroke-width="17" stroke-linecap="round"/>
- <path d="M-27 74-43 83m72-9 15 9" stroke="#f1f1e7" stroke-width="13" stroke-linecap="round"/>
- <path d="M-28-35q28-19 56 0l17 77q-45 19-90 0Z" fill="url(#jacket)" stroke="#174b61" stroke-width="5"/>
- <rect x="-22" y="-15" width="44" height="48" rx="10" fill="#ed9a54" stroke="#754b49" stroke-width="3"/>
- <path d="M-13-5h26" stroke="#ffd18a" stroke-width="5"/>
- <path d="M-23-27-38 13m61-40 15 40" stroke="#e9b38f" stroke-width="12" stroke-linecap="round"/>
- <ellipse cy="-60" rx="24" ry="27" fill="#e7b28e"/>
- <path d="M-24-64q-4-35 24-32 31 2 25 37L13-42h-26Z" fill="#29364a"/>
- <ellipse cy="-82" rx="24" ry="10" fill="#43b8b3"/>
- <path d="M-4-94h8" stroke="#f1cc71" stroke-width="5"/>
+<!-- striped jump barrier -->
+<g transform="translate(224 286)">
+ <path d="M-27 4-34 51m61-47 8 47" stroke="#45534e" stroke-width="8" stroke-linecap="round"/>
+ <rect x="-53" y="-10" width="106" height="30" rx="4" fill="#f7c94f" stroke="#84553e" stroke-width="3"/>
+ <path d="m-39-8 19 27m5-29 19 29m5-29 19 29" stroke="#e56c43" stroke-width="9"/>
 </g>
-<g fill="#fff0bd" opacity=".9"><path d="m95 297 5 11 11 5-11 5-5 11-5-11-11-5 11-5z"/><path d="m623 309 4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/></g>
+<!-- power up and coin stream -->
+<g fill="url(#gold)" stroke="#fff1ad" stroke-width="3"><circle cx="358" cy="210" r="12"/><circle cx="358" cy="252" r="16"/><circle cx="358" cy="302" r="21"/></g>
+<g fill="#fff8cf"><path d="m358 201 3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="m358 240 4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/><path d="m358 287 5 10 10 5-10 5-5 10-5-10-10-5 10-5z"/></g>
+<g transform="translate(445 231)"><rect x="-22" y="-22" width="44" height="44" rx="11" fill="#a36de4" stroke="#fff" stroke-width="3"/><text x="0" y="7" text-anchor="middle" font-family="Arial" font-size="27" font-weight="900" fill="#fff">M</text></g>
+<!-- original Luna courier, back view -->
+<g transform="translate(360 332)">
+ <path d="M-15-53q-53-8-66 22l38 19 29-18Z" fill="#f0c58b"/>
+ <path d="M-16 34-27 78m44-44 12 44" stroke="#302746" stroke-width="18" stroke-linecap="round"/>
+ <path d="M-27 77-44 87m72-10 16 10" stroke="#f5eee1" stroke-width="13" stroke-linecap="round"/>
+ <path d="M-29-36q29-19 58 0l17 80q-46 18-92 0Z" fill="url(#coat)" stroke="#302746" stroke-width="5"/>
+ <rect x="-21" y="-15" width="42" height="48" rx="10" fill="#5c9f9d" stroke="#302746" stroke-width="3"/>
+ <path d="M-13-5h26" stroke="#ffe3a6" stroke-width="5"/>
+ <path d="M-24-27-40 14m64-41 16 41" stroke="#e8b99c" stroke-width="12" stroke-linecap="round"/>
+ <ellipse cy="-61" rx="24" ry="27" fill="#e8b99c"/>
+ <path d="M-24-64q-5-35 24-33 31 2 25 38L13-42h-26Z" fill="#28233c"/>
+ <ellipse cy="-84" rx="24" ry="10" fill="#d8b8f0"/>
+ <path d="M-5-97h10" stroke="#ffe3a6" stroke-width="5"/>
+</g>
+<g fill="#fff3c1" opacity=".95"><path d="m100 295 5 11 11 5-11 5-5 11-5-11-11-5 11-5z"/><path d="m618 312 4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/></g>
+<rect x="16" y="16" width="688" height="388" rx="18" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3"/>
 </svg>
