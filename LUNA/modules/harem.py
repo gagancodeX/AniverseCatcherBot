@@ -202,7 +202,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                             animation=media_file_id, caption=harem_message,
                             reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                         )
-                    watermarked_photo = await get_watermarked_photo(client, media_file_id)
+                    watermarked_photo = None if image_character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
                     return await message.reply_photo(
                         photo=watermarked_photo or media_file_id, caption=harem_message,
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
@@ -213,7 +213,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
                 if 'img_url' in image_character:
-                    watermarked_photo = await get_watermarked_photo(client, image_character['img_url'])
+                    watermarked_photo = None if image_character.get("watermarked") else await get_watermarked_photo(client, image_character['img_url'])
                     return await message.reply_photo(
                         photo=watermarked_photo or image_character['img_url'], caption=harem_message,
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
