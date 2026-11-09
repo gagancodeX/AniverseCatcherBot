@@ -21,6 +21,8 @@ user_collection_cache = TTLCache(maxsize=10000, ttl=60)  # Cache for user collec
 # Persist processed image variants so old archive images only need watermarking once.
 inline_watermark_cache = db["luna_inline_watermark_cache"]
 _inline_watermark_locks = {}
+_inline_watermark_semaphore = asyncio.Semaphore(5)
+_inline_watermark_tasks = set()
 
 
 async def _get_inline_watermarked_file_id(character):
@@ -88,6 +90,12 @@ async def _get_inline_watermarked_file_id(character):
             watermarked_photo.close()
 
 
+async def _prepare_inline_watermark(index, character):
+    """Limit concurrent media work so the inline answer stays responsive."""
+    async with _inline_watermark_semaphore:
+        return index, await _get_inline_watermarked_file_id(character)
+
+
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     query = update.inline_query.query
     offset = int(update.inline_query.offset) if update.inline_query.offset else 0
@@ -135,9 +143,43 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
     characters = all_characters[offset:offset + 50]
     next_offset = str(offset + len(characters)) if len(characters) == 50 else None
 
+    # Process the visible result page concurrently. Slow items keep processing
+    # in the background and are cached for the user's next inline refresh.
+    inline_watermarked_ids = {}
+    pending_watermark_tasks = {}
+    for index, character in enumerate(characters):
+        media_type = character.get("media_type", "photo")
+        if media_type not in ("photo", "document"):
+            continue
+        if character.get("watermarked") and character.get("media_file_id"):
+            inline_watermarked_ids[index] = character["media_file_id"]
+            continue
+        if character.get("media_file_id") or character.get("img_url"):
+            task = asyncio.create_task(_prepare_inline_watermark(index, character))
+            pending_watermark_tasks[task] = index
+            _inline_watermark_tasks.add(task)
+            task.add_done_callback(_inline_watermark_tasks.discard)
+
+    if pending_watermark_tasks:
+        done, _pending = await asyncio.wait(
+            pending_watermark_tasks,
+            timeout=5.0,
+        )
+        for task in done:
+            try:
+                index, watermarked_file_id = task.result()
+                if watermarked_file_id:
+                    inline_watermarked_ids[index] = watermarked_file_id
+            except Exception as exc:
+                from LUNA import LOGGER
+                LOGGER("LUNA.INLINE").warning(
+                    "Inline watermark task failed: %s",
+                    str(exc)[:250],
+                )
+
     # Construct results for inline query
     results = []
-    for character in characters:
+    for character_index, character in enumerate(characters):
         # Generate caption based on whether it's a user collection or global character search
         if 'user' in locals():
             user_character_count = sum(1 for char in user['characters'] if 'id' in char and char['id'] == character['id'])
@@ -161,19 +203,18 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         media_type = character.get('media_type', 'photo')
         result_id = f"{character['id']}_{time.time_ns()}"
 
-        # Watermark both new and already-existing archive photos before inline display.
-        if media_type in ("photo", "document") and (media_file_id or character.get("img_url")):
-            inline_photo_id = await _get_inline_watermarked_file_id(character)
-            if inline_photo_id:
-                results.append(
-                    InlineQueryResultCachedPhoto(
-                        id=result_id,
-                        photo_file_id=inline_photo_id,
-                        caption=caption,
-                        parse_mode='HTML'
-                    )
+        # Existing archive images use the processed cached file ID.
+        inline_photo_id = inline_watermarked_ids.get(character_index)
+        if media_type in ("photo", "document") and inline_photo_id:
+            results.append(
+                InlineQueryResultCachedPhoto(
+                    id=result_id,
+                    photo_file_id=inline_photo_id,
+                    caption=caption,
+                    parse_mode='HTML'
                 )
-                continue
+            )
+            continue
 
         # Cached Telegram results need no public URL or external hosting.
         if media_file_id:
