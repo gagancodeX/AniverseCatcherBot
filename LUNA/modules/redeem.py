@@ -10,6 +10,7 @@ from pyrogram import Client, filters
 from pyrogram import enums
 from LUNA import bot_client as app
 from LUNA import collection, user_collection, db, require_power
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 redeem_collection = db["redeem_codes"]  # Collection for redeem codes
 
@@ -129,11 +130,13 @@ async def redeem_character(client, message):
         elif media_type == "animation":
             await message.reply_animation(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
         else:
-            await message.reply_photo(media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+            watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
+            await message.reply_photo(watermarked_photo or media_file_id, caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
     elif character.get("vid_url"):
         await message.reply_video(character["vid_url"], caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
     elif character.get("img_url"):
-        await message.reply_photo(character["img_url"], caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
+        watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, character["img_url"])
+        await message.reply_photo(watermarked_photo or character["img_url"], caption=char_info, parse_mode=enums.ParseMode.MARKDOWN)
     else:
         await message.reply_text(char_info, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
