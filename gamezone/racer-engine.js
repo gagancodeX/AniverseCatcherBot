@@ -48,6 +48,9 @@
     var keyRight       = false;
     var keyFaster      = false;
     var keySlower      = false;
+    var keyBoost       = false;
+    var nitro          = 100;
+    var boostMultiplier = 1;
 
     var hud = {
       speed:            { value: null, dom: Dom.get('speed_value')            },
@@ -65,8 +68,24 @@
       var n, car, carW, sprite, spriteW;
       var playerSegment = findSegment(position+playerZ);
       var playerW       = SPRITES.PLAYER_STRAIGHT.w * SPRITES.SCALE;
+      var boostActive   = keyBoost && (nitro > 0) && !keySlower;
+      if (boostActive) {
+        nitro = Math.max(0, nitro - (dt * 27));
+        boostMultiplier = Math.min(1.30, boostMultiplier + (dt * 0.82));
+        speed = Util.accelerate(speed, accel * 2.35, dt);
+      }
+      else {
+        nitro = Math.min(100, nitro + (dt * 8));
+        boostMultiplier = Math.max(1, boostMultiplier - (dt * 0.58));
+        if (keyFaster)
+          speed = Util.accelerate(speed, accel, dt);
+        else if (keySlower)
+          speed = Util.accelerate(speed, breaking, dt);
+        else
+          speed = Util.accelerate(speed, decel, dt);
+      }
       var speedPercent  = speed/maxSpeed;
-      var dx            = dt * 2 * speedPercent; // at top speed, should be able to cross from left to right (-1 to 1) in 1 second
+      var dx            = dt * 2 * speedPercent;
       var startPosition = position;
 
       updateCars(dt, playerSegment, playerW);
@@ -80,13 +99,8 @@
 
       playerX = playerX - (dx * speedPercent * playerSegment.curve * centrifugal);
 
-      if (keyFaster)
-        speed = Util.accelerate(speed, accel, dt);
-      else if (keySlower)
-        speed = Util.accelerate(speed, breaking, dt);
-      else
-        speed = Util.accelerate(speed, decel, dt);
-
+      if (!boostActive && speed > maxSpeed)
+        speed = Math.min(speed, maxSpeed * boostMultiplier);
 
       if ((playerX < -1) || (playerX > 1)) {
 
@@ -117,7 +131,7 @@
       }
 
       playerX = Util.limit(playerX, -3, 3);     // dont ever let it go too far out of bounds
-      speed   = Util.limit(speed, 0, maxSpeed); // or exceed maxSpeed
+      speed   = Util.limit(speed, 0, maxSpeed * boostMultiplier); // nitro temporarily raises the top speed
 
       skyOffset  = Util.increase(skyOffset,  skySpeed  * playerSegment.curve * (position-startPosition)/segmentLength, 1);
       hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * (position-startPosition)/segmentLength, 1);
@@ -147,6 +161,7 @@
 
       updateHud('speed',            5 * Math.round(speed/500));
       updateHud('current_lap_time', formatTime(currentLapTime));
+      updateBoostHud(boostActive);
     }
 
     //-------------------------------------------------------------------------
@@ -220,6 +235,18 @@
         hud[key].value = value;
         Dom.set(hud[key].dom, value);
       }
+    }
+
+    function updateBoostHud(active) {
+      var value = Math.round(nitro);
+      var output = Dom.get('boostValue');
+      var percent = Dom.get('boostPct');
+      var fill = Dom.get('boostFill');
+      var app = Dom.get('racerApp');
+      if (output && output.innerHTML !== (value + '%')) output.innerHTML = value + '%';
+      if (percent && percent.innerHTML !== (value + '%')) percent.innerHTML = value + '%';
+      if (fill) fill.style.width = value + '%';
+      if (app) app.classList.toggle('boosting', !!active);
     }
 
     function formatTime(dt) {
