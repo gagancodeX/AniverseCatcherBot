@@ -110,10 +110,17 @@ async def send_image(update: Update, context: CallbackContext) -> None:
                 caption=caption, parse_mode="Markdown"
             )
         elif media_type == "document":
-            sent_message = await context.bot.send_document(
-                chat_id=chat_id, document=media_file_id,
-                caption=caption, parse_mode="Markdown"
-            )
+            watermarked_photo = None if selected_character.get("watermarked") else await get_watermarked_photo(bot_client, media_file_id)
+            if watermarked_photo:
+                sent_message = await context.bot.send_photo(
+                    chat_id=chat_id, photo=watermarked_photo,
+                    caption=caption, parse_mode="Markdown"
+                )
+            else:
+                sent_message = await context.bot.send_document(
+                    chat_id=chat_id, document=media_file_id,
+                    caption=caption, parse_mode="Markdown"
+                )
         elif media_type == "animation":
             sent_message = await context.bot.send_animation(
                 chat_id=chat_id, animation=media_file_id,
