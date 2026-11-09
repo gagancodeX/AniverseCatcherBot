@@ -71,11 +71,14 @@
   let resizeFrame = 0;
   function resizeRace() {
     if (!canvas || !stage || typeof window.raceReset !== "function") return;
-    const rect = stage.getBoundingClientRect();
-    if (rect.width < 120 || rect.height < 120) return;
+    // clientWidth/clientHeight are the layout dimensions before the
+    // portrait-mode 90-degree transform. getBoundingClientRect() is rotated.
+    const stageWidth = stage.clientWidth;
+    const stageHeight = stage.clientHeight;
+    if (stageWidth < 120 || stageHeight < 120) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const width = Math.max(480, Math.round(rect.width * dpr));
-    const height = Math.max(320, Math.round(rect.height * dpr));
+    const width = Math.max(480, Math.round(stageWidth * dpr));
+    const height = Math.max(320, Math.round(stageHeight * dpr));
     if (canvas.width !== width || canvas.height !== height) {
       window.raceReset({width, height});
     }
