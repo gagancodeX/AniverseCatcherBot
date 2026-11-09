@@ -25,6 +25,21 @@ _inline_watermark_semaphore = asyncio.Semaphore(5)
 _inline_watermark_tasks = set()
 
 
+def _release_inline_watermark_task(task):
+    _inline_watermark_tasks.discard(task)
+    if not task.cancelled():
+        try:
+            error = task.exception()
+            if error:
+                from LUNA import LOGGER
+                LOGGER("LUNA.INLINE").warning(
+                    "Background watermark task failed: %s",
+                    str(error)[:250],
+                )
+        except Exception:
+            pass
+
+
 async def _get_inline_watermarked_file_id(character):
     """Return a cached Telegram photo ID with the Luna watermark applied."""
     media_type = character.get("media_type", "photo")
@@ -158,7 +173,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             task = asyncio.create_task(_prepare_inline_watermark(index, character))
             pending_watermark_tasks[task] = index
             _inline_watermark_tasks.add(task)
-            task.add_done_callback(_inline_watermark_tasks.discard)
+            task.add_done_callback(_release_inline_watermark_task)
 
     if pending_watermark_tasks:
         done, _pending = await asyncio.wait(
