@@ -193,6 +193,12 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                             reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                         )
                     if media_type == 'document':
+                        watermarked_photo = None if image_character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
+                        if watermarked_photo:
+                            return await message.reply_photo(
+                                photo=watermarked_photo, caption=harem_message,
+                                reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
+                            )
                         return await message.reply_document(
                             document=media_file_id, caption=harem_message,
                             reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
@@ -229,11 +235,15 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     if media_type == 'video':
                         media = InputMediaVideo(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     elif media_type == 'document':
-                        media = InputMediaDocument(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                        watermarked_photo = None if image_character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
+                        if watermarked_photo:
+                            media = InputMediaPhoto(watermarked_photo, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                        else:
+                            media = InputMediaDocument(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     elif media_type == 'animation':
                         media = InputMediaAnimation(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     else:
-                        watermarked_photo = await get_watermarked_photo(client, media_file_id)
+                        watermarked_photo = None if image_character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
                         media = InputMediaPhoto(watermarked_photo or media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     await callback_query.message.edit_media(media=media, reply_markup=reply_markup)
                 elif 'vid_url' in image_character:
