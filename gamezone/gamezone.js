@@ -14,6 +14,7 @@
   const pixelCtx = pixelBuffer.getContext('2d', { willReadFrequently: true });
   const pixelBayer = [-8,0,-6,2,4,-4,6,-2,-5,3,-7,1,7,-1,5,-3];
   function finishPixelFrame() {
+    if (current === 'runner' && game && game.runnerMode !== 'select') return;
     pixelCtx.imageSmoothingEnabled = true;
     pixelCtx.clearRect(0, 0, pixelBuffer.width, pixelBuffer.height);
     pixelCtx.drawImage(canvas, 0, 0, pixelBuffer.width, pixelBuffer.height);
@@ -1390,7 +1391,7 @@
     ctx.fillStyle='#ffe6a8';ctx.fillRect(x-w/2,y-147*s,w,5*s);ctx.fillStyle='#75452d';ctx.fillRect(x-w/2+u,y-122*s,w-u*2,5*s);
     ctx.fillStyle='#6c4029';ctx.font='bold '+Math.max(6,10*s)+'px "Press Start 2P"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('DUCK',x,y-135*s);ctx.restore();
   }
-  function drawSubwayRunner(){
+  function drawSubwayRunnerLegacy(){
     if(game.runnerMode==='select'){runDrawMenu();return}
     const st=runStage();runSky();runTracks();
     for(let i=0;i<10;i++){
@@ -1431,4 +1432,628 @@
 
 
 
-})();
+
+  // Original Luna Run WebGL renderer. The game simulation and controls above
+  // remain authoritative; this module only renders the 3D world from that state.
+  let lunaRunner3D = null;
+  let lunaRunner3DAttempted = false;
+
+  function createLunaRunner3D() {
+    const layer = document.createElement('canvas');
+    layer.id = 'runner3dCanvas';
+    layer.width = W;
+    layer.height = H;
+    layer.style.display = 'none';
+    layer.style.pointerEvents = 'none';
+    layer.setAttribute('aria-hidden', 'true');
+    canvas.parentNode.insertBefore(layer, canvas);
+
+    const gl = layer.getContext('webgl', {
+      alpha: true,
+      antialias: true,
+      depth: true,
+      premultipliedAlpha: false
+    }) || layer.getContext('experimental-webgl');
+
+    if (!gl) {
+      layer.remove();
+      return null;
+    }
+
+    const vertexSource = [
+      'attribute vec4 aClip;',
+      'attribute vec4 aColor;',
+      'attribute float aDepth;',
+      'varying vec4 vColor;',
+      'varying float vDepth;',
+      'void main(void) {',
+      '  gl_Position = aClip;',
+      '  vColor = aColor;',
+      '  vDepth = aDepth;',
+      '}'
+    ].join('\n');
+
+    const fragmentSource = [
+      'precision mediump float;',
+      'uniform vec3 uFogColor;',
+      'varying vec4 vColor;',
+      'varying float vDepth;',
+      'void main(void) {',
+      '  float fog = smoothstep(27.0, 62.0, vDepth);',
+      '  vec3 rgb = mix(vColor.rgb, uFogColor, fog);',
+      '  gl_FragColor = vec4(rgb, vColor.a);',
+      '}'
+    ].join('\n');
+
+    function compile(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const error = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error(error || 'WebGL shader compilation failed');
+      }
+      return shader;
+    }
+
+    let program;
+    try {
+      const vs = compile(gl.VERTEX_SHADER, vertexSource);
+      const fs = compile(gl.FRAGMENT_SHADER, fragmentSource);
+      program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(program) || 'WebGL program link failed');
+      }
+    } catch (error) {
+      console.warn('Luna Run 3D renderer could not initialize:', error);
+      layer.remove();
+      return null;
+    }
+
+    const buffer = gl.createBuffer();
+    const clipLocation = gl.getAttribLocation(program, 'aClip');
+    const colorLocation = gl.getAttribLocation(program, 'aColor');
+    const depthLocation = gl.getAttribLocation(program, 'aDepth');
+    const fogLocation = gl.getUniformLocation(program, 'uFogColor');
+    const near = 0.12;
+    const far = 125;
+    const fov = 52 * Math.PI / 180;
+    const focal = 1 / Math.tan(fov / 2);
+    const aspect = W / H;
+    const depthA = (far + near) / (far - near);
+    const depthB = (2 * far * near) / (far - near);
+    let vertices = [];
+    let camera = null;
+
+    function hexColor(value) {
+      const s = String(value || '#ffffff').replace('#', '');
+      const full = s.length === 3 ? s.split('').map(ch => ch + ch).join('') : s;
+      const n = parseInt(full.slice(0, 6), 16);
+      if (!Number.isFinite(n)) return [1, 1, 1];
+      return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+    }
+
+    function tint(color, amount) {
+      const rgb = Array.isArray(color) ? color : hexColor(color);
+      return [
+        Math.min(1, Math.max(0, rgb[0] * amount)),
+        Math.min(1, Math.max(0, rgb[1] * amount)),
+        Math.min(1, Math.max(0, rgb[2] * amount)),
+        1
+      ];
+    }
+
+    function cameraPoint(point) {
+      const dx = point[0] - camera.eye[0];
+      const dy = point[1] - camera.eye[1];
+      const dz = point[2] - camera.eye[2];
+      const cx = dx * camera.right[0] + dy * camera.right[1] + dz * camera.right[2];
+      const cy = dx * camera.up[0] + dy * camera.up[1] + dz * camera.up[2];
+      const cz = dx * camera.forward[0] + dy * camera.forward[1] + dz * camera.forward[2];
+      const safeZ = Math.max(near, cz);
+      return [
+        (cx * focal / aspect),
+        (cy * focal),
+        depthA * safeZ - depthB,
+        safeZ,
+        safeZ
+      ];
+    }
+
+    function emit(point, color) {
+      const p = cameraPoint(point);
+      vertices.push(p[0], p[1], p[2], p[3], color[0], color[1], color[2], color[3], p[4]);
+    }
+
+    function triangle(a, b, c, color) {
+      emit(a, color);
+      emit(b, color);
+      emit(c, color);
+    }
+
+    function quad(a, b, c, d, color) {
+      triangle(a, b, c, color);
+      triangle(a, c, d, color);
+    }
+
+    function box(x, y, z, width, height, depth, color, turn) {
+      const hx = width / 2, hy = height / 2, hz = depth / 2;
+      const cs = Math.cos(turn || 0), sn = Math.sin(turn || 0);
+      const local = [
+        [-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],
+        [-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]
+      ];
+      const pts = local.map(p => [
+        x + p[0] * cs + p[2] * sn,
+        y + p[1],
+        z - p[0] * sn + p[2] * cs
+      ]);
+      const faces = [
+        [0,1,2,3,.72],
+        [4,7,6,5,.88],
+        [0,4,5,1,.63],
+        [3,2,6,7,.82],
+        [1,5,6,2,1.04],
+        [0,3,7,4,.68]
+      ];
+      faces.forEach(face => {
+        const shade = tint(color, face[4]);
+        quad(pts[face[0]], pts[face[1]], pts[face[2]], pts[face[3]], shade);
+      });
+    }
+
+    function sphere(x, y, z, radius, color, rings, segments) {
+      const latitudes = rings || 7;
+      const longitudes = segments || 10;
+      for (let lat = 0; lat < latitudes; lat++) {
+        const a0 = -Math.PI / 2 + Math.PI * lat / latitudes;
+        const a1 = -Math.PI / 2 + Math.PI * (lat + 1) / latitudes;
+        for (let lon = 0; lon < longitudes; lon++) {
+          const b0 = Math.PI * 2 * lon / longitudes;
+          const b1 = Math.PI * 2 * (lon + 1) / longitudes;
+          const point = (a, b) => [
+            x + Math.cos(a) * Math.cos(b) * radius,
+            y + Math.sin(a) * radius,
+            z + Math.cos(a) * Math.sin(b) * radius
+          ];
+          const p1 = point(a0, b0), p2 = point(a0, b1);
+          const p3 = point(a1, b1), p4 = point(a1, b0);
+          const shade = tint(color, .83 + .17 * Math.sin(a1 + 1.5));
+          quad(p1, p2, p3, p4, shade);
+        }
+      }
+    }
+
+    function coin(x, y, z, special, phase) {
+      const radius = special ? .47 : .34;
+      const thickness = .09;
+      const angle = (phase || 0) * .65;
+      const ca = Math.cos(angle), sa = Math.sin(angle);
+      const point = (a, side) => {
+        const px = Math.cos(a) * radius;
+        const py = Math.sin(a) * radius;
+        return [x + px * ca + side * sa, y + py, z - px * sa + side * ca];
+      };
+      const front = tint(special ? '#71e5ff' : '#ffd05a', 1.05);
+      const inner = tint(special ? '#eaffff' : '#fff1b1', 1.0);
+      for (let i = 0; i < 14; i++) {
+        const a0 = Math.PI * 2 * i / 14;
+        const a1 = Math.PI * 2 * (i + 1) / 14;
+        const f0 = point(a0, thickness), f1 = point(a1, thickness);
+        const b0 = point(a0, -thickness), b1 = point(a1, -thickness);
+        triangle([x,y,z + thickness * ca], f0, f1, front);
+        triangle([x,y,z - thickness * ca], b1, b0, tint(special ? '#169db8' : '#b87927', .9));
+        quad(f0, b0, b1, f1, tint(special ? '#35bcd9' : '#d99430', .95));
+      }
+      // A tiny raised centre makes each pickup readable at a distance.
+      box(x, y, z + .012, radius * .48, radius * .48, .035, inner);
+    }
+
+    function worldZ(normalized) {
+      return -31 + Math.max(0, Math.min(1.12, normalized)) * 38;
+    }
+
+    function addBuilding(side, index, shift) {
+      const z = -49 + index * 8 - shift;
+      const h = 5.2 + ((index * 7 + (side > 0 ? 3 : 1)) % 5) * 1.25;
+      const width = 3.6 + (index % 3) * .5;
+      const x = side * (7.6 + (index % 2) * .7);
+      const palette = side < 0
+        ? ['#35485c','#40566a','#4d5369','#68506a']
+        : ['#455466','#354d5b','#5c4c62','#4d5b65'];
+      const body = palette[index % palette.length];
+      box(x, h / 2 - .1, z, width, h, 6.5, body);
+      box(x, h + .10, z, width + .2, .22, 6.7, '#273644');
+      // Windows face the runner, with a warm/cool alternating lit pattern.
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const wx = x - width * .34 + col * width * .34;
+          const wy = 1.05 + row * 1.27;
+          const lit = ((row + col + index) % 3) !== 0;
+          box(wx, wy, z + 3.29, .39, .57, .055, lit ? (index % 2 ? '#f4c68c' : '#9bd2dc') : '#202f40');
+        }
+      }
+      // A lit vertical edge gives the skyline depth without external textures.
+      box(x - side * (width / 2 - .12), h / 2, z + 3.34, .13, h - .3, .06, '#8a9291');
+    }
+
+    function addTree(x, z, size) {
+      const s = size || 1;
+      box(x, .75 * s, z, .22 * s, 1.5 * s, .22 * s, '#72513a');
+      sphere(x, 1.85 * s, z, .92 * s, '#35785a', 5, 7);
+      sphere(x - .42 * s, 1.65 * s, z + .14, .58 * s, '#4b9b67', 4, 6);
+      sphere(x + .37 * s, 2.0 * s, z - .1, .62 * s, '#286949', 4, 6);
+    }
+
+    function addLamp(x, z) {
+      box(x, 2.9, z, .12, 5.8, .12, '#38444a');
+      box(x - (x < 0 ? -.62 : .62), 5.7, z, 1.35, .12, .12, '#38444a');
+      sphere(x - (x < 0 ? -1.15 : 1.15), 5.56, z, .22, '#ffe4a3', 5, 7);
+    }
+
+    function addTrain(lane, normalizedZ) {
+      const x = (lane - 1) * 3.15;
+      const frontZ = worldZ(normalizedZ);
+      for (let car = 0; car < 3; car++) {
+        const centerZ = frontZ - 4.25 - car * 8.6;
+        const base = car === 0 ? '#197f8b' : '#216d82';
+        box(x, 1.72, centerZ, 2.72, 3.35, 8.5, base);
+        box(x, 3.43, centerZ, 2.82, .22, 8.58, '#153f52');
+        box(x, .36, centerZ, 2.52, .30, 8.2, '#183647');
+        box(x, 1.05, centerZ + 4.30, 2.40, .34, .08, '#e9b951');
+        box(x, 2.55, centerZ + 4.34, 1.86, .85, .09, '#8ad3d7');
+        box(x, 2.53, centerZ + 4.40, .10, .93, .10, '#22516a');
+        box(x, .75, centerZ + 4.40, .33, .24, .11, '#fff0b0');
+        box(x - .91, .75, centerZ + 4.40, .25, .24, .11, '#fff0b0');
+        box(x + .91, .75, centerZ + 4.40, .25, .24, .11, '#fff0b0');
+        // Long side windows and a broad Luna-colour stripe.
+        for (let w = 0; w < 4; w++) {
+          const wz = centerZ + 2.75 - w * 1.55;
+          box(x - 1.375, 2.28, wz, .055, .92, 1.12, '#9bdde0');
+          box(x + 1.375, 2.28, wz, .055, .92, 1.12, '#9bdde0');
+          box(x - 1.405, 2.29, wz + .02, .025, .12, 1.04, '#eff8e8');
+          box(x + 1.405, 2.29, wz + .02, .025, .12, 1.04, '#eff8e8');
+        }
+        box(x - 1.38, 1.18, centerZ, .045, .19, 8.0, '#f0c65e');
+        box(x + 1.38, 1.18, centerZ, .045, .19, 8.0, '#f0c65e');
+        box(x - .85, .14, centerZ - 2.8, .56, .30, 1.0, '#202a31');
+        box(x + .85, .14, centerZ - 2.8, .56, .30, 1.0, '#202a31');
+      }
+    }
+
+    function addBarrier(lane, normalizedZ) {
+      const x = (lane - 1) * 3.15, z = worldZ(normalizedZ);
+      box(x, .55, z, 2.55, .94, .68, '#e4b849');
+      box(x, 1.05, z, 2.65, .12, .76, '#fff0af');
+      for (let i = -2; i <= 2; i++) {
+        box(x + i * .48, .55, z + .37, .21, .90, .055, '#d65b49');
+      }
+      box(x - 1.02, .16, z, .22, .34, .76, '#593a2d');
+      box(x + 1.02, .16, z, .22, .34, .76, '#593a2d');
+    }
+
+    function addOverhead(lane, normalizedZ) {
+      const x = (lane - 1) * 3.15, z = worldZ(normalizedZ);
+      box(x - 1.22, 1.38, z, .16, 2.75, .22, '#37434a');
+      box(x + 1.22, 1.38, z, .16, 2.75, .22, '#37434a');
+      box(x, 2.70, z, 2.65, .44, .48, '#d9a84f');
+      box(x, 2.94, z, 2.45, .09, .51, '#fff0b9');
+      box(x, 2.49, z + .27, 2.20, .12, .08, '#633c2b');
+    }
+
+    function addRamp(lane, normalizedZ) {
+      const x = (lane - 1) * 3.15, z = worldZ(normalizedZ);
+      const a = [x - 1.2,.12,z - 1.5];
+      const b = [x + 1.2,.12,z - 1.5];
+      const c = [x + 1.2,.12,z + 1.5];
+      const d = [x - 1.2,.12,z + 1.5];
+      const e = [x - 1.2,1.15,z - 1.5];
+      const f = [x + 1.2,1.15,z - 1.5];
+      const ramp = tint('#1b91a8', .92);
+      quad(a, b, f, e, ramp);
+      quad(a, e, d, a, tint('#41d7d4', .9));
+      quad(b, c, f, b, tint('#28667a', .9));
+      quad(d, e, f, c, tint('#42aeb8', .95));
+      quad(a, d, c, b, tint('#253f4c', .85));
+      for (let i = 0; i < 4; i++) {
+        box(x - .75 + i * .5, .38 + i * .19, z - .9 + i * .42, .10, .08, .48, '#e8d08c');
+      }
+    }
+
+    function addHero(x, baseY, z, hero, phase, sliding, jumping, flying, board) {
+      const skin = hero.skin, body = hero.body, shine = hero.shine;
+      const dark = hero.dark, hair = hero.hair, pack = hero.pack, accent = hero.accent;
+      const crouch = sliding ? .56 : 1;
+      const jumpY = baseY;
+      const swing = Math.sin(phase || 0) * .28;
+      const stride = Math.cos(phase || 0) * .34;
+      // Hoverboard and shoes.
+      if (board) {
+        box(x, jumpY + .05, z, 1.18, .15, 1.22, '#1599b9');
+        box(x, jumpY - .04, z + .03, .82, .08, .70, '#f4e0a4');
+        sphere(x - .42, jumpY - .10, z + .18, .16, '#26333e', 5, 7);
+        sphere(x + .42, jumpY - .10, z + .18, .16, '#26333e', 5, 7);
+      }
+      const bodyY = jumpY + .95 * crouch;
+      box(x, bodyY, z, .78, 1.02 * crouch, .48, body);
+      box(x, bodyY + .24 * crouch, z + .255, .42, .18, .055, shine);
+      box(x, bodyY - .24 * crouch, z + .26, .64, .16, .055, accent);
+      // Backpack sits on the side seen by the camera.
+      box(x, bodyY + .05 * crouch, z + .34, .58, .66 * crouch, .22, pack);
+      box(x, bodyY + .33 * crouch, z + .47, .42, .10, .035, accent);
+      box(x, bodyY - .05 * crouch, z + .48, .30, .10, .035, '#f2dca6');
+      // Shoulder straps and arms swing independently.
+      box(x - .30, bodyY + .12 * crouch, z + .31, .11, .77 * crouch, .08, dark);
+      box(x + .30, bodyY + .12 * crouch, z + .31, .11, .77 * crouch, .08, dark);
+      box(x - .54, bodyY - .02 * crouch + swing, z + .02, .23, .68 * crouch, .24, body, -.08);
+      box(x + .54, bodyY - .02 * crouch - swing, z + .02, .23, .68 * crouch, .24, body, .08);
+      sphere(x - .55, bodyY - .39 * crouch + swing, z + .10, .15, skin, 5, 7);
+      sphere(x + .55, bodyY - .39 * crouch - swing, z + .10, .15, skin, 5, 7);
+      // Head, hair and scarf.
+      const headY = jumpY + (sliding ? 1.45 : 1.93);
+      sphere(x, headY, z, .40, skin, 8, 10);
+      sphere(x, headY + .21, z - .02, .40, hair, 6, 9);
+      box(x, headY + .34, z + .02, .72, .20, .48, hair);
+      box(x - .34, headY + .05, z + .02, .16, .40, hair);
+      box(x + .34, headY + .05, z + .02, .16, .40, hair);
+      box(x, headY + .14, z + .40, .58, .11, accent);
+      box(x, bodyY + .50 * crouch, z + .30, .72, .16, .25, hero.scarf);
+      box(x + .40, bodyY + .49 * crouch, z - .48, .20, .16, .90, hero.scarf, .18);
+      // Legs use alternating depth and height for a clear running gait.
+      box(x - .22, jumpY + .38 * crouch, z + stride * .45, .28, .72 * crouch, .34, dark);
+      box(x + .22, jumpY + .38 * crouch, z - stride * .45, .28, .72 * crouch, .34, dark);
+      box(x - .22, jumpY + .07, z + .25 + stride * .45, .45, .17, .63, accent);
+      box(x + .22, jumpY + .07, z + .25 - stride * .45, .45, .17, .63, accent);
+      if (jumping) {
+        box(x - .76, jumpY + 1.25, z, .10, .08, .10, '#fff2ba');
+        box(x + .76, jumpY + 1.25, z, .10, .08, .10, '#fff2ba');
+      }
+      if (flying) {
+        for (let i = -1; i <= 1; i++) {
+          const flicker = .55 + .24 * Math.sin(game.time * 25 + i);
+          box(x + i * .30, jumpY - .55, z + .08, .11, flicker, .12, '#ff9b45');
+          sphere(x + i * .30, jumpY - .88, z + .08, .09, '#fff1b0', 4, 6);
+        }
+        box(x, bodyY + .06, z - .36, .72, .60, .35, '#b34f32');
+        box(x, bodyY + .35, z - .52, .42, .18, .14, '#f7be64');
+      }
+    }
+
+    function addPoliceAndDog(laneX) {
+      // Small original chase silhouettes, kept behind the playable runner.
+      box(laneX - .92, .92, 10.1, .55, 1.45, .40, '#374c69');
+      sphere(laneX - .92, 1.92, 10.1, .28, '#dcae8c', 6, 8);
+      box(laneX - .92, 2.18, 10.1, .56, .16, .42, '#263951');
+      box(laneX - 1.17, .30, 10.12, .18, .62, .20, '#202c3d');
+      box(laneX - .67, .30, 10.12, .18, .62, .20, '#202c3d');
+      const dogX = laneX + .86;
+      box(dogX, .43, 9.55, .68, .46, .90, '#9d704c');
+      sphere(dogX, .73, 9.94, .35, '#b9875e', 6, 8);
+      sphere(dogX - .18, .70, 10.22, .10, '#3b2c27', 4, 6);
+      sphere(dogX + .18, .70, 10.22, .10, '#3b2c27', 4, 6);
+      box(dogX, .18, 9.22, .16, .48, .15, '#714b37');
+      box(dogX - .24, .18, 9.22, .16, .48, .15, '#714b37');
+      box(dogX + .24, .18, 9.22, .16, .48, .15, '#714b37');
+    }
+
+    function drawWorld() {
+      const stage = runStage();
+      const distancePhase = ((game.runnerDistance || 0) * .020) % 2.6;
+      // Camera follows the lane smoothly, with a slight forward tilt.
+      const eye = [0, 6.3, 14.6];
+      const target = [0, 1.05, -14.5];
+      const forwardRaw = [target[0]-eye[0], target[1]-eye[1], target[2]-eye[2]];
+      const length = Math.hypot(forwardRaw[0], forwardRaw[1], forwardRaw[2]) || 1;
+      const forward = forwardRaw.map(v => v / length);
+      const rightRaw = [forward[2], 0, -forward[0]];
+      const rightLength = Math.hypot(rightRaw[0], rightRaw[1], rightRaw[2]) || 1;
+      const right = rightRaw.map(v => v / rightLength);
+      const up = [
+        right[1] * forward[2] - right[2] * forward[1],
+        right[2] * forward[0] - right[0] * forward[2],
+        right[0] * forward[1] - right[1] * forward[0]
+      ];
+      camera = {eye, forward, right, up};
+
+      // Ground, raised station platforms and three metal rail beds.
+      box(0, -.45, -22, 12.2, .72, 78, '#343c42');
+      box(0, -.83, -22, 12.4, .12, 78, '#242a30');
+      box(-7.05, -.14, -22, 1.7, .36, 80, '#667064');
+      box(7.05, -.14, -22, 1.7, .36, 80, '#667064');
+      box(-7.05, .09, -22, 1.72, .12, 80, '#d9c28d');
+      box(7.05, .09, -22, 1.72, .12, 80, '#d9c28d');
+
+      // Repeating sleepers scroll toward the camera, creating forward motion.
+      for (let i = 0; i < 34; i++) {
+        const z = -57 + i * 2.35 - distancePhase;
+        box(0, -.05, z, 11.0, .17, .55, i % 2 ? '#705a45' : '#80674d');
+      }
+      for (let lane = 0; lane < 3; lane++) {
+        const laneX = (lane - 1) * 3.15;
+        box(laneX, -.13, -22, 2.78, .13, 77, lane === 1 ? '#42484a' : '#3c4447');
+        [-.88, .88].forEach(offset => {
+          box(laneX + offset, .06, -22, .14, .20, 77, '#aeb6b4');
+          box(laneX + offset, .17, -22, .06, .06, 77, '#e4e4d5');
+        });
+      }
+      // Platform edge lights and painted lane guides.
+      for (let i = 0; i < 28; i++) {
+        const z = -55 + i * 2.7 - distancePhase;
+        box(-5.95, .10, z, .14, .08, .38, '#ffe1a1');
+        box(5.95, .10, z, .14, .08, .38, '#ffe1a1');
+      }
+
+      // A layered city skyline, repeating trees and street lamps.
+      const buildingShift = ((game.runnerDistance || 0) * .026) % 8;
+      for (let side = -1; side <= 1; side += 2) {
+        for (let i = 0; i < 8; i++) addBuilding(side, i, buildingShift);
+        for (let i = 0; i < 5; i++) {
+          const z = -44 + i * 10 - ((game.runnerDistance || 0) * .025 % 10);
+          addTree(side * (6.0 + (i % 2) * .45), z, .72 + (i % 3) * .1);
+          addLamp(side * 6.25, z - 3.2);
+        }
+      }
+
+      // Overhead metro gantries and a luminous station sign.
+      for (let i = 0; i < 3; i++) {
+        const z = -34 + i * 23 - ((game.runnerDistance || 0) * .018 % 23);
+        box(-5.75, 3.85, z, .16, 7.7, .18, '#3f4b51');
+        box(5.75, 3.85, z, .16, 7.7, .18, '#3f4b51');
+        box(0, 7.48, z, 11.6, .18, .20, '#3f4b51');
+        box(0, 7.18, z + .15, 3.7, .65, .18, '#e8b85f');
+        box(0, 7.18, z + .26, 3.3, .43, .08, '#243947');
+      }
+
+      // Distant warm sun and a few soft cloud blocks.
+      sphere(12, 11.8, -57, 2.4, '#ffe1a3', 7, 10);
+      for (let i = 0; i < 6; i++) {
+        const z = -55 - (i % 3) * 2;
+        const x = (i - 2.5) * 4.4;
+        box(x, 10.7 + (i % 2) * .7, z, 3.0, .52, .45, '#fff0dc');
+        box(x + .55, 11.0 + (i % 2) * .7, z, 1.8, .55, .5, '#fff4e5');
+      }
+
+      return stage;
+    }
+
+    function drawObjects() {
+      // Coins and boosts are sorted by distance only for stable draw ordering;
+      // the depth buffer handles all actual visibility.
+      game.pickups.slice().sort((a,b) => a.z - b.z).forEach(item => {
+        const x = (item.lane - 1) * 3.15;
+        const z = worldZ(item.z);
+        if (item.type === 'coin' || item.type === 'super') {
+          coin(x, item.type === 'super' ? 1.38 : 1.02, z, item.type === 'super', game.time * 8 + item.z * 3);
+        } else {
+          const itemData = RUN_ITEMS[item.type] || RUN_ITEMS.mystery;
+          const color = itemData.color || '#a879ef';
+          box(x, 1.45 + Math.sin(game.time * 3 + item.z) * .10, z, .94, .94, .72, color);
+          box(x, 1.45, z + .40, .70, .70, .06, '#f7f1d9');
+          sphere(x, 1.45, z + .46, .22, color, 5, 7);
+        }
+      });
+
+      game.obstacles.slice().sort((a,b) => a.z - b.z).forEach(obstacle => {
+        if (obstacle.type === 'train') addTrain(obstacle.lane, obstacle.z);
+        else if (obstacle.type === 'overhead') addOverhead(obstacle.lane, obstacle.z);
+        else if (obstacle.type === 'ramp') addRamp(obstacle.lane, obstacle.z);
+        else addBarrier(obstacle.lane, obstacle.z);
+      });
+    }
+
+    function drawPlayer() {
+      const lane = game.laneVisual === undefined ? 1 : game.laneVisual;
+      const x = (lane - 1) * 3.15;
+      const flying = !!(game.runnerEffects && game.runnerEffects.jet > 0);
+      const board = !!(game.runnerEffects && game.runnerEffects.board > 0);
+      const jumping = (game.jump || 0) > 28 || (game.rideT || 0) > 0;
+      const height = Math.min(3.3, Math.max(0, (game.jump || 0) / 54));
+      const flyHeight = flying ? 2.35 : 0;
+      const rideHeight = game.rideT > 0 ? 1.55 : 0;
+      const sliding = game.slide > 0;
+      const hero = RUN_HEROES[game.heroIndex] || RUN_HEROES[0];
+      addHero(x, height + flyHeight + rideHeight, 6.3, hero, game.time * 14, sliding, jumping, flying, board);
+      addPoliceAndDog(x);
+    }
+
+    function render() {
+      const stage = drawWorld();
+      drawObjects();
+      drawPlayer();
+
+      const fog = hexColor(stage.sky[2]);
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      const data = new Float32Array(vertices);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(clipLocation);
+      gl.vertexAttribPointer(clipLocation, 4, gl.FLOAT, false, 36, 0);
+      gl.enableVertexAttribArray(colorLocation);
+      gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 36, 16);
+      gl.enableVertexAttribArray(depthLocation);
+      gl.vertexAttribPointer(depthLocation, 1, gl.FLOAT, false, 36, 32);
+      gl.uniform3fv(fogLocation, fog);
+      gl.viewport(0, 0, W, H);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.disable(gl.CULL_FACE);
+      gl.drawArrays(gl.TRIANGLES, 0, data.length / 9);
+      vertices = [];
+    }
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    return {
+      canvas: layer,
+      draw: function() {
+        const stage = runStage();
+        layer.style.background = 'linear-gradient(180deg,' +
+          stage.sky[0] + ' 0%,' + stage.sky[1] + ' 39%,' +
+          stage.sky[2] + ' 58%,#667061 59%,#29343b 100%)';
+        vertices = [];
+        render();
+      }
+    };
+  }
+
+  function drawSubwayRunner() {
+    if (game.runnerMode === 'select') {
+      if (lunaRunner3D) lunaRunner3D.canvas.style.display = 'none';
+      screen.classList.remove('runner-3d-active');
+      drawSubwayRunnerLegacy();
+      return;
+    }
+
+    if (!lunaRunner3DAttempted) {
+      lunaRunner3DAttempted = true;
+      lunaRunner3D = createLunaRunner3D();
+    }
+    if (!lunaRunner3D) {
+      drawSubwayRunnerLegacy();
+      return;
+    }
+
+    lunaRunner3D.canvas.style.display = 'block';
+    screen.classList.add('runner-3d-active');
+    ctx.clearRect(0, 0, W, H);
+    lunaRunner3D.draw();
+    runDrawHUD();
+
+    const stage = runStage();
+    ctx.fillStyle = 'rgba(10,22,39,.72)';
+    ctx.beginPath();
+    ctx.roundRect(245, 110, 230, 34, 10);
+    ctx.fill();
+    ctx.fillStyle = stage.accent;
+    ctx.font = 'bold 11px "DM Mono"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(stage.name, 360, 127);
+    ctx.textAlign = 'left';
+
+    if (game.runnerMode === 'paused') runDrawOverlay('PAUSED', 'Your run is paused.', 'RESUME', null);
+    if (game.runnerMode === 'over') {
+      runDrawOverlay(
+        game.runnerKeys > 0 ? 'CRASHED' : 'RUN OVER',
+        game.runnerKeys > 0
+          ? 'Use one Luna Key to continue?'
+          : 'Distance ' + Math.floor(game.runnerDistance / 10) + ' · Coins ' + coins,
+        game.runnerKeys > 0 ? 'CONTINUE · ' + game.runnerKeys + ' KEY' : 'TRY AGAIN',
+        game.runnerKeys > 0 ? 'END RUN / RETRY' : null
+      );
+    }
+  }
+
+
+  })();
