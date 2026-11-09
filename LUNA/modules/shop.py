@@ -173,7 +173,7 @@ async def show_character(client, msg, user_id):
         elif media_type == "animation":
             await msg.reply_animation(animation=media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
         else:
-            watermarked_photo = await get_watermarked_photo(client, media_file_id)
+            watermarked_photo = None if char.get("watermarked") else await get_watermarked_photo(client, media_file_id)
             await msg.reply_photo(photo=watermarked_photo or media_file_id, caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
     elif char.get("vid_url"):
         await msg.reply_video(video=char["vid_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
@@ -181,7 +181,7 @@ async def show_character(client, msg, user_id):
         if is_video(char["img_url"]):
             await msg.reply_video(video=char["img_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
         else:
-            watermarked_photo = await get_watermarked_photo(client, char["img_url"])
+            watermarked_photo = None if char.get("watermarked") else await get_watermarked_photo(client, char["img_url"])
             await msg.reply_photo(photo=watermarked_photo or char["img_url"], caption=caption, reply_markup=markup, parse_mode=ParseMode.HTML)
     else:
         await msg.reply_text(caption, reply_markup=markup, parse_mode=ParseMode.HTML)
