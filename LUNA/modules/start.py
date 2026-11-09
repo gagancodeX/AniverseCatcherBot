@@ -236,8 +236,8 @@ async def start_private_command(client, message):
         await application.bot.send_message(
             chat_id=log_chat_id,
             text=(
-                f"{message.from_user.first_name} just started the bot.\\n\\n"
-                f"User ID: {message.from_user.id}\\n"
+                f"{message.from_user.first_name} just started the bot.\n\n"
+                f"User ID: {message.from_user.id}\n"
                 f"Username: {username}"
             ),
         )
