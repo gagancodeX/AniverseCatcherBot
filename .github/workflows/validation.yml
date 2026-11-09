@@ -24,6 +24,14 @@ jobs:
       - name: Compile Python modules
         run: python -m compileall -q LUNA config.py
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check GameZone JavaScript syntax
+        run: node --check gamezone/gamezone.js
+
       - name: Validate app metadata
         run: python -m json.tool app.json > /dev/null
 
