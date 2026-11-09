@@ -24,6 +24,38 @@ def get_uptime():
     return f"{hours}h {minutes}m {seconds}s"
 
 
+def normalize_logging_chat_id(value):
+    """Accept Telegram chat IDs and public @usernames, never phone numbers."""
+    if isinstance(value, bool) or value is None:
+        raise ValueError("BOT_LOGGING is empty or invalid.")
+
+    if isinstance(value, int):
+        if value == 0:
+            raise ValueError("BOT_LOGGING cannot be 0.")
+        return value
+
+    raw = str(value).strip()
+    if not raw:
+        raise ValueError("BOT_LOGGING is empty.")
+
+    if raw.startswith("+"):
+        raise ValueError(
+            "BOT_LOGGING contains a phone number. Set it to the numeric Telegram "
+            "chat ID (usually -100...) or a public @channelusername instead."
+        )
+
+    if raw.startswith("@") and len(raw) > 1:
+        return raw
+
+    if raw.lstrip("-").isdigit():
+        return int(raw)
+
+    raise ValueError(
+        "BOT_LOGGING must be a numeric Telegram chat ID (usually -100...) "
+        "or a public @channelusername; phone numbers are not valid chat IDs."
+    )
+
+
 def valid_button_url(value):
     """Normalize a Telegram-style link and reject malformed button URLs."""
     if not isinstance(value, str):
@@ -195,11 +227,17 @@ async def start_private_command(client, message):
     media = random.choice(START_MEDIA) if START_MEDIA else None
 
     try:
-        await app.send_message(
-            chat_id=BOT_LOGGING,
-            text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
+        log_chat_id = normalize_logging_chat_id(BOT_LOGGING)
+        await client.send_message(
+            chat_id=log_chat_id,
+            text=(
+                f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ ᴛᴏ ᴄʜᴇᴄᴋ <b>sᴜᴅᴏʟɪsᴛ</b>.\\n\\n"
+                f"<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\\n"
+                f"<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username or 'N/A'}"
+            ),
         )
-    
+    except ValueError as exc:
+        LOGGER("LUNA").warning("Could not send /start log message: invalid BOT_LOGGING: %s", exc)
     except Exception as exc:
         LOGGER("LUNA").warning("Could not send /start log message: %s", exc)
 
