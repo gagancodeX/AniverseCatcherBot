@@ -1,6 +1,6 @@
 # ==========================================
 # Creator: Adam
-# Project: AniverseCatcherBot
+# Project: LunaCatcherBot
 # ==========================================
 
 import os

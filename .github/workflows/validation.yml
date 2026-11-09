@@ -1,4 +1,4 @@
-name: Aniverse validation
+name: Luna validation
 
 on:
   pull_request:
@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Compile Python modules
-        run: python -m compileall -q ANIVERSE config.py
+        run: python -m compileall -q LUNA config.py
 
       - name: Validate app metadata
         run: python -m json.tool app.json > /dev/null

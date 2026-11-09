@@ -1,10 +1,10 @@
-<h1 align="center">✦ ANIVERSE CATCHER BOT ✦</h1>
+<h1 align="center">✦ LUNA CATCHER BOT ✦</h1>
 
 <p align="center"><b>Catch · Collect · Trade · Play</b></p>
 <p align="center">A Telegram-native anime character collection game with interactive group gameplay.</p>
 
 <p align="center">
-  <a href="https://github.com/gagancodeX/AniverseCatcherBot">GitHub Repository</a>
+  <a href="https://github.com/gagancodeX/LunaCatcherBot">GitHub Repository</a>
   · Creator: <b>Adam</b>
 </p>
 
@@ -24,8 +24,8 @@
 Use Python 3.11 or later.
 
 ```bash
-git clone https://github.com/gagancodeX/AniverseCatcherBot.git
-cd AniverseCatcherBot
+git clone https://github.com/gagancodeX/LunaCatcherBot.git
+cd LunaCatcherBot
 python -m venv .venv
 ```
 
@@ -57,10 +57,10 @@ Fill in the required values in `.env`:
 ## ✦ Run
 
 ```bash
-python -m ANIVERSE
+python -m LUNA
 ```
 
-The project now runs from the `ANIVERSE` Python package. Internal imports, startup commands and the Docker entry point all use this package name.
+The project now runs from the `LUNA` Python package. Internal imports, startup commands and the Docker entry point all use this package name.
 
 ## ✦ Deployment
 
@@ -68,6 +68,6 @@ The repository includes a `Procfile` and `Dockerfile` for supported hosting work
 
 ## ✦ Project
 
-- Repository: https://github.com/gagancodeX/AniverseCatcherBot
+- Repository: https://github.com/gagancodeX/LunaCatcherBot
 - License: MIT
 - Creator credit: Adam

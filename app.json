@@ -1,7 +1,7 @@
 {
-  "name": "AniverseCatcherBot",
+  "name": "LunaCatcherBot",
   "description": "Telegram-native anime character catcher with character collection, guessing, trading, events and interactive games.",
-  "repository": "https://github.com/gagancodeX/AniverseCatcherBot",
+  "repository": "https://github.com/gagancodeX/LunaCatcherBot",
   "keywords": [
     "waifu-bot",
     "telegram-bot",

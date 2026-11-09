@@ -1,1 +1,1 @@
-web: python -m ANIVERSE
+web: python -m LUNA
