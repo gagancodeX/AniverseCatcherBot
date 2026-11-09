@@ -8,7 +8,7 @@ from telegram import (
     Update, InlineQueryResultPhoto, InlineQueryResultVideo,
     InlineQueryResultCachedPhoto, InlineQueryResultCachedVideo,
     InlineQueryResultCachedDocument, InlineQueryResultArticle,
-    InputTextMessageContent, InlineQueryResultsButton, WebAppInfo,
+    InputTextMessageContent, InlineQueryResultsButton, WebAppInfo, InlineQueryResultGame,
 )
 from telegram.ext import InlineQueryHandler, CallbackContext
 from LUNA import application, bot_client, DATABASE_ID, db
@@ -120,6 +120,34 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
     # by the static-site host through GAMEZONE_URL; normal character search is
     # unchanged for every other inline query.
     if query.strip().lower() in {"game", "games", "gamezone", "arcade", "play"}:
+        # Native Telegram Games are enabled only after all six titles have been
+        # registered through @BotFather with the matching short names below.
+        # Until then, retain the existing Mini App launcher so the arcade remains usable.
+        native_games_enabled = os.getenv("LUNA_NATIVE_GAMES_ENABLED", "").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        native_games = [
+            ("luna_flappy", "FLAPPY LUNA"),
+            ("luna_run", "LUNA RUN"),
+            ("luna_sky_jumper", "SKY JUMPER"),
+            ("luna_star_defender", "STAR DEFENDER"),
+            ("luna_neon_breaker", "NEON BREAKER"),
+            ("luna_neon_racer", "NEON RACER"),
+        ]
+        if native_games_enabled:
+            await update.inline_query.answer(
+                results=[
+                    InlineQueryResultGame(
+                        id=f"luna_native_{index}",
+                        game_short_name=short_name,
+                    )
+                    for index, (short_name, _title) in enumerate(native_games, start=1)
+                ],
+                cache_time=0,
+                is_personal=True,
+            )
+            return
+
         gamezone_url = os.getenv("GAMEZONE_URL", "").strip()
         if gamezone_url.startswith("https://"):
             await update.inline_query.answer(
