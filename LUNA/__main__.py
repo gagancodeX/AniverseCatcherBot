@@ -9,6 +9,7 @@ import os
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -20,10 +21,9 @@ from LUNA.modules import ALL_MODULES
 BOT_READY = False
 
 BOT_NAME = "Luna | Anime Catcher 🌙"
-BOT_SHORT_DESCRIPTION = "🌙 Catch • Collect • Trade anime characters. Hunt rare finds, build your collection & become a top collector!"
 BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
 
-BOT_COMMANDS = [
+USER_COMMANDS = [
     {
         "command": "start",
         "description": "🌙 Open the Luna world"
@@ -33,8 +33,40 @@ BOT_COMMANDS = [
         "description": "🎯 Guess the hidden character"
     },
     {
+        "command": "protecc",
+        "description": "🛡️ Catch a mystery character"
+    },
+    {
+        "command": "collect",
+        "description": "✨ Collect a mystery character"
+    },
+    {
+        "command": "grab",
+        "description": "💫 Grab the appearing character"
+    },
+    {
+        "command": "hunt",
+        "description": "🔍 Hunt for a character"
+    },
+    {
         "command": "harem",
         "description": "💖 View your character collection"
+    },
+    {
+        "command": "collection",
+        "description": "📚 Open your collection"
+    },
+    {
+        "command": "hmode",
+        "description": "🎨 Filter your collection by rarity"
+    },
+    {
+        "command": "hclaim",
+        "description": "🎁 Claim your daily character"
+    },
+    {
+        "command": "claim",
+        "description": "🌟 Claim a character reward"
     },
     {
         "command": "check",
@@ -49,8 +81,12 @@ BOT_COMMANDS = [
         "description": "💜 Save a favourite character"
     },
     {
-        "command": "claim",
-        "description": "🎁 Claim your daily character"
+        "command": "addchar",
+        "description": "➕ Request a character for the archive"
+    },
+    {
+        "command": "gift",
+        "description": "🎀 Gift a character to a friend"
     },
     {
         "command": "balance",
@@ -69,28 +105,36 @@ BOT_COMMANDS = [
         "description": "💸 Send coins to another user"
     },
     {
-        "command": "gift",
-        "description": "🎀 Gift a character to a friend"
-    },
-    {
         "command": "shop",
         "description": "🛍️ Explore the character shop"
+    },
+    {
+        "command": "hshop",
+        "description": "🛒 Open the character shop"
+    },
+    {
+        "command": "hshopmenu",
+        "description": "✨ Open the shop menu"
     },
     {
         "command": "rank",
         "description": "🏆 View collector rankings"
     },
     {
-        "command": "bounty",
-        "description": "📜 Create a wanted-style poster"
+        "command": "topgroups",
+        "description": "🌐 See the top capture groups"
     },
     {
-        "command": "transfer",
-        "description": "🔁 Transfer characters (VIP)"
+        "command": "ctop",
+        "description": "👑 Top collectors in this group"
     },
     {
-        "command": "addchar",
-        "description": "➕ Request a character"
+        "command": "st",
+        "description": "📡 View Luna network status"
+    },
+    {
+        "command": "stats",
+        "description": "📊 View your collector stats"
     },
     {
         "command": "total",
@@ -101,65 +145,239 @@ BOT_COMMANDS = [
         "description": "🤝 Trade characters with a user"
     },
     {
+        "command": "transfer",
+        "description": "🔁 Transfer a collection (VIP)"
+    },
+    {
+        "command": "backtransfer",
+        "description": "↩️ Undo a recent transfer (VIP)"
+    },
+    {
+        "command": "untransfer",
+        "description": "↩️ Undo a recent transfer (VIP)"
+    },
+    {
+        "command": "trback",
+        "description": "↩️ Undo a recent transfer (VIP)"
+    },
+    {
         "command": "rarity",
-        "description": "💎 View character rarity information"
+        "description": "💎 View character rarity details"
+    },
+    {
+        "command": "redeem",
+        "description": "🎟️ Redeem a character code"
+    },
+    {
+        "command": "valentine",
+        "description": "💝 Claim the seasonal event reward"
+    },
+    {
+        "command": "ping",
+        "description": "🏓 Check Luna's response"
     }
 ]
+ADMIN_COMMANDS = [
+    {
+        "command": "backup",
+        "description": "📦 Create a database backup (VIP)"
+    },
+    {
+        "command": "backupstatus",
+        "description": "📈 Check backup status (VIP)"
+    },
+    {
+        "command": "listbackups",
+        "description": "🗂️ List saved backups (VIP)"
+    },
+    {
+        "command": "startbackup",
+        "description": "⚙️ Start automatic backups (owner)"
+    },
+    {
+        "command": "bcast",
+        "description": "📣 Send an admin broadcast (VIP)"
+    },
+    {
+        "command": "broadcast",
+        "description": "📣 Send an admin broadcast (VIP)"
+    },
+    {
+        "command": "ctime",
+        "description": "⏱️ Set the group's capture interval (admin)"
+    },
+    {
+        "command": "cgen",
+        "description": "🎟️ Generate redeem codes (VIP)"
+    },
+    {
+        "command": "discount",
+        "description": "🏷️ Set a shop discount (owner)"
+    },
+    {
+        "command": "reupload",
+        "description": "☁️ Migrate character media (admin)"
+    },
+    {
+        "command": "telegramize",
+        "description": "☁️ Migrate media to Telegram (admin)"
+    },
+    {
+        "command": "saddsudo",
+        "description": "🛡️ Add a sudo user (VIP)"
+    },
+    {
+        "command": "sremovesudo",
+        "description": "🧹 Remove a sudo user (VIP)"
+    },
+    {
+        "command": "seditsudo",
+        "description": "🔧 Edit sudo permissions (VIP)"
+    },
+    {
+        "command": "sudolist",
+        "description": "👥 List sudo users (owner)"
+    },
+    {
+        "command": "gdelete",
+        "description": "🗑️ Delete an archive character (admin)"
+    },
+    {
+        "command": "gupdate",
+        "description": "📝 Update a character record (admin)"
+    },
+    {
+        "command": "maxupdate",
+        "description": "📝 Update multiple characters (admin)"
+    },
+    {
+        "command": "gmedia",
+        "description": "🖼️ Replace character media (admin)"
+    },
+    {
+        "command": "find",
+        "description": "🆔 Find the next character ID (admin)"
+    },
+    {
+        "command": "server",
+        "description": "☁️ Check media storage (admin)"
+    },
+    {
+        "command": "gupload",
+        "description": "⬆️ Upload a character directly (admin)"
+    },
+    {
+        "command": "upload",
+        "description": "⬆️ Upload a character directly (admin)"
+    },
+    {
+        "command": "u",
+        "description": "⬆️ Upload a character directly (admin)"
+    }
+]
+ALL_OWNER_COMMANDS = USER_COMMANDS + ADMIN_COMMANDS
 
-# Telegram may keep separate profile/command overrides by language.
-# Apply Luna's profile to the default, English and Hindi settings.
-PROFILE_LANGUAGES = ("", "en", "hi")
-BOT_PROFILE_SETTINGS = []
-for _language in PROFILE_LANGUAGES:
-    _localized = {"language_code": _language} if _language else {}
-    BOT_PROFILE_SETTINGS.extend(
-        [
-            ("setMyName", {"name": BOT_NAME, **_localized}),
-            ("setMyShortDescription", {
-                "short_description": BOT_SHORT_DESCRIPTION,
-                **_localized,
-            }),
-            ("setMyDescription", {
-                "description": BOT_DESCRIPTION,
-                **_localized,
-            }),
-            ("setMyCommands", {
-                "commands": BOT_COMMANDS,
-                "scope": {"type": "default"},
-                **_localized,
-            }),
-        ]
+# Clear the profile About text for the default, English and Hindi languages.
+ABOUT_LANGUAGES = ("", "en", "hi")
+
+
+def _telegram_api_call(method: str, payload: dict):
+    """Call the Telegram Bot API and return its result or a useful error."""
+    request = urllib.request.Request(
+        f"https://api.telegram.org/bot{TOKEN}/{method}",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
     )
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        details = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(f"HTTP {exc.code}: {details}") from exc
+
+    if not result.get("ok"):
+        raise RuntimeError(result.get("description", "Telegram rejected the request"))
+    return result.get("result")
+
+
+def _apply_command_scope(scope: dict, commands: list, language_code: str = "") -> None:
+    payload = {"commands": commands, "scope": scope}
+    if language_code:
+        payload["language_code"] = language_code
+    _telegram_api_call("setMyCommands", payload)
 
 
 def sync_bot_profile() -> None:
-    """Apply Luna's public profile text and command menu through the Telegram Bot API."""
-    for method, payload in BOT_PROFILE_SETTINGS:
-        request = urllib.request.Request(
-            f"https://api.telegram.org/bot{TOKEN}/{method}",
-            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
+    """Clear About and install complete command lists for private chats, groups and admins."""
+    # Telegram allows an empty short_description to remove the About text.
+    for language_code in ABOUT_LANGUAGES:
+        payload = {"short_description": "", "language_code": language_code}
         try:
-            with urllib.request.urlopen(request, timeout=10) as response:
-                result = json.loads(response.read().decode("utf-8"))
-            if not result.get("ok"):
-                raise RuntimeError(result.get("description", "Telegram rejected the request"))
-            LOGGER("LUNA").info("Telegram bot profile setting applied: %s", method)
-        except Exception as exc:
-            # Keep the bot online, but preserve Telegram's real error for debugging.
-            detail = str(exc)
-            if isinstance(exc, urllib.error.HTTPError):
-                try:
-                    detail = exc.read().decode("utf-8", "replace")
-                except Exception:
-                    pass
-            LOGGER("LUNA").warning(
-                "Telegram profile setting %s failed: %s",
-                method,
-                detail[:500],
+            _telegram_api_call("setMyShortDescription", payload)
+            LOGGER("LUNA").info(
+                "Telegram About text cleared for language %r",
+                language_code or "default",
             )
+        except Exception as exc:
+            LOGGER("LUNA").warning("Could not clear Telegram About text: %s", exc)
+
+    # Keep the public-facing name and long description current.
+    for language_code in ABOUT_LANGUAGES:
+        language_payload = {"language_code": language_code}
+        try:
+            _telegram_api_call("setMyName", {"name": BOT_NAME, **language_payload})
+            _telegram_api_call(
+                "setMyDescription",
+                {"description": BOT_DESCRIPTION, **language_payload},
+            )
+            LOGGER("LUNA").info(
+                "Telegram name and description synced for language %r",
+                language_code or "default",
+            )
+        except Exception as exc:
+            LOGGER("LUNA").warning("Could not sync Telegram profile text: %s", exc)
+
+    # Replace any narrower menu lists too; Telegram prefers a narrower command scope
+    # over the default scope when displaying the slash-command menu.
+    command_scopes = [
+        ({"type": "default"}, USER_COMMANDS, "default"),
+        ({"type": "all_private_chats"}, USER_COMMANDS, "all private chats"),
+        ({"type": "all_group_chats"}, USER_COMMANDS, "all group chats"),
+        ({"type": "all_chat_administrators"}, ALL_OWNER_COMMANDS, "group administrators"),
+    ]
+    for scope, commands, label in command_scopes:
+        try:
+            _apply_command_scope(scope, commands)
+            LOGGER("LUNA").info("Telegram command menu synced: %s (%s commands)", label, len(commands))
+        except Exception as exc:
+            LOGGER("LUNA").warning("Could not sync command menu for %s: %s", label, exc)
+
+    # Give the configured bot owner the complete command list in the private bot chat.
+    if getattr(LUNA, "OWNER_ID", 0):
+        try:
+            _apply_command_scope(
+                {"type": "chat", "chat_id": LUNA.OWNER_ID},
+                ALL_OWNER_COMMANDS,
+            )
+            LOGGER("LUNA").info("Telegram owner command menu synced (%s commands)", len(ALL_OWNER_COMMANDS))
+        except Exception as exc:
+            LOGGER("LUNA").warning("Could not sync owner command menu: %s", exc)
+
+    # Read back the default list so the logs show what Telegram actually saved.
+    try:
+        actual_commands = _telegram_api_call(
+            "getMyCommands",
+            {"scope": {"type": "default"}},
+        )
+        actual_about = _telegram_api_call("getMyShortDescription", {})
+        LOGGER("LUNA").info(
+            "Telegram profile verification: %s default commands; About length=%s",
+            len(actual_commands or []),
+            len((actual_about or {}).get("short_description", "")),
+        )
+    except Exception as exc:
+        LOGGER("LUNA").warning("Could not verify Telegram profile settings: %s", exc)
 
 
 def start_health_server() -> None:

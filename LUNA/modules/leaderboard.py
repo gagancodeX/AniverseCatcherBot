@@ -13,7 +13,7 @@ from LUNA import (app, OWNER_ID,
                       group_user_totals_collection)
 
 
-@app.on_message(filters.command("TopGroups"))
+@app.on_message(filters.command("topgroups"))
 async def global_leaderboard(client: Client, message: Message):
     cursor = top_global_groups_collection.aggregate([
         {"$project": {"group_name": 1, "count": 1}},
