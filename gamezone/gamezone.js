@@ -69,7 +69,7 @@
   }
   function initGame(id){
     game={time:0,particles:[],stars:Array.from({length:65},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,a:Math.random()*.65+.2,s:Math.random()*.6+.15}))};
-    if(id==='flappy'){game.player={x:190,y:470,vy:0,r:24,rot:0};game.pipes=[];game.spawn=0;game.passed=0;game.pipes.push(makePipe(900));}
+    if(id==='flappy'){game.player={x:190,y:470,vy:0,r:28,rot:0};game.pipes=[];game.spawn=0;game.passed=0;game.pipes.push(makePipe(900));}
     if(id==='runner'||id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
     if(id==='jumper'){game.player={x:360,y:790,vx:0,vy:-620,r:23};game.platforms=[];for(let i=0;i<9;i++)game.platforms.push({x:70+Math.random()*530,y:860-i*105,w:110+Math.random()*55});game.camera=0;game.left=false;game.right=false;}
     if(id==='space'){game.player={x:360,y:840};game.bullets=[];game.enemies=[];game.spawn=0;game.fire=0;game.drag=false;game.lives=3;game.scoreTime=0;}
@@ -139,7 +139,7 @@
     game.spawn+=dt;if(game.spawn>1.65){game.pipes.push(makePipe(W+50));game.spawn=0}
     game.pipes.forEach(pipe=>{pipe.x-=250*dt;if(!pipe.passed&&pipe.x+92<p.x){pipe.passed=true;setScore(score+1);tone(720)}});
     game.pipes=game.pipes.filter(p=>p.x>-130);
-    if(p.y>H-42||p.y<38){endGame();return}
+    if(p.y>H-95||p.y<38){endGame();return}
     for(const pipe of game.pipes){const gapTop=pipe.center-pipe.gap/2,gapBottom=pipe.center+pipe.gap/2;if(p.x+p.r>pipe.x-8&&p.x-p.r<pipe.x+100&&(p.y-p.r<gapTop||p.y+p.r>gapBottom)){endGame();return}}
   }
   function updateRunner(dt,isCar){
@@ -334,7 +334,7 @@
     });
     // Loose light motes behind the mascot.
     for(let i=0;i<8;i++){const x=(game.player.x-100+i*19+W)%W,y=game.player.y+Math.sin(game.time*4+i)*20;ctx.globalAlpha=.45-i*.04;artStar(x,y,2+i*.2,'#ffe9c4')}ctx.globalAlpha=1;
-    drawLunaMascot(game.player.x,game.player.y,game.player.rot,1);
+    drawLunaMascot(game.player.x,game.player.y,game.player.rot,.72);
   }
   function drawRunnerBackdrop(){
     const sky=artGrad(0,0,0,H,[[0,'#14253c'],[.38,'#4d536c'],[.62,'#c08383'],[1,'#e1a58e']]);ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
