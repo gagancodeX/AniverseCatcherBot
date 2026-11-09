@@ -19,9 +19,12 @@ GAME_SHORT_NAMES = {
 async def launch_luna_game(update, context):
     """Open the selected native Telegram game at its own direct game route."""
     query = update.callback_query
-    game_slug = GAME_SHORT_NAMES.get(query.game_short_name or "")
-    base_url = os.getenv("GAMEZONE_URL", "").strip().rstrip("/")
+    if not query or not query.game_short_name:
+        # This fallback handler runs after ordinary callback handlers.
+        return
 
+    game_slug = GAME_SHORT_NAMES.get(query.game_short_name)
+    base_url = os.getenv("GAMEZONE_URL", "").strip().rstrip("/")
     if not game_slug or not base_url.startswith("https://"):
         await query.answer(
             text="This Luna game is not configured yet. Please try again later.",
@@ -32,10 +35,6 @@ async def launch_luna_game(update, context):
     await query.answer(url=f"{base_url}/?game={game_slug}")
 
 
-# Game callbacks are distinct from ordinary callback_data button presses.
-application.add_handler(
-    CallbackQueryHandler(
-        launch_luna_game,
-        game_pattern=r"^(luna_flappy|luna_run|luna_sky_jumper|luna_star_defender|luna_neon_breaker|luna_neon_racer)$",
-    )
-)
+# PTB 20.6 predates CallbackQueryHandler.game_pattern. Register a broad
+# fallback handler in a later group and only process Telegram game callbacks.
+application.add_handler(CallbackQueryHandler(launch_luna_game), group=1)
