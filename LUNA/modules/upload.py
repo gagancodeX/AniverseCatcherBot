@@ -147,9 +147,14 @@ async def ul_main(client, message):
 
             # Copy directly inside Telegram. The returned file_id belongs to this bot
             # and can be reused by Pyrogram and python-telegram-bot.
+            image_file_id = (
+                reply.photo.file_id if reply.photo
+                else reply.document.file_id if reply.document
+                else None
+            )
             watermarked_photo = (
-                await get_watermarked_photo(client, reply.photo.file_id)
-                if reply.photo else None
+                await get_watermarked_photo(client, image_file_id)
+                if image_file_id else None
             )
             if watermarked_photo:
                 saved_message = await client.send_photo(
