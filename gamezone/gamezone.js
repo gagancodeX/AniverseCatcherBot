@@ -12,7 +12,7 @@
     flappy:{title:'FLAPPY LUNA',symbol:'☾',hint:'TAP TO FLY · SPACE TO FLAP',start:'Tap to flap through the glowing moon gates. Every gate is a point.',over:'The night got you. One more flight?',color:'#cfb2ff'},
     runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Change lanes, jump over barriers and collect moon coins.',over:'The run is over. Ready for another dash?',color:'#f4c98b'},
     jumper:{title:'SKY JUMPER',symbol:'✧',hint:'TAP LEFT / RIGHT SIDE · ARROW KEYS',start:'Keep bouncing upward. Land on platforms and keep climbing.',over:'You reached the clouds. Try to climb higher!',color:'#9ce9ff'},
-    space:{title:'STAR BLASTER',symbol:'✦',hint:'DRAG TO MOVE · AUTO FIRE',start:'Slide your ship across the sky and dodge the incoming swarm.',over:'The stars are quiet again. Launch another mission?',color:'#9ce9ff'},
+    space:{title:'STAR DEFENDER',symbol:'✦',hint:'DRAG TO MOVE · AUTO FIRE',start:'Slide your ship across the sky and dodge the incoming swarm.',over:'The stars are quiet again. Launch another mission?',color:'#9ce9ff'},
     brick:{title:'NEON BREAKER',symbol:'▰',hint:'DRAG OR MOVE TO CONTROL THE PADDLE',start:'Keep the energy orb alive and clear every glowing block.',over:'The orb slipped away. Reset and try again.',color:'#f4a9df'},
     racer:{title:'NEON RACER',symbol:'◈',hint:'SWIPE LEFT / RIGHT · ARROW KEYS',start:'Three lanes. Endless neon. Avoid traffic and collect stars.',over:'The road ends here. Can you beat your record?',color:'#f4a9df'}
   };
@@ -257,7 +257,8 @@
   }
   function artMoon(x,y,r) {
     ctx.save();ctx.shadowBlur=44;ctx.shadowColor='#ffe2bd';ctx.fillStyle='#f4dfbb';
-    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x+r*.34,y-r*.2,r*.86,0,Math.PI*2);ctx.fill();ctx.globalCompositeOperation='source-over';
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(54,58,83,.48)';ctx.beginPath();ctx.arc(x+r*.34,y-r*.2,r*.86,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='rgba(255,241,214,.16)';ctx.beginPath();ctx.arc(x-r*.2,y-r*.28,r*.12,0,Math.PI*2);ctx.arc(x+r*.05,y+r*.3,r*.08,0,Math.PI*2);ctx.fill();ctx.restore();
   }
   function artPine(x,y,s,color) {
@@ -550,7 +551,7 @@
     game.speed=Math.min(isCar?840:760,game.speed+dt*8);
     distance+=game.speed*dt/23;
     game.spawn+=dt;
-    if(game.spawn>(isCar?.82:1.02)){
+    if(game.spawn > (isCar ? .82 : 1.02)){
       const lane=Math.floor(Math.random()*3);
       game.obstacles.push({lane,y:-80,z:Math.random()});
       if(Math.random()>.23){const coinLane=Math.floor(Math.random()*3);game.pickups.push({x:180+coinLane*180,y:-260})}
