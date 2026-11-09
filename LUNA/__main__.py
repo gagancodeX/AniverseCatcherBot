@@ -19,56 +19,117 @@ from LUNA.modules import ALL_MODULES
 
 BOT_READY = False
 
-BOT_PROFILE_SETTINGS = [
-    ("setMyName", {"name": "Luna | Anime Catcher 🌙"}),
-    (
-        "setMyShortDescription",
-        {
-            "short_description": (
-                "Catch, collect and trade anime characters. "
-                "Build your collection and claim daily rewards! 🌙"
-            )
-        },
-    ),
-    (
-        "setMyDescription",
-        {
-            "description": (
-                "Welcome to Luna, your anime character catcher! 🌙\n\n"
-                "✨ Discover mystery anime characters.\n"
-                "💖 Build your personal collection and save favorites.\n"
-                "🎁 Gift characters to friends and explore the shop.\n"
-                "💰 Collect coins and climb the collector rankings.\n\n"
-                "Use /start to begin your anime collecting adventure!"
-            )
-        },
-    ),
-    (
-        "setMyCommands",
-        {
-            "commands": [
-                {"command": "start", "description": "Start your Luna adventure"},
-                {"command": "guess", "description": "Guess the mystery character"},
-                {"command": "harem", "description": "View your character collection"},
-                {"command": "check", "description": "Check character details"},
-                {"command": "sips", "description": "Search the character archive"},
-                {"command": "fav", "description": "Save a favorite character"},
-                {"command": "claim", "description": "Claim your daily character"},
-                {"command": "balance", "description": "Check your coin balance"},
-                {"command": "daily", "description": "Collect your daily coins"},
-                {"command": "weekly", "description": "Collect your weekly coins"},
-                {"command": "pay", "description": "Send coins to another user"},
-                {"command": "gift", "description": "Gift a character to a friend"},
-                {"command": "shop", "description": "Browse the character shop"},
-                {"command": "rank", "description": "View collector rankings"},
-                {"command": "bounty", "description": "Create a character bounty poster"},
-                {"command": "transfer", "description": "Transfer characters (VIP)"},
-                {"command": "addchar", "description": "Request a character for the archive"},
-                {"command": "total", "description": "View the archive character count"},
-            ]
-        },
-    ),
+BOT_NAME = "Luna | Anime Catcher 🌙"
+BOT_SHORT_DESCRIPTION = "🌙 Catch • Collect • Trade anime characters. Hunt rare finds, build your collection & become a top collector!"
+BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
+
+BOT_COMMANDS = [
+    {
+        "command": "start",
+        "description": "🌙 Open the Luna world"
+    },
+    {
+        "command": "guess",
+        "description": "🎯 Guess the hidden character"
+    },
+    {
+        "command": "harem",
+        "description": "💖 View your character collection"
+    },
+    {
+        "command": "check",
+        "description": "🔎 Check a character by ID"
+    },
+    {
+        "command": "sips",
+        "description": "✨ Search the character archive"
+    },
+    {
+        "command": "fav",
+        "description": "💜 Save a favourite character"
+    },
+    {
+        "command": "claim",
+        "description": "🎁 Claim your daily character"
+    },
+    {
+        "command": "balance",
+        "description": "🪙 Check your coin balance"
+    },
+    {
+        "command": "daily",
+        "description": "☀️ Collect your daily coins"
+    },
+    {
+        "command": "weekly",
+        "description": "🌟 Collect your weekly coins"
+    },
+    {
+        "command": "pay",
+        "description": "💸 Send coins to another user"
+    },
+    {
+        "command": "gift",
+        "description": "🎀 Gift a character to a friend"
+    },
+    {
+        "command": "shop",
+        "description": "🛍️ Explore the character shop"
+    },
+    {
+        "command": "rank",
+        "description": "🏆 View collector rankings"
+    },
+    {
+        "command": "bounty",
+        "description": "📜 Create a wanted-style poster"
+    },
+    {
+        "command": "transfer",
+        "description": "🔁 Transfer characters (VIP)"
+    },
+    {
+        "command": "addchar",
+        "description": "➕ Request a character"
+    },
+    {
+        "command": "total",
+        "description": "📚 Count characters in the archive"
+    },
+    {
+        "command": "trade",
+        "description": "🤝 Trade characters with a user"
+    },
+    {
+        "command": "rarity",
+        "description": "💎 View character rarity information"
+    }
 ]
+
+# Telegram may keep separate profile/command overrides by language.
+# Apply Luna's profile to the default, English and Hindi settings.
+PROFILE_LANGUAGES = ("", "en", "hi")
+BOT_PROFILE_SETTINGS = []
+for _language in PROFILE_LANGUAGES:
+    _localized = {"language_code": _language} if _language else {}
+    BOT_PROFILE_SETTINGS.extend(
+        [
+            ("setMyName", {"name": BOT_NAME, **_localized}),
+            ("setMyShortDescription", {
+                "short_description": BOT_SHORT_DESCRIPTION,
+                **_localized,
+            }),
+            ("setMyDescription", {
+                "description": BOT_DESCRIPTION,
+                **_localized,
+            }),
+            ("setMyCommands", {
+                "commands": BOT_COMMANDS,
+                "scope": {"type": "default"},
+                **_localized,
+            }),
+        ]
+    )
 
 
 def sync_bot_profile() -> None:
@@ -87,11 +148,17 @@ def sync_bot_profile() -> None:
                 raise RuntimeError(result.get("description", "Telegram rejected the request"))
             LOGGER("LUNA").info("Telegram bot profile setting applied: %s", method)
         except Exception as exc:
-            # A profile-sync failure should never prevent the catcher bot from starting.
+            # Keep the bot online, but preserve Telegram's real error for debugging.
+            detail = str(exc)
+            if isinstance(exc, urllib.error.HTTPError):
+                try:
+                    detail = exc.read().decode("utf-8", "replace")
+                except Exception:
+                    pass
             LOGGER("LUNA").warning(
-                "Could not apply Telegram profile setting %s: %s",
+                "Telegram profile setting %s failed: %s",
                 method,
-                type(exc).__name__,
+                detail[:500],
             )
 
 
