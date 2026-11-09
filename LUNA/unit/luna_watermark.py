@@ -49,12 +49,12 @@ def _watermark_image(source: BytesIO) -> BytesIO:
         canvas = image.convert("RGBA")
         width, height = canvas.size
         shortest = min(width, height)
+        margin = max(5, round(shortest * 0.018))
 
-        # Compact on larger images, still readable on Telegram-sized thumbnails.
-        badge_w = min(max(118, round(width * 0.31)), 250)
-        badge_h = min(max(43, round(shortest * 0.105)), 76)
-        margin = max(7, round(shortest * 0.018))
-        radius = max(9, round(badge_h * 0.25))
+        # Compact on larger art and keep the whole badge inside small images.
+        badge_w = min(max(96, round(width * 0.30)), 250, max(1, width - 2 * margin))
+        badge_h = min(max(36, round(shortest * 0.095)), 76, max(1, height - 2 * margin))
+        radius = max(7, round(badge_h * 0.25))
 
         badge = Image.new("RGBA", (badge_w, badge_h), (0, 0, 0, 0))
         gradient = Image.new("RGBA", (badge_w, badge_h), (0, 0, 0, 0))
