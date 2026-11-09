@@ -9,6 +9,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 from LUNA import bot_client as bot
 from LUNA import user_collection, collection, FORCE_JOIN as chat, FORCE_JOIN_LINK
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 async def get_unique_characters(user_id, target_rarities):
     try:
@@ -103,11 +104,13 @@ async def valentine(_, message: t.Message):
                 elif media_type == "animation":
                     await message.reply_animation(media_file_id, caption=caption)
                 else:
-                    await message.reply_photo(media_file_id, caption=caption)
+                    watermarked_photo = await get_watermarked_photo(bot, media_file_id)
+                    await message.reply_photo(watermarked_photo or media_file_id, caption=caption)
             elif character.get("vid_url"):
                 await message.reply_video(character["vid_url"], caption=caption)
             elif character.get("img_url"):
-                await message.reply_photo(character["img_url"], caption=caption)
+                watermarked_photo = await get_watermarked_photo(bot, character["img_url"])
+                await message.reply_photo(watermarked_photo or character["img_url"], caption=caption)
             else:
                 await message.reply_text(caption)
 
