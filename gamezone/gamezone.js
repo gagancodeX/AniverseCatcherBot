@@ -79,8 +79,16 @@
     overlay.classList.remove('hidden');tone(180,.18);
   }
   function startGame(){
-    if(!current)return;initGame(current);state='playing';lastTime=performance.now();overlay.classList.add('hidden');setScore(0);
-    tone(520);raf=requestAnimationFrame(loop);
+    if(!current)return;
+    cancelAnimationFrame(raf);
+    coins=0;distance=0;
+    initGame(current);
+    state='playing';
+    lastTime=performance.now();
+    overlay.classList.add('hidden');
+    setScore(0);
+    tone(520);
+    raf=requestAnimationFrame(loop);
   }
   function initGame(id){
     game={time:0,particles:[],stars:Array.from({length:65},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,a:Math.random()*.65+.2,s:Math.random()*.6+.15}))};
@@ -281,7 +289,13 @@
     if(e.key===' '&&state==='ready')startGame();
   },{passive:false});
   document.querySelectorAll('[data-game]').forEach(card=>card.addEventListener('click',()=>openGame(card.dataset.game)));
-  $('startButton').addEventListener('click',startGame);$('restartButton').addEventListener('click',()=>{if(current)openGame(current)});$('backButton').addEventListener('click',closeGame);
+  $('startButton').addEventListener('click',startGame);
+  $('restartButton').addEventListener('click',(event)=>{
+    event.preventDefault();
+    event.stopPropagation();
+    if(current)startGame();
+  });
+  $('backButton').addEventListener('click',closeGame);
   soundToggle.addEventListener('click',()=>{soundOn=!soundOn;soundToggle.innerHTML=(soundOn?'♫':'♪')+' <span>Sound '+(soundOn?'ON':'OFF')+'</span>';if(soundOn)tone(640)});
   window.addEventListener('resize',()=>{if(current&&state!=='playing'){draw();finishPixelFrame()}});
   if(window.Telegram&&Telegram.WebApp){
