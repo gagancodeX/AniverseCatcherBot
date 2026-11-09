@@ -1301,4 +1301,107 @@
   $('runnerSoundBtn').addEventListener('click',()=>{soundOn=!soundOn;$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';if(soundOn)tone(540)});
   $('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';
 
+  // Subway Hero Run finishing pass: longer metro trains, station detail and
+  // clearer mobile-game visuals, while retaining Luna's original characters.
+  function runDrawTrainCar(lane,z,isFront){
+    const p=runProject(lane,z),s=p.scale,w=145*s,h=194*s,x=p.x,y=p.y;
+    ctx.save();ctx.translate(x,y-h*.88);ctx.shadowBlur=22*s;ctx.shadowColor='rgba(12,28,42,.36)';
+    const body=ctx.createLinearGradient(-w/2,0,w/2,0);
+    body.addColorStop(0,'#174d68');body.addColorStop(.2,'#2e8295');body.addColorStop(.5,'#65c6c1');body.addColorStop(.8,'#338da0');body.addColorStop(1,'#164c68');
+    ctx.fillStyle=body;ctx.strokeStyle='#e4f0df';ctx.lineWidth=Math.max(1.3,3.5*s);
+    ctx.beginPath();ctx.roundRect(-w/2,0,w,h,11*s);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    if(isFront){
+      ctx.fillStyle='#173b55';ctx.beginPath();ctx.roundRect(-w*.37,h*.13,w*.74,h*.39,8*s);ctx.fill();
+      const glass=ctx.createLinearGradient(0,h*.16,0,h*.49);glass.addColorStop(0,'#d5f4e9');glass.addColorStop(.52,'#8ed0cf');glass.addColorStop(1,'#397e9b');
+      ctx.fillStyle=glass;ctx.beginPath();ctx.roundRect(-w*.32,h*.17,w*.64,h*.29,5*s);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.86)';ctx.lineWidth=Math.max(1,2*s);ctx.beginPath();ctx.moveTo(0,h*.17);ctx.lineTo(0,h*.45);ctx.stroke();
+      ctx.fillStyle='#f1c85e';ctx.fillRect(-w*.29,h*.59,w*.58,7*s);
+      ctx.save();ctx.shadowColor='#fff0b5';ctx.shadowBlur=15*s;ctx.fillStyle='#fff5c8';
+      ctx.beginPath();ctx.arc(-w*.31,h*.82,6*s,0,Math.PI*2);ctx.arc(w*.31,h*.82,6*s,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.fillStyle='#164a60';ctx.beginPath();ctx.roundRect(-w*.17,h*.91,w*.34,12*s,3*s);ctx.fill();
+      ctx.fillStyle='#f7e6ac';ctx.font='bold '+Math.max(5,9*s)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('LUNA LINE',0,h*.97);
+    }else{
+      for(let i=0;i<3;i++){
+        const wx=-w*.36+i*w*.25,wy=h*.2,ww=w*.2,wh=h*.25;
+        ctx.fillStyle='#173e58';ctx.beginPath();ctx.roundRect(wx,wy,ww,wh,4*s);ctx.fill();
+        const glass=ctx.createLinearGradient(0,wy,0,wy+wh);glass.addColorStop(0,'#c5eee6');glass.addColorStop(1,'#5ca7b6');
+        ctx.fillStyle=glass;ctx.beginPath();ctx.roundRect(wx+3*s,wy+3*s,ww-6*s,wh-6*s,3*s);ctx.fill();
+      }
+      ctx.fillStyle='#f1c85e';ctx.fillRect(-w*.43,h*.61,w*.86,6*s);
+      ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=Math.max(1,s*1.5);ctx.beginPath();ctx.moveTo(-w*.47,h*.12);ctx.lineTo(-w*.47,h*.86);ctx.stroke();
+    }
+    ctx.fillStyle='#1c3c4c';ctx.fillRect(-w*.45,h*.88,w*.9,12*s);
+    ctx.fillStyle='#e7e7d3';ctx.fillRect(-w*.43,h*.92,w*.86,4*s);
+    ctx.fillStyle='#202c3b';ctx.beginPath();ctx.roundRect(-w*.39,h*.95,w*.2,13*s,3*s);ctx.roundRect(w*.19,h*.95,w*.2,13*s,3*s);ctx.fill();
+    ctx.restore();
+    if(isFront){
+      ctx.save();runPoly([[x+w*.49,y-h*.83],[x+w*.63,y-h*.72],[x+w*.63,y-4*s],[x+w*.49,y]],'rgba(15,57,74,.88)');ctx.restore();
+    }
+  }
+  function runTrain(o){
+    // A connected three-car metro approaches along the chosen railway.
+    runDrawTrainCar(o.lane,Math.max(.08,o.z-.30),false);
+    runDrawTrainCar(o.lane,Math.max(.08,o.z-.15),false);
+    runDrawTrainCar(o.lane,o.z,true);
+  }
+  function runBarrier(o){
+    const p=runProject(o.lane,o.z),s=p.scale,w=118*s,h=39*s,x=p.x,y=p.y-14*s;
+    ctx.save();ctx.translate(x,y);ctx.strokeStyle='#4d5550';ctx.lineWidth=Math.max(2,7*s);ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-w*.35,4*s);ctx.lineTo(-w*.42,h+20*s);ctx.moveTo(w*.35,4*s);ctx.lineTo(w*.42,h+20*s);ctx.stroke();
+    ctx.fillStyle='#f8ca4d';ctx.strokeStyle='#765039';ctx.lineWidth=Math.max(1,3*s);
+    ctx.beginPath();ctx.roundRect(-w/2,0,w,h,4*s);ctx.fill();ctx.stroke();
+    ctx.save();ctx.beginPath();ctx.roundRect(-w/2+2*s,2*s,w-4*s,h-4*s,3*s);ctx.clip();
+    ctx.strokeStyle='#e65045';ctx.lineWidth=Math.max(3,14*s);
+    for(let i=-2;i<6;i++){ctx.beginPath();ctx.moveTo(i*29*s,h);ctx.lineTo(i*29*s+36*s,0);ctx.stroke()}
+    ctx.restore();ctx.fillStyle='#fff2ca';ctx.fillRect(-w*.48,-5*s,w*.96,5*s);ctx.restore();
+  }
+  function runOverhead(o){
+    const p=runProject(o.lane,o.z),s=p.scale,w=138*s,x=p.x,y=p.y;
+    ctx.save();ctx.strokeStyle='#4a5b5b';ctx.lineWidth=Math.max(2,8*s);
+    ctx.beginPath();ctx.moveTo(x-w*.43,y-136*s);ctx.lineTo(x-w*.43,y);ctx.moveTo(x+w*.43,y-136*s);ctx.lineTo(x+w*.43,y);ctx.stroke();
+    const g=ctx.createLinearGradient(0,y-150*s,0,y-121*s);g.addColorStop(0,'#fff0a4');g.addColorStop(1,'#d78b4b');
+    ctx.fillStyle=g;ctx.strokeStyle='#784e42';ctx.lineWidth=Math.max(1,3*s);
+    ctx.beginPath();ctx.roundRect(x-w/2,y-150*s,w,27*s,5*s);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#76503c';ctx.font='bold '+Math.max(7,12*s)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↓ DUCK ↓',x,y-136*s);ctx.restore();
+  }
+  function drawSubwayRunner(){
+    if(game.runnerMode==='select'){runDrawMenu();return}
+    runSky();runTracks();
+    // Station poles and illuminated signs recede toward the horizon.
+    for(let i=0;i<12;i++){
+      const z=((i/12)+(game.time*.18)%1)%1,lane=i%2?0:2,p=runProject(lane,z);
+      ctx.strokeStyle='rgba(56,78,75,'+(.25+z*.52)+')';ctx.lineWidth=2+z*4;
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x,p.y-88*p.scale);ctx.stroke();
+      ctx.fillStyle=runStage().accent;ctx.shadowBlur=10;ctx.shadowColor=runStage().accent;
+      ctx.beginPath();ctx.arc(p.x,p.y-91*p.scale,3+z*3,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      if(i%3===0){const sw=42*p.scale,sy=p.y-128*p.scale;ctx.fillStyle='rgba(18,42,54,.92)';ctx.fillRect(p.x-sw/2,sy,sw,17*p.scale);ctx.fillStyle='#f6e4b5';ctx.font='bold '+Math.max(6,10*p.scale)+'px Arial';ctx.textAlign='center';ctx.fillText('LUNA',p.x,sy+12*p.scale)}
+    }
+    game.pickups.filter(o=>o.type==='coin'||o.type==='super').slice().sort((a,b)=>a.z-b.z).forEach(runDrawCoin);
+    game.pickups.filter(o=>o.type!=='coin'&&o.type!=='super').slice().sort((a,b)=>a.z-b.z).forEach(runDrawPickup);
+    game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(runDrawObstacle);
+    const lane=game.laneVisual===undefined?1:game.laneVisual,heroX=360+(lane-1)*170;
+    const flying=game.runnerEffects.jet>0,heroY=845-(game.jump||0)*.85-(flying?125:0)-(game.rideT>0?105:0);
+    if(game.runnerEffects.board>0){
+      ctx.save();ctx.translate(heroX,heroY+97);ctx.shadowColor='#36d8ff';ctx.shadowBlur=25;
+      const board=ctx.createLinearGradient(-48,0,48,0);board.addColorStop(0,'#24c8e8');board.addColorStop(.5,'#f4e9ba');board.addColorStop(1,'#875ce0');
+      ctx.fillStyle=board;ctx.beginPath();ctx.roundRect(-46,-6,92,13,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-30,-2,60,3);
+      ctx.fillStyle='#18293d';ctx.beginPath();ctx.arc(-28,9,5,0,Math.PI*2);ctx.arc(28,9,5,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    if(flying){
+      ctx.save();ctx.translate(heroX,heroY+73);
+      for(let i=-1;i<=1;i++){const flame=22+Math.sin(game.time*24+i)*9,g=ctx.createLinearGradient(0,0,0,flame);g.addColorStop(0,'#fff5c4');g.addColorStop(.35,'#ffbd4b');g.addColorStop(1,'rgba(255,75,45,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(i*12-5,0);ctx.lineTo(i*12,flame);ctx.lineTo(i*12+5,0);ctx.closePath();ctx.fill()}
+      ctx.restore();
+    }
+    runDrawHero(game.heroIndex,heroX,heroY,1.02,game.time*14,game.slide>0,game.jump>30);
+    if(game.runnerInvul>0&&Math.floor(game.time*16)%2===0){ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(heroX,heroY-75,49,91,0,0,Math.PI*2);ctx.stroke()}
+    runDrawHUD();
+    ctx.fillStyle='rgba(10,22,39,.58)';ctx.beginPath();ctx.roundRect(245,110,230,34,10);ctx.fill();
+    ctx.fillStyle=runStage().accent;ctx.font='bold 11px "DM Mono"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(runStage().name,360,127);
+    if(game.runnerMode==='paused')runDrawOverlay('PAUSED','Your run is paused.','RESUME',null);
+    if(game.runnerMode==='over')runDrawOverlay(game.runnerKeys>0?'CAUGHT!':'RUN OVER',
+      game.runnerKeys>0?'Use one Luna Key to continue?':'Distance '+Math.floor(game.runnerDistance/10)+' · Coins '+coins,
+      game.runnerKeys>0?'CONTINUE · '+game.runnerKeys+' KEY':'TRY AGAIN',game.runnerKeys>0?'END RUN / RETRY':null);
+  }
+
+
 })();
