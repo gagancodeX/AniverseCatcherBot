@@ -842,4 +842,18 @@
     if(current==='brick'&&game.ball.stuck){game.ball.stuck=false;game.ball.vy=-480;tone(520)}
   }
 
+
+  // LUNA_NATIVE_GAME_DIRECT_LAUNCH
+  // Telegram Gaming Platform opens each registered game with ?game=<slug>.
+  // Start that title directly, without showing the GameZone lobby first.
+  try {
+    const requestedGame = new URLSearchParams(window.location.search).get('game');
+    if (requestedGame && Object.prototype.hasOwnProperty.call(games, requestedGame)) {
+      openGame(requestedGame);
+      startGame();
+    }
+  } catch (error) {
+    console.warn('Luna direct game launch could not start:', error);
+  }
+
 })();
