@@ -5,42 +5,13 @@
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
-  // Unified 16-bit pixel-art render pass for every game scene.
-  // Draw at a compact resolution, limit the palette, then scale up with
-  // nearest-neighbour sampling so each game shares the same crisp pixel grid.
-  const pixelBuffer = document.createElement('canvas');
-  pixelBuffer.width = 180;
-  pixelBuffer.height = 250;
-  const pixelCtx = pixelBuffer.getContext('2d', { willReadFrequently: true });
-  const pixelBayer = [-8,0,-6,2,4,-4,6,-2,-5,3,-7,1,7,-1,5,-3];
+  // All 2D scenes render directly at the canvas's native 720x1000
+  // resolution. No low-resolution intermediate buffer or palette reduction:
+  // this preserves fine edges and avoids the blur on every game.
+  ctx.imageSmoothingEnabled = true;
+  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
   function finishPixelFrame() {
-    if (current === 'runner' && game && game.runnerMode !== 'select') return;
-    pixelCtx.imageSmoothingEnabled = true;
-    pixelCtx.clearRect(0, 0, pixelBuffer.width, pixelBuffer.height);
-    pixelCtx.drawImage(canvas, 0, 0, pixelBuffer.width, pixelBuffer.height);
-
-    const frame = pixelCtx.getImageData(0, 0, pixelBuffer.width, pixelBuffer.height);
-    for (let y = 0; y < pixelBuffer.height; y++) {
-      for (let x = 0; x < pixelBuffer.width; x++) {
-        const i = (y * pixelBuffer.width + x) * 4;
-        const dither = pixelBayer[(y & 3) * 4 + (x & 3)] * 1.15;
-        for (let channel = 0; channel < 3; channel++) {
-          frame.data[i + channel] = Math.max(0, Math.min(255,
-            Math.round((frame.data[i + channel] + dither) / 51) * 51));
-        }
-      }
-    }
-    pixelCtx.putImageData(frame, 0, 0);
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.filter = 'none';
-    ctx.clearRect(0, 0, W, H);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(pixelBuffer, 0, 0, W, H);
-    ctx.restore();
+    // Kept as a no-op for existing call sites; never resample the game canvas.
   }
   const screen = $('gameScreen');
   const overlay = $('gameOverlay');
@@ -85,6 +56,7 @@
   function openGame(id){
     if(!games[id])return;
     current=id;state='ready';const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('runner-3d-active');screen.classList.add('active');screen.classList.toggle('runner-active',id==='runner');screen.setAttribute('aria-hidden','false');$('runnerControls').hidden=id!=='runner';
+    if(id==='runner'){$('runnerPauseBtn').textContent='Ⅱ PAUSE';$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';}
     $('gameTitle').textContent=games[id].title;$('controlHint').textContent=games[id].hint;$('overlaySymbol').textContent=games[id].symbol;
     $('overlayTitle').textContent='READY TO PLAY?';$('overlayText').textContent=games[id].start;$('overlayEyebrow').textContent='LUNA ARCADE · '+id.toUpperCase();
     $('startButton').innerHTML='START GAME <span>→</span>';overlay.classList.remove('hidden');
@@ -92,6 +64,10 @@
     if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.expand();Telegram.WebApp.requestFullscreen&&Telegram.WebApp.requestFullscreen();Telegram.WebApp.HapticFeedback.impactOccurred('light')}catch(_){}}
   }
   function closeGame(){
+    if(current==='runner'&&state==='playing'&&game.runnerMode==='over'&&!game.runnerSaved){
+      setScore(Math.floor((game.runnerDistance||0)/12)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*10);
+      runSaveResult();
+    }
     state='menu';current=null;cancelAnimationFrame(raf);const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('active','runner-active','runner-3d-active');$('runnerControls').hidden=true;screen.setAttribute('aria-hidden','true');
     if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.exitFullscreen&&Telegram.WebApp.exitFullscreen();Telegram.WebApp.BackButton.hide()}catch(_){}}
   }
@@ -205,7 +181,19 @@
     game.spawn+=dt;if(game.spawn>.65){game.enemies.push({x:45+Math.random()*(W-90),y:-35,v:260+Math.random()*140});game.spawn=0}
     game.bullets.forEach(b=>b.y-=720*dt);game.enemies.forEach(e=>e.y+=e.v*dt);
     game.bullets=game.bullets.filter(b=>b.y>-30);
-    for(const e of game.enemies){for(const b of game.bullets){if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){e.dead=true;b.dead=true;setScore(score+10);tone(660)}}if(e.y>p.y-30&&e.y<p.y+30&&Math.abs(e.x-p.x)<48){e.dead=true;game.lives--;tone(120,.15);if(game.lives<=0){endGame();return}}}
+    for(const e of game.enemies){
+      if(e.dead)continue;
+      for(const b of game.bullets){
+        if(b.dead)continue;
+        if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){
+          e.dead=true;b.dead=true;setScore(score+10);tone(660);break;
+        }
+      }
+      if(!e.dead&&e.y>p.y-30&&e.y<p.y+30&&Math.abs(e.x-p.x)<48){
+        e.dead=true;game.lives--;tone(120,.15);
+        if(game.lives<=0){endGame();return}
+      }
+    }
     game.enemies=game.enemies.filter(e=>!e.dead&&e.y<H+40);game.bullets=game.bullets.filter(b=>!b.dead);
     game.scoreTime+=dt;if(game.scoreTime>=1){setScore(score+5);game.scoreTime=0}
     if(pointerDown){p.x+=(pointerX-p.x)*Math.min(1,dt*12)}p.x=Math.max(45,Math.min(W-45,p.x));
@@ -245,7 +233,15 @@
     if(current==='jumper')game.player.vx=0;
     swipeStart=null;
   }
-  canvas.addEventListener('pointerdown',pointerDownHandler);canvas.addEventListener('pointermove',pointerMoveHandler);window.addEventListener('pointerup',pointerUpHandler);
+  function pointerCancelHandler(){
+    pointerDown=false;swipeStart=null;
+    if(current==='jumper'&&game.player)game.player.vx=0;
+  }
+  canvas.addEventListener('pointerdown',pointerDownHandler);
+  canvas.addEventListener('pointermove',pointerMoveHandler);
+  window.addEventListener('pointerup',pointerUpHandler);
+  window.addEventListener('pointercancel',pointerCancelHandler);
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
   window.addEventListener('keydown',e=>{
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key))e.preventDefault();
     if(e.key==='Escape'&&screen.classList.contains('active'))closeGame();
@@ -878,20 +874,6 @@
     if(current==='racer'){if(dx)game.targetLane=runnerClampV2(game.targetLane+dx,0,2),game.lane=game.targetLane;if(dy<0&&game.jump<=0){game.jump=1;game.jumpV=620;tone(600)}if(dy>0)game.slide=.55}
     if(current==='jumper')game.player.vx=dx*560;
     if(current==='brick'&&game.ball.stuck){game.ball.stuck=false;game.ball.vy=-480;tone(520)}
-  }
-
-
-  // LUNA_NATIVE_GAME_DIRECT_LAUNCH
-  // Telegram Gaming Platform opens each registered game with ?game=<slug>.
-  // Start that title directly, without showing the GameZone lobby first.
-  try {
-    const requestedGame = new URLSearchParams(window.location.search).get('game');
-    if (requestedGame && Object.prototype.hasOwnProperty.call(games, requestedGame)) {
-      openGame(requestedGame);
-      startGame();
-    }
-  } catch (error) {
-    console.warn('Luna direct game launch could not start:', error);
   }
 
 
@@ -2008,6 +1990,8 @@
   }
 
   function drawSubwayRunner() {
+    const pauseButton = $('runnerPauseBtn');
+    if (pauseButton) pauseButton.textContent = game.runnerMode === 'paused' ? '▶ RESUME' : 'Ⅱ PAUSE';
     if (game.runnerMode === 'select') {
       if (lunaRunner3D) lunaRunner3D.canvas.style.display = 'none';
       screen.classList.remove('runner-3d-active');
@@ -2055,5 +2039,26 @@
     }
   }
 
+  // Telegram BotFather short names map to the internal GameZone IDs.
+  // Keep internal slugs working too, so normal website links remain compatible.
+  const TELEGRAM_GAME_ALIASES = {
+    luna_flappy: 'flappy',
+    luna_run: 'runner',
+    luna_sky_jumper: 'jumper',
+    luna_star_defender: 'space',
+    luna_neon_race: 'racer'
+  };
+  try {
+    const rawGame = new URLSearchParams(window.location.search).get('game');
+    const requestedGame = Object.prototype.hasOwnProperty.call(games, rawGame)
+      ? rawGame
+      : TELEGRAM_GAME_ALIASES[rawGame];
+    if (requestedGame) {
+      openGame(requestedGame);
+      startGame();
+    }
+  } catch (error) {
+    console.warn('Luna direct game launch could not start:', error);
+  }
 
   })();
