@@ -1376,24 +1376,19 @@
     runDrawTrainCar(o.lane,o.z,true);
   }
   function runBarrier(o){
-    const p=runProject(o.lane,o.z),s=p.scale,w=118*s,h=39*s,x=p.x,y=p.y-14*s;
-    ctx.save();ctx.translate(x,y);ctx.strokeStyle='#4d5550';ctx.lineWidth=Math.max(2,7*s);ctx.lineCap='round';
-    ctx.beginPath();ctx.moveTo(-w*.35,4*s);ctx.lineTo(-w*.42,h+20*s);ctx.moveTo(w*.35,4*s);ctx.lineTo(w*.42,h+20*s);ctx.stroke();
-    ctx.fillStyle='#f8ca4d';ctx.strokeStyle='#765039';ctx.lineWidth=Math.max(1,3*s);
-    ctx.beginPath();ctx.roundRect(-w/2,0,w,h,4*s);ctx.fill();ctx.stroke();
-    ctx.save();ctx.beginPath();ctx.roundRect(-w/2+2*s,2*s,w-4*s,h-4*s,3*s);ctx.clip();
-    ctx.strokeStyle='#e65045';ctx.lineWidth=Math.max(3,14*s);
-    for(let i=-2;i<6;i++){ctx.beginPath();ctx.moveTo(i*29*s,h);ctx.lineTo(i*29*s+36*s,0);ctx.stroke()}
-    ctx.restore();ctx.fillStyle='#fff2ca';ctx.fillRect(-w*.48,-5*s,w*.96,5*s);ctx.restore();
+    const p=runProject(o.lane,o.z),s=p.scale,w=124*s,h=42*s,x=Math.round(p.x),y=Math.round(p.y-13*s),u=Math.max(2,Math.round(7*s));
+    ctx.save();ctx.fillStyle='#49352a';ctx.fillRect(x-w*.38,y+h*.55,u*2,h*.9);ctx.fillRect(x+w*.33,y+h*.55,u*2,h*.9);
+    ctx.fillStyle='#301f17';ctx.fillRect(x-w/2-u,y-u,w+u*2,h+u*2);ctx.fillStyle='#f4c34f';ctx.fillRect(x-w/2,y,w,h);
+    ctx.fillStyle='#fff0b7';ctx.fillRect(x-w/2,y,w,u);ctx.fillStyle='#d95b45';
+    for(let i=0;i<5;i++){const sx=x-w/2+i*w/5;runPoly([[sx,y+h],[sx+w/10,y+h],[sx+w/5,y],[sx+w/10,y]],'#d95b45')}
+    ctx.fillStyle='#8c4a35';ctx.fillRect(x-w/2,y+h-u,u,h*.25);ctx.fillRect(x+w/2-u,y+h-u,u,h*.25);ctx.restore();
   }
   function runOverhead(o){
-    const p=runProject(o.lane,o.z),s=p.scale,w=138*s,x=p.x,y=p.y;
-    ctx.save();ctx.strokeStyle='#4a5b5b';ctx.lineWidth=Math.max(2,8*s);
-    ctx.beginPath();ctx.moveTo(x-w*.43,y-136*s);ctx.lineTo(x-w*.43,y);ctx.moveTo(x+w*.43,y-136*s);ctx.lineTo(x+w*.43,y);ctx.stroke();
-    const g=ctx.createLinearGradient(0,y-150*s,0,y-121*s);g.addColorStop(0,'#fff0a4');g.addColorStop(1,'#d78b4b');
-    ctx.fillStyle=g;ctx.strokeStyle='#784e42';ctx.lineWidth=Math.max(1,3*s);
-    ctx.beginPath();ctx.roundRect(x-w/2,y-150*s,w,27*s,5*s);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#76503c';ctx.font='bold '+Math.max(7,12*s)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↓ DUCK ↓',x,y-136*s);ctx.restore();
+    const p=runProject(o.lane,o.z),s=p.scale,w=142*s,x=Math.round(p.x),y=Math.round(p.y),u=Math.max(2,Math.round(7*s));
+    ctx.save();ctx.fillStyle='#37413f';ctx.fillRect(x-w*.42,y-138*s,u*2,138*s);ctx.fillRect(x+w*.34,y-138*s,u*2,138*s);
+    ctx.fillStyle='#271b16';ctx.fillRect(x-w/2-u,y-151*s,w+u*2,34*s);ctx.fillStyle='#f2c76e';ctx.fillRect(x-w/2,y-147*s,w,25*s);
+    ctx.fillStyle='#ffe6a8';ctx.fillRect(x-w/2,y-147*s,w,5*s);ctx.fillStyle='#75452d';ctx.fillRect(x-w/2+u,y-122*s,w-u*2,5*s);
+    ctx.fillStyle='#6c4029';ctx.font='bold '+Math.max(6,10*s)+'px "Press Start 2P"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('DUCK',x,y-135*s);ctx.restore();
   }
   function drawSubwayRunner(){
     if(game.runnerMode==='select'){runDrawMenu();return}
