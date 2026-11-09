@@ -70,7 +70,7 @@
   function initGame(id){
     game={time:0,particles:[],stars:Array.from({length:65},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,a:Math.random()*.65+.2,s:Math.random()*.6+.15}))};
     if(id==='flappy'){game.player={x:190,y:470,vy:0,r:28,rot:0};game.pipes=[];game.spawn=0;game.passed=0;game.pipes.push(makePipe(900));}
-    if(id==='runner'){game.lane=1;game.targetLane=1;game.laneVisual=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;game.runnerMode='select';game.heroIndex=0;game.runnerDistance=0;game.runnerStage=0;game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};game.runnerKeys=1;game.runnerInvul=0;game.runnerSaved=false;game.runnerBest=bestOf('runner');try{game.runnerHero=runRead('hero',0);game.runnerKeys=runRead('keys',1)}catch(_){}}if(id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
+    if(id==='runner'){game.lane=1;game.targetLane=1;game.laneVisual=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;game.runnerMode='select';game.heroIndex=runRead('hero',0);game.runnerDistance=0;game.runnerStage=0;game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};game.runnerKeys=1;game.runnerInvul=0;game.runnerSaved=false;game.runnerBest=bestOf('runner');try{game.runnerKeys=runRead('keys',1)}catch(_){}}if(id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
     if(id==='jumper'){game.player={x:360,y:790,vx:0,vy:-620,r:23};game.platforms=[];for(let i=0;i<9;i++)game.platforms.push({x:70+Math.random()*530,y:860-i*105,w:110+Math.random()*55});game.camera=0;game.left=false;game.right=false;}
     if(id==='space'){game.player={x:360,y:840};game.bullets=[];game.enemies=[];game.spawn=0;game.fire=0;game.drag=false;game.lives=3;game.scoreTime=0;}
     if(id==='brick'){game.paddle={x:360,y:915,w:150};game.ball={x:360,y:870,vx:220,vy:-480,r:12,stuck:true};game.bricks=[];for(let row=0;row<6;row++)for(let col=0;col<8;col++)game.bricks.push({x:43+col*80,y:145+row*48,w:69,h:25,hp:row<2?2:1,alive:true,hue:(row*35+col*9)%360});game.lives=3;}
@@ -718,9 +718,9 @@
   games.runner.hint='SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE';
   games.runner.start='Dash through three tracks. Dodge trains, jump barriers, slide under signs and collect moon coins.';
   games.runner.over='The tracks got the better of you. Ready for another run?';
-  function runClamp(n,a,b){return Math.max(a,Math.min(b,n))}
+  function runnerClampV2(n,a,b){return Math.max(a,Math.min(b,n))}
   function runProject(lane,z){
-    const d=runClamp(z,0,1.12),half=92+d*365;
+    const d=runnerClampV2(z,0,1.12),half=92+d*365;
     return {x:360+(lane-1)*half*.66,y:366+Math.pow(Math.min(1,d),1.7)*606,scale:.13+d*1.02,half,laneWidth:half*2/3};
   }
   function runCloud(x,y,s){
@@ -836,8 +836,8 @@
   }
   function action(dx,dy){
     if(state!=='playing')return;
-    if(current==='runner'){if(dx){game.targetLane=runClamp(game.targetLane+dx,0,2);game.lane=game.targetLane}if(dy<0&&game.jump<=0&&game.slide<=0){game.jump=1;game.jumpV=735;tone(600)}if(dy>0){game.slide=.78;tone(340)}return}
-    if(current==='racer'){if(dx)game.targetLane=runClamp(game.targetLane+dx,0,2),game.lane=game.targetLane;if(dy<0&&game.jump<=0){game.jump=1;game.jumpV=620;tone(600)}if(dy>0)game.slide=.55}
+    if(current==='runner'){if(dx){game.targetLane=runnerClampV2(game.targetLane+dx,0,2);game.lane=game.targetLane}if(dy<0&&game.jump<=0&&game.slide<=0){game.jump=1;game.jumpV=735;tone(600)}if(dy>0){game.slide=.78;tone(340)}return}
+    if(current==='racer'){if(dx)game.targetLane=runnerClampV2(game.targetLane+dx,0,2),game.lane=game.targetLane;if(dy<0&&game.jump<=0){game.jump=1;game.jumpV=620;tone(600)}if(dy>0)game.slide=.55}
     if(current==='jumper')game.player.vx=dx*560;
     if(current==='brick'&&game.ball.stuck){game.ball.stuck=false;game.ball.vy=-480;tone(520)}
   }
@@ -887,7 +887,7 @@
   const runClamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const runStage=()=>RUN_STAGES[game.runnerStage||0];
   function runProject(lane,z){
-    z=runClamp(z,0,1.12);
+    z=runnerClampV2(z,0,1.12);
     const half=74+z*302;
     return {x:360+(lane-1)*(48+z*236),y:352+Math.pow(Math.min(z,1),1.7)*610,
       scale:.17+z*1.03,half:half,laneWidth:half*2/3};
@@ -1189,7 +1189,7 @@
   }
   function runHandleTap(x,y){
     if(game.runnerMode==='select'){
-      if(y>=285&&y<=670){game.heroIndex=runClamp(Math.floor(x/240),0,2);runWrite('hero',game.heroIndex);tone(600);return}
+      if(y>=285&&y<=670){game.heroIndex=runnerClampV2(Math.floor(x/240),0,2);runWrite('hero',game.heroIndex);tone(600);return}
       if(y>=735&&y<=865)runStart();
       return;
     }
@@ -1262,16 +1262,16 @@
   function action(dx,dy){
     if(state!=='playing')return;
     if(current==='runner'){
-      if(game.runnerMode==='select'){if(dx){game.heroIndex=runClamp(game.heroIndex+dx,0,2);runWrite('hero',game.heroIndex)}else if(dy<0)runStart();return}
+      if(game.runnerMode==='select'){if(dx){game.heroIndex=runnerClampV2(game.heroIndex+dx,0,2);runWrite('hero',game.heroIndex)}else if(dy<0)runStart();return}
       if(game.runnerMode==='paused'){if(dy!==0||dx!==0)game.runnerMode='run';return}
       if(game.runnerMode==='over'){if(dy<0&&game.runnerKeys>0)runContinue();else if(dy>0||game.runnerKeys<1)runRetry();return}
-      if(dx){game.targetLane=runClamp(game.targetLane+dx,0,2);game.lane=game.targetLane}
+      if(dx){game.targetLane=runnerClampV2(game.targetLane+dx,0,2);game.lane=game.targetLane}
       if(dy<0&&game.jump<=0&&game.slide<=0){game.jump=1;game.jumpV=game.runnerEffects.shoes>0?880:730;tone(620)}
       if(dy>0&&game.jump<25){game.slide=.72;tone(350)}
       return;
     }
     if(current==='racer'){
-      if(dx)game.targetLane=runClamp(game.targetLane+dx,0,2),game.lane=game.targetLane;
+      if(dx)game.targetLane=runnerClampV2(game.targetLane+dx,0,2),game.lane=game.targetLane;
       if(dy<0&&game.jump<=0){game.jump=1;game.jumpV=620;tone(600)}
       if(dy>0)game.slide=.55;
       return;
