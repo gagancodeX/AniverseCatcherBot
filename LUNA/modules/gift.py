@@ -9,6 +9,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
 
 from LUNA import user_collection, bot_client
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 # Dictionary to store pending gifts
 pending_gifts = {}
@@ -116,8 +117,9 @@ async def gift(client, message):
                 reply_markup=keyboard
             )
         else:
+            watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
             await message.reply_photo(
-                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                watermarked_photo or media_file_id, caption=caption, parse_mode=ParseMode.HTML,
                 reply_markup=keyboard
             )
     elif character.get('vid_url'):
@@ -126,8 +128,9 @@ async def gift(client, message):
             reply_markup=keyboard
         )
     elif character.get('img_url'):
+        watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, character['img_url'])
         await message.reply_photo(
-            character['img_url'], caption=caption, parse_mode=ParseMode.HTML,
+            watermarked_photo or character['img_url'], caption=caption, parse_mode=ParseMode.HTML,
             reply_markup=keyboard
         )
     else:
