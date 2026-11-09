@@ -4,7 +4,8 @@
 
 import asyncio
 from pyrogram import filters
-from LUNA import bot_client, collection, require_power, DATABASE_ID
+from LUNA import bot_client, collection, require_power, DATABASE_ID, BOT_LOGGING
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 
 async def find_char(char_id: str):
@@ -80,13 +81,17 @@ async def reupload_handler(client, message):
                 file_id = sent_msg.video.file_id
                 media_type = "video"
             else:
+                watermarked_photo = await get_watermarked_photo(client, old_url)
                 sent_msg = await client.send_photo(
-                    chat_id=BOT_LOGGING, photo=old_url, caption=caption
+                    chat_id=BOT_LOGGING,
+                    photo=watermarked_photo or old_url,
+                    caption=caption,
                 )
                 if not sent_msg.photo:
                     raise RuntimeError("Telegram did not return a photo file reference.")
                 file_id = sent_msg.photo.file_id
                 media_type = "photo"
+                char["watermarked"] = bool(watermarked_photo)
 
             result = await collection.update_one(
                 {"id": stored_id},
@@ -95,6 +100,7 @@ async def reupload_handler(client, message):
                     "media_type": media_type,
                     "media_chat_id": DATABASE_ID,
                     "media_message_id": sent_msg.id,
+                    "watermarked": bool(char.get("watermarked", False)),
                 }},
             )
             if result.matched_count != 1:
