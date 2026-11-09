@@ -132,8 +132,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             ("luna_run", "LUNA RUN"),
             ("luna_sky_jumper", "SKY JUMPER"),
             ("luna_star_defender", "STAR DEFENDER"),
-            ("luna_neon_breaker", "NEON BREAKER"),
-            ("luna_neon_racer", "NEON RACER"),
+            ("luna_neon_race", "NEON RACER"),
         ]
         if native_games_enabled:
             try:
@@ -390,8 +389,7 @@ NATIVE_GAME_ROUTES = {
     "luna_run": "runner",
     "luna_sky_jumper": "jumper",
     "luna_star_defender": "space",
-    "luna_neon_breaker": "brick",
-    "luna_neon_racer": "racer",
+    "luna_neon_race": "racer",
 }
 
 
