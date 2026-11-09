@@ -15,7 +15,9 @@
   #racerStage{position:absolute;inset:0;background:#70c6dc;overflow:hidden}
   #canvas{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;touch-action:none;filter:saturate(1.13) contrast(1.045) brightness(1.015)}
   #racerStage:after{content:"";position:absolute;z-index:1;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(3,9,18,.23),transparent 24%,transparent 68%,rgba(3,9,18,.34)),radial-gradient(ellipse at center,transparent 48%,rgba(2,7,15,.26) 100%);box-shadow:inset 0 0 70px rgba(3,9,18,.22)}
-  #racerApp.boosting #racerStage:after{background:linear-gradient(180deg,rgba(42,206,190,.14),transparent 32%,transparent 66%,rgba(6,20,32,.4)),repeating-linear-gradient(105deg,transparent 0 42px,rgba(160,255,236,.10) 44px,transparent 47px)}
+  #racerApp.boosting #racerStage:after{background:linear-gradient(180deg,rgba(42,206,190,.14),transparent 32%,transparent 66%,rgba(6,20,32,.4)),repeating-linear-gradient(105deg,transparent 0 42px,rgba(160,255,236,.10) 44px,transparent 47px);background-size:auto,auto 90px;animation:nitroSweep .28s linear infinite}
+  @keyframes nitroSweep{from{background-position:0 0,0 0}to{background-position:0 0,0 90px}}
+  #racerApp.boosting .nitro-control{box-shadow:0 0 0 5px rgba(165,133,255,.22),0 0 24px rgba(181,144,255,.7)}
   .race-topbar{position:absolute;z-index:5;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));display:flex;align-items:center;gap:10px;pointer-events:none}
   .race-back,.race-brand{pointer-events:auto;display:flex;align-items:center;justify-content:center;min-height:38px;border:1px solid rgba(237,222,190,.22);border-radius:13px;background:rgba(7,15,28,.76);backdrop-filter:blur(14px);color:#f9e9cc;text-decoration:none;box-shadow:0 6px 24px rgba(0,0,0,.15)}
   .race-back{padding:0 13px;font-size:10px;font-weight:900;letter-spacing:.8px}
@@ -95,7 +97,7 @@
       <div id="boostHud" class="hud boost-hud"><span>NITRO</span><strong id="boostValue">100%</strong><span class="boost-track"><i id="boostFill"></i></span></div>
       <span id="last_lap_time" class="hud">LAST <span id="last_lap_time_value" class="value">0.0</span></span>
     </div>
-    <div id="instructions" class="touch-instructions">DRAG THE WHEEL · HOLD GAS · TAP NITRO</div>
+    <div class="touch-instructions">DRAG THE WHEEL · HOLD GAS · TAP NITRO</div>
     <div id="instructions" class="desktop-instructions">WASD / ARROWS · SHIFT / SPACE = NITRO</div>
     <div class="race-mobile-controls" aria-label="Mobile racing controls">
       <div class="steer-cluster">
