@@ -39,7 +39,7 @@ BOT_PROFILE_SETTINGS = [
                 "💖 Build your personal collection and save favorites.\n"
                 "🎁 Gift characters to friends and explore the shop.\n"
                 "💰 Collect coins and climb the collector rankings.\n\n"
-                "Use /start to begin or /privacy to read how Luna handles your data."
+                "Use /start to begin your anime collecting adventure!"
             )
         },
     ),
@@ -65,7 +65,6 @@ BOT_PROFILE_SETTINGS = [
                 {"command": "transfer", "description": "Transfer characters (VIP)"},
                 {"command": "addchar", "description": "Request a character for the archive"},
                 {"command": "total", "description": "View the archive character count"},
-                {"command": "privacy", "description": "Read Luna's privacy policy"},
             ]
         },
     ),
