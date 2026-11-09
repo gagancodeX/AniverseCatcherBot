@@ -34,3 +34,25 @@ The bot displays the official inline Mini App button above the result list. Tele
 - Enable inline mode for the bot in @BotFather if it is not already enabled.
 - No separate Telegram HTML5 Game registration is required; this uses the Mini App inline-results button.
 - Scores are currently local to each device. A shared MongoDB leaderboard can be added separately with a server-side score endpoint and validation of Telegram init data.
+
+
+## Native Telegram inline game cards (optional)
+
+To show all six titles as native Telegram game cards with Telegram's built-in **Play** buttons:
+
+1. In the bot's @BotFather chat, run `/newgame` six times for this same bot.
+2. Use these exact short names and game URLs:
+
+| Game title | BotFather short name | Game URL |
+| --- | --- | --- |
+| Flappy Luna | `luna_flappy` | `https://luna-gamezone.onrender.com/?game=flappy` |
+| Luna Run | `luna_run` | `https://luna-gamezone.onrender.com/?game=runner` |
+| Sky Jumper | `luna_sky_jumper` | `https://luna-gamezone.onrender.com/?game=jumper` |
+| Star Defender | `luna_star_defender` | `https://luna-gamezone.onrender.com/?game=space` |
+| Neon Breaker | `luna_neon_breaker` | `https://luna-gamezone.onrender.com/?game=brick` |
+| Neon Racer | `luna_neon_racer` | `https://luna-gamezone.onrender.com/?game=racer` |
+
+3. After all six registrations are complete, set `LUNA_NATIVE_GAMES_ENABLED=true` in the bot service environment and redeploy the bot.
+4. Type `@LunaWaifuBot games` in any chat. Telegram will show the six game cards. Selecting one inserts its Telegram game message; tapping **Play** opens that game in Telegram's in-app game view.
+
+The HTML5 game page still needs HTTPS hosting so Telegram can load it, but players do not need to navigate to the public GameZone lobby or an external browser. Native game cards require the matching BotFather registrations first.
