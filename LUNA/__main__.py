@@ -21,7 +21,6 @@ from LUNA.modules import ALL_MODULES
 
 BOT_READY = False
 
-BOT_NAME = "Luna | Anime Catcher 🌙"
 BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
 
 USER_COMMANDS = [
@@ -349,13 +348,12 @@ def sync_bot_profile() -> None:
     for language_code in ABOUT_LANGUAGES:
         language_payload = {"language_code": language_code} if language_code else {}
         try:
-            _telegram_api_call("setMyName", {"name": BOT_NAME, **language_payload})
             _telegram_api_call(
                 "setMyDescription",
                 {"description": BOT_DESCRIPTION, **language_payload},
             )
             LOGGER("LUNA").info(
-                "Telegram name and description synced for language %r",
+                "Telegram description synced for language %r",
                 language_code or "default",
             )
         except Exception as exc:
