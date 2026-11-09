@@ -187,6 +187,18 @@ ADMIN_COMMANDS = [
         "description": "📈 Check backup status (VIP)"
     },
     {
+        "command": "mongobackup",
+        "description": "🛡️ Run MongoDB backup (owner)"
+    },
+    {
+        "command": "eval",
+        "description": "🧪 Run owner diagnostics"
+    },
+    {
+        "command": "sh",
+        "description": "🖥️ Run owner shell diagnostics"
+    },
+    {
         "command": "listbackups",
         "description": "🗂️ List saved backups (VIP)"
     },
@@ -316,7 +328,9 @@ def sync_bot_profile() -> None:
     """Clear About and install complete command lists for private chats, groups and admins."""
     # Telegram allows an empty short_description to remove the About text.
     for language_code in ABOUT_LANGUAGES:
-        payload = {"short_description": "", "language_code": language_code}
+        payload = {"short_description": ""}
+        if language_code:
+            payload["language_code"] = language_code
         try:
             _telegram_api_call("setMyShortDescription", payload)
             LOGGER("LUNA").info(
@@ -328,7 +342,7 @@ def sync_bot_profile() -> None:
 
     # Keep the public-facing name and long description current.
     for language_code in ABOUT_LANGUAGES:
-        language_payload = {"language_code": language_code}
+        language_payload = {"language_code": language_code} if language_code else {}
         try:
             _telegram_api_call("setMyName", {"name": BOT_NAME, **language_payload})
             _telegram_api_call(
