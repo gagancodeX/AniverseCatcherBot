@@ -1851,7 +1851,7 @@
       const forwardRaw = [target[0]-eye[0], target[1]-eye[1], target[2]-eye[2]];
       const length = Math.hypot(forwardRaw[0], forwardRaw[1], forwardRaw[2]) || 1;
       const forward = forwardRaw.map(v => v / length);
-      const rightRaw = [forward[2], 0, -forward[0]];
+      const rightRaw = [-forward[2], 0, forward[0]];
       const rightLength = Math.hypot(rightRaw[0], rightRaw[1], rightRaw[2]) || 1;
       const right = rightRaw.map(v => v / rightLength);
       const up = [
