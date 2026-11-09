@@ -1,10 +1,6 @@
-# ==========================================
-# Creator: Adam
-# Project: LunaCatcherBot
-# ==========================================
-
 import re
 import time
+import asyncio
 from html import escape
 from cachetools import TTLCache
 from telegram import (
@@ -13,12 +9,83 @@ from telegram import (
     InlineQueryResultCachedDocument,
 )
 from telegram.ext import InlineQueryHandler, CallbackContext
-from LUNA import application  # Assuming 'application' is the main bot object
+from LUNA import application, bot_client, DATABASE_ID, db
+from LUNA.unit.luna_watermark import get_watermarked_photo
 from LUNA.unit.luna_inline import *
 
 
 all_characters_cache = TTLCache(maxsize=10000, ttl=300)  # Cache for all characters
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)  # Cache for user collections
+
+
+# Persist processed image variants so old archive images only need watermarking once.
+inline_watermark_cache = db["luna_inline_watermark_cache"]
+_inline_watermark_locks = {}
+
+
+async def _get_inline_watermarked_file_id(character):
+    """Return a cached Telegram photo ID with the Luna watermark applied."""
+    media_type = character.get("media_type", "photo")
+    if media_type not in ("photo", "document"):
+        return None
+
+    source = character.get("media_file_id") or character.get("img_url")
+    if not source:
+        return None
+
+    # New uploads already carry the mark in the stored image.
+    if character.get("watermarked") and character.get("media_file_id"):
+        return character["media_file_id"]
+
+    source_key = str(source)
+    cached = await inline_watermark_cache.find_one({"source_key": source_key})
+    if cached and cached.get("watermarked_file_id"):
+        return cached["watermarked_file_id"]
+
+    lock = _inline_watermark_locks.setdefault(source_key, asyncio.Lock())
+    async with lock:
+        # Another concurrent inline query may have completed the watermark.
+        cached = await inline_watermark_cache.find_one({"source_key": source_key})
+        if cached and cached.get("watermarked_file_id"):
+            return cached["watermarked_file_id"]
+
+        watermarked_photo = await get_watermarked_photo(bot_client, source)
+        if not watermarked_photo:
+            return None
+
+        stored_message = None
+        try:
+            stored_message = await bot_client.send_photo(
+                chat_id=DATABASE_ID,
+                photo=watermarked_photo,
+                caption=f"✦ LUNA · WATERMARKED ARCHIVE · #{character.get('id', '?')} ✦",
+                disable_notification=True,
+            )
+            if not stored_message.photo:
+                return None
+
+            watermarked_file_id = stored_message.photo.file_id
+            await inline_watermark_cache.update_one(
+                {"source_key": source_key},
+                {"$set": {
+                    "source_key": source_key,
+                    "source_media_type": media_type,
+                    "watermarked_file_id": watermarked_file_id,
+                    "character_id": str(character.get("id", "")),
+                }},
+                upsert=True,
+            )
+            return watermarked_file_id
+        except Exception as exc:
+            from LUNA import LOGGER
+            LOGGER("LUNA.INLINE").warning(
+                "Inline watermark failed for character %s: %s",
+                character.get("id", "?"),
+                str(exc)[:250],
+            )
+            return None
+        finally:
+            watermarked_photo.close()
 
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
@@ -93,6 +160,20 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         media_file_id = character.get('media_file_id')
         media_type = character.get('media_type', 'photo')
         result_id = f"{character['id']}_{time.time_ns()}"
+
+        # Watermark both new and already-existing archive photos before inline display.
+        if media_type in ("photo", "document") and (media_file_id or character.get("img_url")):
+            inline_photo_id = await _get_inline_watermarked_file_id(character)
+            if inline_photo_id:
+                results.append(
+                    InlineQueryResultCachedPhoto(
+                        id=result_id,
+                        photo_file_id=inline_photo_id,
+                        caption=caption,
+                        parse_mode='HTML'
+                    )
+                )
+                continue
 
         # Cached Telegram results need no public URL or external hosting.
         if media_file_id:
