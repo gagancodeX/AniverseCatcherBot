@@ -10,6 +10,7 @@ from pyrogram.errors import ChatAdminRequired, UserNotParticipant, ChatWriteForb
 from itertools import groupby
 import math
 from html import escape
+from LUNA.unit.luna_watermark import get_watermarked_photo
 import random
 from pyrogram import enums
 import asyncio
@@ -201,8 +202,9 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                             animation=media_file_id, caption=harem_message,
                             reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                         )
+                    watermarked_photo = await get_watermarked_photo(client, media_file_id)
                     return await message.reply_photo(
-                        photo=media_file_id, caption=harem_message,
+                        photo=watermarked_photo or media_file_id, caption=harem_message,
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
                 if 'vid_url' in image_character:
@@ -211,8 +213,9 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
                 if 'img_url' in image_character:
+                    watermarked_photo = await get_watermarked_photo(client, image_character['img_url'])
                     return await message.reply_photo(
-                        photo=image_character['img_url'], caption=harem_message,
+                        photo=watermarked_photo or image_character['img_url'], caption=harem_message,
                         reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML
                     )
             return await message.reply_text(
@@ -230,7 +233,8 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     elif media_type == 'animation':
                         media = InputMediaAnimation(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     else:
-                        media = InputMediaPhoto(media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
+                        watermarked_photo = await get_watermarked_photo(client, media_file_id)
+                        media = InputMediaPhoto(watermarked_photo or media_file_id, caption=harem_message, parse_mode=enums.ParseMode.HTML)
                     await callback_query.message.edit_media(media=media, reply_markup=reply_markup)
                 elif 'vid_url' in image_character:
                     await callback_query.message.edit_media(
@@ -238,8 +242,9 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                         reply_markup=reply_markup
                     )
                 elif 'img_url' in image_character:
+                    watermarked_photo = await get_watermarked_photo(client, image_character['img_url'])
                     await callback_query.message.edit_media(
-                        media=InputMediaPhoto(image_character['img_url'], caption=harem_message),
+                        media=InputMediaPhoto(watermarked_photo or image_character['img_url'], caption=harem_message),
                         reply_markup=reply_markup
                     )
                 else:
