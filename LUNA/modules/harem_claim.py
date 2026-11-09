@@ -9,6 +9,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 from LUNA import bot_client as bot
 from LUNA import user_collection, collection, user_nguess_progress, user_guess_progress, FORCE_JOIN as chat, FORCE_JOIN_LINK
+from LUNA.unit.luna_watermark import get_watermarked_photo
 
 claim_lock = {}
 
