@@ -17,6 +17,8 @@
     var stats          = Game.stats('fps');       // mr.doobs FPS counter
     var canvas         = Dom.get('canvas');       // our canvas...
     var ctx            = canvas.getContext('2d'); // ...and its drawing context
+    ctx.imageSmoothingEnabled = true;
+    try { ctx.imageSmoothingQuality = 'high'; } catch (_) {}
     var background     = null;                    // our background image (loaded below)
     var sprites        = null;                    // our spritesheet (loaded below)
     var resolution     = null;                    // scaling factor to provide resolution independence (computed)
