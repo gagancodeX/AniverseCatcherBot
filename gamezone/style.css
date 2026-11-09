@@ -265,3 +265,17 @@
 .game-screen.runner-active.runner-3d-active .game-stage::after{
   opacity:.045;
 }
+
+/* Native-resolution rendering hotfix: keep gameplay artwork sharp. */
+.game-screen{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+#gameCanvas{
+  image-rendering:auto!important;
+  filter:none!important;
+}
+.game-stage::after{
+  opacity:0!important;
+  mix-blend-mode:normal!important;
+}
