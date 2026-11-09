@@ -107,10 +107,17 @@ async def gift(client, message):
                 reply_markup=keyboard
             )
         elif media_type == 'document':
-            await message.reply_document(
-                media_file_id, caption=caption, parse_mode=ParseMode.HTML,
-                reply_markup=keyboard
-            )
+            watermarked_photo = None if character.get("watermarked") else await get_watermarked_photo(client, media_file_id)
+            if watermarked_photo:
+                await message.reply_photo(
+                    watermarked_photo, caption=caption, parse_mode=ParseMode.HTML,
+                    reply_markup=keyboard
+                )
+            else:
+                await message.reply_document(
+                    media_file_id, caption=caption, parse_mode=ParseMode.HTML,
+                    reply_markup=keyboard
+                )
         elif media_type == 'animation':
             await message.reply_animation(
                 media_file_id, caption=caption, parse_mode=ParseMode.HTML,
