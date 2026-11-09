@@ -3,7 +3,7 @@
 # Project: LunaCatcherBot
 # ==========================================
 
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from LUNA import app, application, BOT_LOGGING, LOGGER
 
@@ -66,7 +66,7 @@ def get_group_details(chat):
 @app.on_message(filters.new_chat_members)
 async def on_new_chat_members(client: Client, message: Message):
     """Log when Luna is added to a group or supergroup."""
-    if not message.chat or message.chat.type not in ("group", "supergroup"):
+    if not message.chat or message.chat.type not in (enums.ChatType.GROUP, enums.ChatType.SUPERGROUP):
         return
 
     bot_user = await client.get_me()
