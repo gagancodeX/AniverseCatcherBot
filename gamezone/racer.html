@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07101e">
+  <title>Neon Racer · Luna GameZone</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#07101e;color:#f4f0e7;font-family:Arial, sans-serif;overscroll-behavior:none}
+    body{user-select:none;-webkit-user-select:none}
+    #racerApp{position:fixed;inset:0;overflow:hidden;background:#07101e;isolation:isolate}
+    #racerStage{position:absolute;inset:0;background:#70c6dc}
+    #canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+    .race-topbar{position:absolute;z-index:5;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));display:flex;align-items:center;gap:12px;pointer-events:none}
+    .race-back,.race-brand{pointer-events:auto;display:flex;align-items:center;justify-content:center;min-height:42px;border:1px solid rgba(237,222,190,.25);border-radius:12px;background:rgba(7,15,28,.78);backdrop-filter:blur(12px);color:#f9e9cc;text-decoration:none}
+    .race-back{padding:0 14px;font-size:12px;font-weight:800;letter-spacing:.7px}
+    .race-brand{margin-left:auto;padding:0 14px;font-size:11px;font-weight:900;letter-spacing:2px}
+    .race-brand span{color:#77f3d1;margin-left:5px}
+    #hud{position:absolute;z-index:5;top:66px;left:12px;right:12px;display:flex;justify-content:center;gap:9px;pointer-events:none;flex-wrap:wrap}
+    .hud{min-width:94px;padding:8px 12px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(8,16,29,.76);color:#c5d4e1;text-align:center;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;backdrop-filter:blur(9px)}
+    .hud .value{display:inline-block;margin-right:4px;color:#fff4d8;font-size:17px;letter-spacing:0}
+    #fast_lap_time{display:none}
+    #last_lap_time{display:none}
+    #instructions{position:absolute;z-index:4;top:116px;left:50%;transform:translateX(-50%);padding:7px 12px;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:rgba(8,16,29,.56);color:#f0e8da;font-size:9px;font-weight:800;letter-spacing:1px;white-space:nowrap;pointer-events:none}
+    .race-controls{position:absolute;z-index:6;left:0;right:0;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr 1.35fr 1.35fr;gap:10px;width:min(560px,calc(100% - 24px));margin:auto;align-items:end}
+    .race-control{min-height:62px;border:1px solid rgba(255,255,255,.2);border-radius:15px;background:linear-gradient(155deg,rgba(25,49,72,.94),rgba(8,20,37,.94));color:#f8f0e1;box-shadow:0 7px 24px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.12);font-size:12px;font-weight:900;letter-spacing:1px;touch-action:none;cursor:pointer}
+    .race-control.steer{font-size:25px;color:#83f2d6}
+    .race-control.gas{background:linear-gradient(145deg,#0b9d7c,#08715f);border-color:rgba(117,255,214,.45)}
+    .race-control.brake{background:linear-gradient(145deg,#a34b3e,#702b35);border-color:rgba(255,171,152,.42)}
+    .race-control.is-down{transform:translateY(2px) scale(.98);filter:brightness(1.22);box-shadow:0 2px 8px rgba(0,0,0,.34)}
+    .race-credit{position:absolute;z-index:5;right:13px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 76px);color:rgba(255,255,255,.55);font-size:8px;font-weight:700;letter-spacing:1px;pointer-events:none}
+    #fps,.hidden-tweaks,#music,#mute{display:none!important}
+    @media (orientation:portrait){
+      #racerApp{inset:auto;top:0;left:100vw;width:100dvh;height:100vw;transform-origin:top left;transform:rotate(90deg)}
+      .race-topbar{top:8px;left:10px;right:10px}
+      .race-back,.race-brand{min-height:35px}
+      #hud{top:50px;gap:6px}
+      .hud{min-width:82px;padding:5px 9px;font-size:8px}
+      .hud .value{font-size:14px}
+      #instructions{top:92px;font-size:8px}
+      .race-controls{bottom:8px;width:min(500px,calc(100% - 22px));gap:8px}
+      .race-control{min-height:48px;border-radius:12px;font-size:10px}
+      .race-control.steer{font-size:21px}
+      .race-credit{bottom:62px;right:12px;font-size:7px}
+    }
+    @media(max-height:430px) and (orientation:landscape){
+      .race-topbar{top:6px}
+      #hud{top:48px}
+      .hud{padding:5px 8px;min-width:80px}
+      #instructions{top:92px}
+      .race-control{min-height:48px}
+      .race-controls{bottom:7px}
+    }
+  </style>
+</head>
+<body>
+  <main id="racerApp">
+    <div id="racerStage">
+      <canvas id="canvas" width="1280" height="720" aria-label="Neon Racer road"></canvas>
+    </div>
+    <header class="race-topbar">
+      <a class="race-back" href="/" aria-label="Back to Luna GameZone">← GAMEZONE</a>
+      <div class="race-brand">☾ LUNA <span>RACE</span></div>
+    </header>
+    <div id="hud">
+      <span id="speed" class="hud"><span id="speed_value" class="value">0</span> MPH</span>
+      <span id="current_lap_time" class="hud">TIME <span id="current_lap_time_value" class="value">0.0</span></span>
+      <span id="last_lap_time" class="hud">LAST <span id="last_lap_time_value" class="value">0.0</span></span>
+      <span id="fast_lap_time" class="hud">BEST <span id="fast_lap_time_value" class="value">0.0</span></span>
+    </div>
+    <div id="instructions">WASD / ARROWS · HOLD GAS · DODGE TRAFFIC</div>
+    <div class="race-controls" aria-label="Driving controls">
+      <button class="race-control steer" id="raceLeft" aria-label="Steer left">◀</button>
+      <button class="race-control steer" id="raceRight" aria-label="Steer right">▶</button>
+      <button class="race-control brake" id="raceBrake" aria-label="Brake">BRAKE</button>
+      <button class="race-control gas" id="raceGas" aria-label="Accelerate">ACCELERATE</button>
+    </div>
+    <div class="race-credit">CURVES · HILLS · TRAFFIC</div>
+    <div id="fps" aria-hidden="true"></div>
+    <div class="hidden-tweaks" aria-hidden="true">
+      <select id="resolution"><option value="fine">Fine</option><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+      <select id="lanes"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+      <input id="roadWidth" type="range" min="500" max="3000" value="2000">
+      <span id="currentRoadWidth"></span>
+      <input id="cameraHeight" type="range" min="500" max="5000" value="1000">
+      <span id="currentCameraHeight"></span>
+      <input id="drawDistance" type="range" min="100" max="500" value="230">
+      <span id="currentDrawDistance"></span>
+      <input id="fieldOfView" type="range" min="80" max="140" value="100">
+      <span id="currentFieldOfView"></span>
+      <input id="fogDensity" type="range" min="0" max="50" value="5">
+      <span id="currentFogDensity"></span>
+    </div>
+    <audio id="music" muted></audio>
+    <span id="mute"></span>
+  </main>
+  <script src="racer-common.js"></script>
+  <script src="racer-stats.js"></script>
+  <script src="racer-engine.js"></script>
+  <script src="racer-touch.js"></script>
+</body>
+</html>
