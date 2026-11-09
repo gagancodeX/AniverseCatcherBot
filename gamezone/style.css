@@ -237,3 +237,31 @@
   .score-box b { font-size: 9px; }
   .game-stage { border-width: 4px; }
 }
+
+
+/* Luna Run WebGL scene layer */
+.game-stage{isolation:isolate}
+#runner3dCanvas{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:none;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  image-rendering:auto;
+}
+#gameCanvas{
+  position:relative;
+  z-index:2;
+  background:transparent;
+}
+.game-stage::after{z-index:3}
+.game-overlay{z-index:4}
+.game-screen.runner-active.runner-3d-active #gameCanvas{
+  image-rendering:auto;
+  filter:none;
+}
+.game-screen.runner-active.runner-3d-active .game-stage::after{
+  opacity:.045;
+}
