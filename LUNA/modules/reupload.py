@@ -4,7 +4,7 @@
 
 import asyncio
 from pyrogram import filters
-from LUNA import bot_client, collection, require_power, DATABASE_ID, BOT_LOGGING
+from LUNA import bot_client, collection, require_power, DATABASE_ID
 from LUNA.unit.luna_watermark import get_watermarked_photo
 
 
@@ -83,7 +83,7 @@ async def reupload_handler(client, message):
             else:
                 watermarked_photo = await get_watermarked_photo(client, old_url)
                 sent_msg = await client.send_photo(
-                    chat_id=BOT_LOGGING,
+                    chat_id=DATABASE_ID,
                     photo=watermarked_photo or old_url,
                     caption=caption,
                 )
