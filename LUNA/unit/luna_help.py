@@ -290,7 +290,7 @@ Each result includes:
 - 📈 Win: 1.5x payout (15% chance)
 - 🔥 Double: 2.0x payout (10% chance)
 - 🚀 Jackpot: 5.0x payout (4% chance)
-- 🌟 **Waifu Drop**: Win a random Legendary/Celestial character! (1% chance)
+- 🌟 **Waifu Drop**: Win a random Vanguard/Divine character! (1% chance)
 
 📝 **Limits:**
 - Minimum bet: 100 coins.

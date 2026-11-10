@@ -23,6 +23,7 @@ LEGACY_RARITY_RENAMES = {
     "🎗️ AMV Edition": rarity_map[18],
     "🌟 Luminous": rarity_map[19],
     "🌧 Rainy": rarity_map[20],
+    "🍭 Winter event": rarity_map[22],
 }
 
 
