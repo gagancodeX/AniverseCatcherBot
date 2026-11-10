@@ -2,6 +2,7 @@
 # LUNA CATCHER - Runtime entry point
 # ==========================================
 
+import asyncio
 import importlib
 import json
 import logging
@@ -610,7 +611,10 @@ def start_pyrogram_client() -> None:
 
     from LUNA.modules.rarity import migrate_rarity_labels
 
-    migrated_count = bot_client.loop.run_until_complete(migrate_rarity_labels())
+    # Kurigram exposes its active loop through the asyncio loop registered by
+    # its synchronous Client.start() bridge; it no longer provides Client.loop.
+    loop = asyncio.get_event_loop()
+    migrated_count = loop.run_until_complete(migrate_rarity_labels())
     LOGGER("LUNA").info(
         "Rarity label migration complete; updated %s stored values.",
         migrated_count,
