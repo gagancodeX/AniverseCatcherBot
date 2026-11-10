@@ -136,6 +136,7 @@
           if (Util.overlap(playerX, playerW, sprite.offset + spriteW/2 * (sprite.offset > 0 ? 1 : -1), spriteW)) {
             if (registerRaceCrash()) return;
             speed = maxSpeed/5;
+            playerX = Util.limit(playerX, -0.82, 0.82);
             position = Util.increase(playerSegment.p1.world.z, -playerZ, trackLength);
             break;
           }
