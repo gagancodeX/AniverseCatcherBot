@@ -1840,53 +1840,113 @@
     ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
   }
   function lunaRunDrawTracks(){
-    const stage=runStage(),ground=ctx.createLinearGradient(0,360,0,H);
-    ground.addColorStop(0,stage.ground);ground.addColorStop(.22,'#354b4a');ground.addColorStop(1,'#151f2c');
-    ctx.fillStyle=ground;ctx.fillRect(0,360,W,H-360);
-    lunaRunPoly([[0,360],[248,360],[-85,H],[0,H]],'#596451');
-    lunaRunPoly([[472,360],[720,360],[805,H],[720,H]],'#596451');
-    lunaRunPoly([[0,438],[248,372],[0,H]],'rgba(181,190,145,.12)');
-    lunaRunPoly([[472,372],[720,438],[720,H]],'rgba(181,190,145,.12)');
-    const phase=((game.runnerDistance||0)*.024)%1;
+    const stage=runStage();
+    const ground=ctx.createLinearGradient(0,352,0,H);
+    ground.addColorStop(0,stage.ground);
+    ground.addColorStop(.32,'#344a48');
+    ground.addColorStop(1,'#111d29');
+    ctx.fillStyle=ground;ctx.fillRect(0,352,W,H-352);
+
+    // Ballast shoulders frame one coherent three-track railway.
+    lunaRunPoly([[0,352],[270,352],[-90,H],[0,H]],'#5d6756');
+    lunaRunPoly([[450,352],[720,352],[810,H],[720,H]],'#5d6756');
+    lunaRunPoly([[0,470],[250,374],[0,H]],'rgba(188,190,145,.11)');
+    lunaRunPoly([[470,374],[720,470],[720,H]],'rgba(188,190,145,.11)');
+
+    const phase=((game.runnerDistance||0)*.0032)%1;
+    const lanes=[];
     for(let lane=0;lane<3;lane++){
-      const near=runProject(lane,0),far=runProject(lane,1.12);
-      const leftNear=near.x-near.laneWidth*.52,rightNear=near.x+near.laneWidth*.52;
-      const leftFar=far.x-far.laneWidth*.52,rightFar=far.x+far.laneWidth*.52;
-      const bed=ctx.createLinearGradient(near.x,near.y,far.x,far.y);
-      bed.addColorStop(0,'#50585b');bed.addColorStop(.55,'#38434a');bed.addColorStop(1,'#242d35');
-      lunaRunPoly([[leftNear,near.y],[rightNear,near.y],[rightFar,far.y],[leftFar,far.y]],bed,'rgba(207,220,210,.16)',2);
-      for(let i=0;i<24;i++){
-        const z=((i/24)+phase)%1,p=runProject(lane,z),width=p.laneWidth*.43,thickness=1.4+z*11;
-        ctx.strokeStyle='rgba(8,14,20,.55)';ctx.lineWidth=thickness+3;
-        ctx.beginPath();ctx.moveTo(p.x-width,p.y+3+z*3);ctx.lineTo(p.x+width,p.y+3+z*3);ctx.stroke();
-        ctx.strokeStyle=i%2?'#6d5b4a':'#88715a';ctx.lineWidth=thickness;
-        ctx.beginPath();ctx.moveTo(p.x-width,p.y);ctx.lineTo(p.x+width,p.y);ctx.stroke();
+      const far=runProject(lane,.015),near=runProject(lane,1.12);
+      const bedFar=far.laneWidth*.52,bedNear=near.laneWidth*.52;
+      const bed=ctx.createLinearGradient(far.x,far.y,near.x,near.y);
+      bed.addColorStop(0,'#454e50');
+      bed.addColorStop(.34,'#3a4549');
+      bed.addColorStop(1,'#222d37');
+      lunaRunPoly([
+        [far.x-bedFar,far.y],[far.x+bedFar,far.y],
+        [near.x+bedNear,near.y],[near.x-bedNear,near.y]
+      ],bed,'rgba(198,215,205,.17)',1.4);
+      lanes.push({lane,far,near});
+    }
+
+    // Wooden sleepers move toward the camera at a measured speed. Each has
+    // a bevel, a grain highlight and rail fasteners instead of flat neon bars.
+    for(const track of lanes){
+      for(let i=0;i<18;i++){
+        const z=((i/18)+phase)%1;
+        const p=runProject(track.lane,z);
+        const half=p.laneWidth*.435;
+        const depth=2.2+z*8.2;
+        const y=p.y;
+        const wood=ctx.createLinearGradient(0,y-depth,0,y+depth);
+        wood.addColorStop(0,'#b08a66');
+        wood.addColorStop(.28,'#80644e');
+        wood.addColorStop(1,'#3a3432');
+        ctx.save();
+        ctx.globalAlpha=.55+z*.45;
+        ctx.fillStyle='rgba(3,9,16,.48)';
+        ctx.beginPath();ctx.roundRect(p.x-half-2,y-depth*.15+depth*.65,half*2+4,depth*1.35,depth*.38);ctx.fill();
+        ctx.fillStyle=wood;
+        ctx.beginPath();ctx.roundRect(p.x-half,y-depth*.5,half*2,depth,depth*.32);ctx.fill();
+        ctx.strokeStyle='rgba(227,190,143,'+(.18+z*.22)+')';
+        ctx.lineWidth=Math.max(.7,depth*.11);
+        ctx.beginPath();ctx.moveTo(p.x-half*.8,y-depth*.22);ctx.lineTo(p.x+half*.8,y-depth*.22);ctx.stroke();
+        const plateW=Math.max(2,2.2+z*5);
+        [-1,1].forEach(side=>{
+          const px=p.x+side*p.laneWidth*.27;
+          ctx.fillStyle='#27343b';
+          ctx.beginPath();ctx.roundRect(px-plateW*1.2,y-depth*.75,plateW*2.4,depth*1.5,plateW*.35);ctx.fill();
+          ctx.fillStyle='#d1c7a4';ctx.beginPath();ctx.arc(px,y,Math.max(.7,depth*.12),0,Math.PI*2);ctx.fill();
+        });
+        ctx.restore();
       }
+    }
+
+    // Six continuous steel rails: dark web, rounded foot and a narrow
+    // brushed-metal highlight so the perspective reads as real rail stock.
+    for(const track of lanes){
       [-1,1].forEach(side=>{
-        const top=runProject(lane,.01),bottom=runProject(lane,1.12);
-        const a=top.laneWidth*.27*side,b=bottom.laneWidth*.27*side;
-        ctx.lineCap='round';ctx.strokeStyle='rgba(8,15,22,.72)';ctx.lineWidth=3+bottom.scale*7;
-        ctx.beginPath();ctx.moveTo(top.x+a,top.y);ctx.lineTo(bottom.x+b,bottom.y);ctx.stroke();
-        const rail=ctx.createLinearGradient(top.x+a,top.y,bottom.x+b,bottom.y);
-        rail.addColorStop(0,'#c9d3ca');rail.addColorStop(.45,'#71858a');rail.addColorStop(1,'#d9d7c3');
-        ctx.strokeStyle=rail;ctx.lineWidth=1.4+bottom.scale*3.8;
-        ctx.beginPath();ctx.moveTo(top.x+a,top.y);ctx.lineTo(bottom.x+b,bottom.y);ctx.stroke();
-        ctx.strokeStyle='rgba(245,247,228,.52)';ctx.lineWidth=1+bottom.scale;
-        ctx.beginPath();ctx.moveTo(top.x+a-1.2,top.y);ctx.lineTo(bottom.x+b-4,bottom.y);ctx.stroke();
+        const top=runProject(track.lane,.008),bottom=runProject(track.lane,1.12);
+        const ax=top.x+top.laneWidth*.27*side;
+        const bx=bottom.x+bottom.laneWidth*.27*side;
+        ctx.lineCap='butt';
+        ctx.strokeStyle='rgba(3,9,16,.78)';
+        ctx.lineWidth=4.5+bottom.scale*6.5;
+        ctx.beginPath();ctx.moveTo(ax+2,top.y+4);ctx.lineTo(bx+2,bottom.y+4);ctx.stroke();
+
+        const steel=ctx.createLinearGradient(ax,top.y,bx,bottom.y);
+        steel.addColorStop(0,'#c4d3ca');
+        steel.addColorStop(.24,'#657982');
+        steel.addColorStop(.52,'#e1e6d6');
+        steel.addColorStop(.76,'#788c91');
+        steel.addColorStop(1,'#d0d6c8');
+        ctx.strokeStyle=steel;
+        ctx.lineWidth=2.1+bottom.scale*4.4;
+        ctx.beginPath();ctx.moveTo(ax,top.y);ctx.lineTo(bx,bottom.y);ctx.stroke();
+
+        ctx.strokeStyle='rgba(255,255,239,.60)';
+        ctx.lineWidth=.8+bottom.scale*.75;
+        ctx.beginPath();ctx.moveTo(ax-1.1,top.y);ctx.lineTo(bx-3,bottom.y);ctx.stroke();
       });
     }
-    for(let i=0;i<24;i++){
-      const z=((i/24)+phase*.78)%1,p=runProject(0,z),q=runProject(2,z);
+
+    // Trackside lamps and small ballast glints create motion cues without
+    // filling the playfield with particle noise.
+    for(let i=0;i<17;i++){
+      const z=((i/17)+phase*.82)%1;
+      const pLeft=runProject(0,z),pRight=runProject(2,z);
       [-1,1].forEach(side=>{
-        const point=side<0?p:q,edgeX=point.x+side*point.laneWidth*.56;
-        ctx.fillStyle='rgba(255,220,160,'+(.18+z*.48)+')';ctx.shadowBlur=5+z*9;ctx.shadowColor='#ffd99a';
-        ctx.beginPath();ctx.arc(edgeX,point.y,1.2+z*3.2,0,Math.PI*2);ctx.fill();
+        const p=side<0?pLeft:pRight;
+        const x=p.x+side*p.laneWidth*.61;
+        const r=1+z*2.3;
+        ctx.fillStyle='rgba(255,222,164,'+(.16+z*.38)+')';
+        ctx.beginPath();ctx.arc(x,p.y,r,0,Math.PI*2);ctx.fill();
       });
     }
-    ctx.shadowBlur=0;
-    const fade=ctx.createLinearGradient(0,850,0,H);
-    fade.addColorStop(0,'rgba(5,12,21,0)');fade.addColorStop(1,'rgba(5,12,21,.34)');
-    ctx.fillStyle=fade;ctx.fillRect(0,850,W,150);
+    const edgeFade=ctx.createLinearGradient(0,830,0,H);
+    edgeFade.addColorStop(0,'rgba(5,12,21,0)');
+    edgeFade.addColorStop(1,'rgba(5,12,21,.38)');
+    ctx.fillStyle=edgeFade;ctx.fillRect(0,830,W,170);
   }
   function lunaRunDrawSpeedLines(){
     const speed=game.speed||430;if(speed<560)return;
@@ -2190,6 +2250,163 @@
     if(secondary){lunaRunPanel(175,615,370,66,'rgba(255,255,255,.07)','rgba(229,237,241,.38)',13);lunaRunText(secondary,360,648,12,'#f0e7d8','center','"DM Mono",monospace');}
     ctx.restore();
   }
+  function lunaRunDrawHeroBack(index,x,groundY,scale,phase,sliding,jumping,jet,board,invulnerable,groundShadowY,groundShadowScale){
+    const hero=RUN_HEROES[index]||RUN_HEROES[0];
+    const gait=Math.sin(phase||0),swing=Math.cos(phase||0);
+    const shadowY=Number.isFinite(groundShadowY)?groundShadowY:groundY;
+    const shadowScale=Number.isFinite(groundShadowScale)?runClamp(groundShadowScale,.36,1):1;
+    const laneDrift=runClamp((game.targetLane??game.laneVisual??1)-(game.laneVisual??1),-1,1);
+    const bob=jumping?Math.sin((phase||0)*2)*2.4:Math.abs(Math.sin((phase||0)*2))*4.2;
+    ctx.save();ctx.globalAlpha=.62;ctx.fillStyle='rgba(2,8,15,.55)';
+    ctx.beginPath();ctx.ellipse(x,shadowY+5,44*shadowScale,11*shadowScale,0,0,Math.PI*2);ctx.fill();ctx.restore();
+
+    ctx.save();
+    ctx.translate(x,groundY-bob);
+    ctx.rotate(laneDrift*.10+(jumping?runClamp(-(game.jumpV||0)/6800,-.10,.10):0));
+    ctx.scale(scale,scale*(sliding?.62:1));
+    if(sliding)ctx.translate(0,52);
+
+    // Hoverboard and jet exhaust sit behind the runner's silhouette.
+    if(board){
+      ctx.save();ctx.shadowBlur=15;ctx.shadowColor='#63e7fa';
+      lunaRunPoly([[-51,-2],[-35,-12],[37,-12],[52,-1],[40,8],[-40,8]],
+        '#1a5168','#9af6ff',3);
+      ctx.fillStyle='#132a3a';
+      [-31,31].forEach(wx=>{ctx.beginPath();ctx.arc(wx,8,7,0,Math.PI*2);ctx.fill()});
+      ctx.restore();
+    }
+    if(jet){
+      for(let i=-1;i<=1;i++){
+        const flame=22+( .68+.32*Math.sin(game.time*24+i*1.7))*28;
+        const fire=ctx.createLinearGradient(0,-74,0,-74+flame);
+        fire.addColorStop(0,'#fff6d2');fire.addColorStop(.42,'#ffc064');
+        fire.addColorStop(1,'rgba(242,75,55,0)');
+        ctx.fillStyle=fire;ctx.beginPath();ctx.moveTo(i*13-5,-76);
+        ctx.quadraticCurveTo(i*13-8,-48+flame*.3,i*13,-76+flame);
+        ctx.quadraticCurveTo(i*13+8,-48+flame*.3,i*13+5,-76);ctx.fill();
+      }
+      lunaRunPanel(-30,-129,60,52,'#9c5c42','#f7c786',11);
+      lunaRunPanel(-21,-121,42,34,'#354b5b','#edc17c',8);
+    }
+
+    // Arms are drawn first so shoulders naturally disappear under the jacket.
+    const leftElbow={x:-35-13*gait,y:-106+8*swing};
+    const rightElbow={x:35+13*gait,y:-106-8*swing};
+    const leftHand={x:-43-20*gait,y:-77+13*swing};
+    const rightHand={x:43+20*gait,y:-77-13*swing};
+    lunaRunLimb(-22,-132,leftElbow.x,leftElbow.y,16,hero.dark,hero.shine);
+    lunaRunLimb(leftElbow.x,leftElbow.y,leftHand.x,leftHand.y,12,hero.body,hero.shine);
+    lunaRunLimb(22,-132,rightElbow.x,rightElbow.y,16,hero.dark,hero.shine);
+    lunaRunLimb(rightElbow.x,rightElbow.y,rightHand.x,rightHand.y,12,hero.body,hero.shine);
+    ctx.fillStyle=hero.skin;ctx.beginPath();
+    ctx.arc(leftHand.x,leftHand.y,8.5,0,Math.PI*2);
+    ctx.arc(rightHand.x,rightHand.y,8.5,0,Math.PI*2);ctx.fill();
+
+    // A proper two-panel backpack, shoulder straps, buckles and a stitched
+    // lower pocket replace the flat rectangular pack.
+    ctx.save();ctx.translate(0,-2*gait);
+    const pack=ctx.createLinearGradient(-28,-154,28,-68);
+    pack.addColorStop(0,hero.shine);pack.addColorStop(.30,hero.pack);
+    pack.addColorStop(1,hero.dark);
+    lunaRunPanel(-28,-151,56,82,pack,'rgba(232,250,239,.46)',14);
+    lunaRunPanel(-22,-141,44,34,'rgba(7,23,39,.28)','rgba(232,250,239,.24)',8);
+    lunaRunPanel(-22,-101,44,24,hero.dark,'rgba(255,255,255,.20)',7);
+    lunaRunPanel(-14,-95,28,4,hero.accent,null,2);
+    ctx.strokeStyle='rgba(243,247,226,.56)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(-21,-143);ctx.lineTo(-21,-79);
+    ctx.moveTo(21,-143);ctx.lineTo(21,-79);ctx.stroke();
+    ctx.fillStyle=hero.accent;ctx.fillRect(-4,-134,8,8);
+    ctx.restore();
+
+    // Jacket back: hood, shoulder yoke, seam piping and natural fabric folds.
+    const jacket=ctx.createLinearGradient(-32,-151,32,-65);
+    jacket.addColorStop(0,hero.shine);jacket.addColorStop(.37,hero.body);
+    jacket.addColorStop(1,hero.dark);
+    lunaRunPanel(-29,-145,58,82,jacket,'rgba(244,255,244,.40)',15);
+    lunaRunPoly([[-25,-137],[0,-149],[25,-137],[17,-119],[0,-112],[-17,-119]],
+      hero.dark,'rgba(255,255,255,.20)',1.3);
+    lunaRunPoly([[-23,-135],[0,-124],[23,-135],[16,-113],[0,-106],[-16,-113]],
+      hero.body,'rgba(255,255,255,.22)',1);
+    ctx.strokeStyle='rgba(244,255,239,.28)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-20,-100);ctx.quadraticCurveTo(-8,-88,-14,-70);
+    ctx.moveTo(20,-100);ctx.quadraticCurveTo(8,-88,14,-70);ctx.stroke();
+    ctx.fillStyle=hero.accent;ctx.fillRect(-3,-108,6,32);
+    lunaRunPanel(-14,-69,28,8,hero.dark,'rgba(255,255,255,.15)',4);
+
+    // Two scarf tails flutter behind the shoulders.
+    ctx.fillStyle=hero.scarf;ctx.strokeStyle='rgba(255,255,255,.36)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-17,-137);
+    ctx.bezierCurveTo(-43,-153-10*gait,-57,-131+8*gait,-76,-120+12*gait);
+    ctx.lineTo(-70,-108+10*gait);
+    ctx.bezierCurveTo(-53,-116+6*gait,-36,-109-7*gait,-12,-119);
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(15,-137);
+    ctx.bezierCurveTo(40,-150+8*gait,50,-128-6*gait,66,-117-10*gait);
+    ctx.lineTo(59,-105-8*gait);
+    ctx.bezierCurveTo(43,-111-5*gait,30,-107+6*gait,12,-119);
+    ctx.closePath();ctx.fill();ctx.stroke();
+
+    // Neck and rear-facing head. No facial features are drawn: the camera is
+    // now following the runner into the station, as in a third-person chase.
+    lunaRunPanel(-10,-173,20,27,hero.skin,'rgba(74,43,48,.35)',7);
+    ctx.fillStyle=hero.skin;ctx.beginPath();ctx.ellipse(0,-184,24,28,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=hero.hair;
+    ctx.beginPath();ctx.moveTo(-26,-185);
+    ctx.quadraticCurveTo(-31,-214,-10,-219);
+    ctx.quadraticCurveTo(19,-226,28,-198);
+    ctx.lineTo(24,-174);ctx.quadraticCurveTo(12,-164,0,-169);
+    ctx.quadraticCurveTo(-14,-162,-24,-174);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.16)';
+    ctx.beginPath();ctx.ellipse(-9,-211,11,4,-.25,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=hero.accent;ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-22,-198);ctx.quadraticCurveTo(0,-189,22,-198);ctx.stroke();
+    ctx.strokeStyle='rgba(255,247,224,.45)';ctx.lineWidth=1.1;
+    ctx.beginPath();ctx.moveTo(-19,-197);ctx.quadraticCurveTo(0,-189,19,-197);ctx.stroke();
+
+    if(index===0){
+      // Luna's tied hair follows the run cycle with a small independent swing.
+      ctx.save();ctx.rotate(gait*.09);
+      ctx.fillStyle=hero.hair;ctx.beginPath();
+      ctx.moveTo(14,-184);ctx.quadraticCurveTo(37,-175,32,-150);
+      ctx.quadraticCurveTo(29,-135,17,-132);
+      ctx.quadraticCurveTo(25,-154,12,-166);ctx.closePath();ctx.fill();
+      ctx.fillStyle=hero.shine;ctx.beginPath();ctx.moveTo(22,-168);
+      ctx.quadraticCurveTo(28,-151,20,-141);ctx.strokeStyle=hero.shine;ctx.lineWidth=2;ctx.stroke();ctx.restore();
+    }else if(index===1){
+      ctx.fillStyle=hero.hair;ctx.beginPath();
+      ctx.moveTo(-24,-202);ctx.lineTo(-34,-196);ctx.lineTo(-25,-191);
+      ctx.moveTo(19,-207);ctx.lineTo(31,-199);ctx.lineTo(23,-193);ctx.fill();
+    }else{
+      ctx.fillStyle=hero.hair;ctx.beginPath();
+      ctx.moveTo(-20,-202);ctx.quadraticCurveTo(-7,-222,9,-216);
+      ctx.quadraticCurveTo(25,-218,30,-198);ctx.lineTo(18,-193);
+      ctx.lineTo(7,-203);ctx.lineTo(-3,-192);ctx.closePath();ctx.fill();
+    }
+
+    // Alternating knees, ankle roll and shoe soles create a readable run cycle.
+    const leftKnee={x:-21-24*gait,y:-43-12*Math.max(0,swing)};
+    const rightKnee={x:21+24*gait,y:-43-12*Math.max(0,-swing)};
+    const leftAnkle={x:-29+25*gait,y:-12-16*Math.max(0,swing)};
+    const rightAnkle={x:29-25*gait,y:-12-16*Math.max(0,-swing)};
+    lunaRunLimb(-12,-69,leftKnee.x,leftKnee.y,18,hero.dark,'rgba(255,255,255,.12)');
+    lunaRunLimb(leftKnee.x,leftKnee.y,leftAnkle.x,leftAnkle.y,14,hero.body,hero.shine);
+    lunaRunLimb(12,-69,rightKnee.x,rightKnee.y,18,hero.dark,'rgba(255,255,255,.12)');
+    lunaRunLimb(rightKnee.x,rightKnee.y,rightAnkle.x,rightAnkle.y,14,hero.body,hero.shine);
+    [[leftAnkle.x,leftAnkle.y,gait],[rightAnkle.x,rightAnkle.y,-gait]].forEach(([sx,sy,turn])=>{
+      ctx.save();ctx.translate(sx,sy);ctx.rotate(-turn*.17);
+      lunaRunPanel(-18,-8,36,16,hero.dark,'rgba(255,255,255,.42)',6);
+      lunaRunPanel(-15,-11,30,7,hero.accent,'rgba(255,255,255,.36)',4);
+      ctx.fillStyle='#f6f0df';ctx.fillRect(-11,-3,22,2);
+      ctx.restore();
+    });
+    if(invulnerable){
+      ctx.strokeStyle='rgba(151,238,255,.72)';ctx.lineWidth=3;
+      ctx.shadowBlur=16;ctx.shadowColor='#8deaff';
+      ctx.beginPath();ctx.ellipse(0,-106,55,116,0,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawSubwayRunner(){
     if(game.runnerMode==='select'){lunaRunDrawSelect();return;}
     const shake=game.runnerShake||0;
@@ -2204,7 +2421,7 @@
     lunaRunDrawHero(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
       game.slide>0,game.jump>30||game.rideT>0,
       !!(game.runnerEffects&&game.runnerEffects.jet>0),
-      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.38,1-lift/250));
+      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.38,1-lift/250),true);
     if(game.runnerFlash>0){ctx.fillStyle='rgba(255,224,195,'+(game.runnerFlash*.30)+')';ctx.fillRect(0,0,W,H);}
     ctx.restore();
     lunaRunDrawHUD();
