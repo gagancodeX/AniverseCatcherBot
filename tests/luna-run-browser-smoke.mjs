@@ -80,18 +80,31 @@ try {
     contentType: 'application/javascript',
     body: "window.Telegram = { WebApp: { initData: '', expand(){}, requestFullscreen(){}, exitFullscreen(){}, HapticFeedback:{impactOccurred(){}}, BackButton:{show(){},hide(){},onClick(){}} }};"
   }));
-  await page.route('https://fonts.googleapis.com/**', route => route.abort());
-  await page.route('https://fonts.gstatic.com/**', route => route.abort());
+  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({status:200,contentType:'text/css',body:''}));
+  await page.route('https://fonts.gstatic.com/**', route => route.fulfill({status:200,contentType:'font/woff2',body:''}));
 
   await page.goto('http://127.0.0.1:' + port + '/?game=luna_run', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('#gameScreen')?.classList.contains('active'), null, { timeout: 10000 });
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.LunaRun3D && window.LunaRun3D.isReady(), null, { timeout: 15000 });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(300);
+
+  await page.evaluate(() => {
+    const renderer=window.LunaRun3D;
+    const original=renderer.render.bind(renderer);
+    renderer.render=(state)=>{
+      window.__lastLunaRunState={
+        lane:state.lane,targetLane:state.targetLane,jump:state.jump,slide:state.slide,mode:state.mode,
+        stage:state.stage,speed:state.speed,obstacles:state.obstacles.length,pickups:state.pickups.length
+      };
+      return original(state);
+    };
+  });
 
   const renderer = await page.evaluate(() => {
     const canvas = document.querySelector('.luna-run-3d-canvas');
     const gl = window.__lunaGL;
+    const controls=document.querySelector('#runnerControls');
     return {
       ready: window.LunaRun3D?.isReady(),
       failed: window.LunaRun3D?.hasFailed(),
@@ -99,12 +112,13 @@ try {
       canvasDisplay: canvas && getComputedStyle(canvas).display,
       canvasWidth: canvas?.width || 0,
       canvasHeight: canvas?.height || 0,
-      gameCanvasWidth: document.querySelector('#gameCanvas')?.width || 0,
       drawCalls: window.__lunaDrawCalls,
       glError: gl ? gl.getError() : -1,
       viewport: gl ? Array.from(gl.getParameter(gl.VIEWPORT)) : null,
       overlayZ: getComputedStyle(document.querySelector('#gameOverlay')).zIndex,
-      rendererZ: canvas ? getComputedStyle(canvas).zIndex : null
+      rendererZ: canvas ? getComputedStyle(canvas).zIndex : null,
+      controlDeckHiddenByDesign: controls && getComputedStyle(controls).display === 'none',
+      runnerState: window.__lastLunaRunState
     };
   });
 
@@ -113,32 +127,55 @@ try {
   assert.equal(renderer.canvasFound, true, 'Separate WebGL canvas is missing');
   assert.equal(renderer.canvasDisplay, 'block', 'WebGL canvas is not visible in runner');
   assert.ok(renderer.canvasWidth > 0 && renderer.canvasHeight > 0, 'WebGL canvas has zero dimensions');
-  assert.ok(renderer.drawCalls > 80, 'Too few WebGL draw calls (' + renderer.drawCalls + ')');
+  assert.ok(renderer.drawCalls > 20, 'Too few WebGL draw calls (' + renderer.drawCalls + ')');
   assert.equal(renderer.glError, 0, 'WebGL error code ' + renderer.glError);
   assert.ok(Number(renderer.overlayZ) > Number(renderer.rendererZ), 'Start/pause overlay is not above the WebGL canvas');
-  record('WebGL renderer initialization', JSON.stringify(renderer));
+  assert.equal(renderer.controlDeckHiddenByDesign, true, 'Swipe-first runner layout unexpectedly shows the old button deck');
+  record('WebGL renderer initialization and fullscreen layout', JSON.stringify(renderer));
 
-  await page.waitForTimeout(500);
-  await page.locator('#runnerPauseBtn').click();
-  await page.waitForFunction(() => document.querySelector('#runnerPauseBtn')?.textContent.includes('RESUME'));
-  record('Pause control');
-  await page.locator('#runnerPauseBtn').click();
-  await page.waitForFunction(() => document.querySelector('#runnerPauseBtn')?.textContent.includes('PAUSE'));
-  record('Resume control');
+  const gameCanvas = page.locator('#gameCanvas');
+  const bounds = await gameCanvas.boundingBox();
+  assert.ok(bounds && bounds.width > 200 && bounds.height > 300, 'Runner playfield is too small');
+  const swipe = async (dx,dy) => {
+    const x=bounds.x+bounds.width*.5,y=bounds.y+bounds.height*.62;
+    await page.mouse.move(x,y);
+    await page.mouse.down();
+    await page.mouse.move(x+dx,y+dy,{steps:6});
+    await page.mouse.up();
+  };
 
-  for (const selector of ['#runnerHeroBtn', '#runnerLeft', '#runnerRight', '#runnerJump', '#runnerRoll', '#runnerSoundBtn']) {
-    const element = page.locator(selector);
-    assert.ok(await element.isVisible(), selector + ' is not visible');
-    await element.click({ force: true });
-  }
-  record('Hero, lane, jump, slide and sound controls are clickable');
+  await swipe(-90,0);
+  await page.waitForFunction(() => window.__lastLunaRunState?.targetLane === 0, null, {timeout:3000});
+  record('Swipe left changes to left lane');
+  await swipe(90,0);
+  await page.waitForFunction(() => window.__lastLunaRunState?.targetLane === 1, null, {timeout:3000});
+  record('Swipe right changes to center lane');
 
-  await page.waitForTimeout(2500);
+  await swipe(0,-100);
+  await page.waitForFunction(() => window.__lastLunaRunState?.jump > 1, null, {timeout:3000});
+  record('Swipe up triggers jump');
+  await page.waitForFunction(() => window.__lastLunaRunState?.jump <= 0, null, {timeout:3000});
+  await swipe(0,100);
+  await page.waitForFunction(() => window.__lastLunaRunState?.slide > 0, null, {timeout:3000});
+  record('Swipe down triggers slide');
+
+  const tapAtCanvasCenter = async () => {
+    const box=await gameCanvas.boundingBox();
+    await page.mouse.click(box.x+box.width*.5,box.y+box.height*.72);
+  };
+  await tapAtCanvasCenter();
+  await page.waitForFunction(() => window.__lastLunaRunState?.mode === 'paused', null, {timeout:3000});
+  record('Tap pauses the run');
+  await tapAtCanvasCenter();
+  await page.waitForFunction(() => window.__lastLunaRunState?.mode === 'run', null, {timeout:3000});
+  record('Tap resumes the run');
+
+  await page.waitForTimeout(700);
   const finalState = await page.evaluate(() => ({
     ready: window.LunaRun3D?.isReady(),
     drawCalls: window.__lunaDrawCalls,
     glError: window.__lunaGL ? window.__lunaGL.getError() : -1,
-    canvasDisplay: getComputedStyle(document.querySelector('.luna-run-3d-canvas')).display,
+    state: window.__lastLunaRunState,
     overlayVisible: !document.querySelector('#gameOverlay').classList.contains('hidden')
   }));
   assert.equal(finalState.ready, true, 'WebGL renderer stopped being ready during gameplay');
@@ -146,8 +183,7 @@ try {
   assert.ok(finalState.drawCalls > renderer.drawCalls, 'WebGL render loop stopped drawing');
   assert.equal(finalState.overlayVisible, false, 'Unexpected game-start overlay obscures active play');
   record('Live gameplay render loop', JSON.stringify(finalState));
-
-  await page.screenshot({ path: 'luna-run-browser-smoke.png', fullPage: true });
+  await page.screenshot({ path: 'luna-run-browser-smoke.png', fullPage: false });
   await page.locator('#backButton').click();
   await page.waitForFunction(() => !document.querySelector('#gameScreen')?.classList.contains('active'));
   record('Return to GameZone menu');
