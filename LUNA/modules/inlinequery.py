@@ -127,13 +127,15 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         native_games_enabled = os.getenv("LUNA_NATIVE_GAMES_ENABLED", "1").strip().lower() in {
             "1", "true", "yes", "on"
         }
+        # Display titles must also be applied to the matching games with
+        # @BotFather /editgame; InlineQueryResultGame takes only game_short_name.
         native_games = [
-            ("luna_flappy", "FLAPPY LUNA"),
+            ("luna_flappy", "FLAPPY BIRD 🐦"),
             ("luna_run", "LUNA RUN"),
-            ("luna_sky_jumper", "SKY JUMPER"),
-            ("luna_star_defender", "STAR DEFENDER"),
-            ("luna_neon_breaker", "NEON BREAKER"),
-            ("luna_neon_race", "NEON RACER"),
+            ("luna_neon_race", "RACE BLAZE 🚗"),
+            ("luna_star_defender", "LUNAR ECLIPSE ☾"),
+            ("luna_sky_jumper", "LUNA THE NINJA 🥷"),
+            ("luna_neon_breaker", "BREAKER BALL ◈"),
         ]
         if native_games_enabled:
             try:
