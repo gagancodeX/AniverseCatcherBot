@@ -25,7 +25,7 @@ async def launch_luna_game(update, context):
         return
 
     game_slug = GAME_SHORT_NAMES.get(query.game_short_name)
-    base_url = os.getenv("GAMEZONE_URL", "").strip().rstrip("/")
+    base_url = os.getenv("GAMEZONE_URL", "https://luna-gamezone.onrender.com").strip().rstrip("/")
     if not game_slug or not base_url.startswith("https://"):
         await query.answer(
             text="This Luna game is not configured yet. Please try again later.",
@@ -40,7 +40,7 @@ async def launch_luna_game(update, context):
 
 async def open_gamezone(update, context):
     """Open the full Luna arcade as a Telegram Web App."""
-    base_url = os.getenv("GAMEZONE_URL", "").strip().rstrip("/")
+    base_url = os.getenv("GAMEZONE_URL", "https://luna-gamezone.onrender.com").strip().rstrip("/")
     message = update.effective_message
     chat = update.effective_chat
     if not message:
