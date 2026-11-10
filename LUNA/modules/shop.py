@@ -16,13 +16,13 @@ user_shop_state = {}
 DEFAULT_DISCOUNT = 12
 
 RARITY_PRICE = {
-    "⚪️ Common": 1000,
-    "🟣 Rare": 5000,
-    "🟡 Legendary": 15000,
-    "🟢 Medium": 30000,
-    "💮 Special Edition": 25000,
-    "🔮 Limited Edition": 40000,
-    "💸 Premium Edition": 30000,
+    rarity_map[1]: 1000,
+    rarity_map[2]: 5000,
+    rarity_map[3]: 15000,
+    rarity_map[4]: 30000,
+    rarity_map[5]: 25000,
+    rarity_map[6]: 40000,
+    rarity_map[7]: 30000,
 }
 
 
