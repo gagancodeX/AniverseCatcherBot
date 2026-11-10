@@ -9,6 +9,14 @@ from pyrogram import filters, enums
 
 # Existing character records keep their IDs; only their display labels change.
 LEGACY_RARITY_RENAMES = {
+    # Previous emoji labels for the six core rarities.
+    "⚪️ Origin Edition": rarity_map[1],
+    "🟣 Phantom Edition": rarity_map[2],
+    "🟡 Vanguard Edition": rarity_map[3],
+    "🟢 Arcane Edition": rarity_map[4],
+    "💮 Zenith Edition": rarity_map[5],
+    "🔮 Ethereal Edition": rarity_map[6],
+    # Earlier rarity names retained for backward-compatible data migration.
     "⚪️ Common": rarity_map[1],
     "🟣 Rare": rarity_map[2],
     "🟡 Legendary": rarity_map[3],
@@ -90,14 +98,14 @@ async def rarity_count(client, message):
 
         if not total_count:
             await message.reply_text(
-                "✦ LUNA · RARITY INDEX ✦\n<blockquote>No rarities are registered yet.</blockquote>",
+                "✦ LUNA · RARITY INDEX ✦\\n<blockquote>No rarities are registered yet.</blockquote>",
                 parse_mode=enums.ParseMode.HTML
             )
             return
 
         response_message = (
-            "<b>✦ LUNA · RARITY INDEX ✦</b>\n"
-            "<blockquote>Explore the character universe by rarity</blockquote>\n"
+            "<b>✦ LUNA · RARITY INDEX ✦</b>\\n"
+            "<blockquote>Explore the character universe by rarity</blockquote>\\n"
         )
         active_total = 0
 
@@ -106,23 +114,23 @@ async def rarity_count(client, message):
                 continue
             count = await collection.count_documents({"rarity": rarity})
             active_total += count
-            response_message += f"◈ {rarity} — <b>{count:,}</b> character(s)\n"
+            response_message += f"◈ {rarity} — <b>{count:,}</b> character(s)\\n"
 
         # Keep retired or unknown records in the universe total without making
         # their old labels selectable as active rarities.
         archived_count = max(total_count - active_total, 0)
         if archived_count:
             response_message += (
-                f"◈ 🗃️ Archived / Unassigned — <b>{archived_count:,}</b> character(s)\n"
+                f"◈ 🗃️ Archived / Unassigned — <b>{archived_count:,}</b> character(s)\\n"
             )
 
         response_message += (
-            f"\n✧ <b>UNIVERSE TOTAL</b> · <code>{total_count:,}</code>"
+            f"\\n✧ <b>UNIVERSE TOTAL</b> · <code>{total_count:,}</code>"
         )
         await message.reply_text(response_message, parse_mode=enums.ParseMode.HTML)
 
     except Exception:
         await message.reply_text(
-            "✦ LUNA · SYSTEM NOTICE ✦\n<blockquote>Unable to load the rarity index right now.</blockquote>",
+            "✦ LUNA · SYSTEM NOTICE ✦\\n<blockquote>Unable to load the rarity index right now.</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
