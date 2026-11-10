@@ -239,33 +239,7 @@
 }
 
 
-/* Luna Run WebGL scene layer */
-.game-stage{isolation:isolate}
-#runner3dCanvas{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  display:none;
-  width:100%;
-  height:100%;
-  pointer-events:none;
-  image-rendering:auto;
-}
-#gameCanvas{
-  position:relative;
-  z-index:2;
-  background:transparent;
-}
-.game-stage::after{z-index:3}
-.game-overlay{z-index:4}
-.game-screen.runner-active.runner-3d-active #gameCanvas{
-  image-rendering:auto;
-  filter:none;
-}
-.game-screen.runner-active.runner-3d-active .game-stage::after{
-  opacity:.045;
-}
-
+/* Luna Run is rendered directly on the native-resolution game canvas. */
 /* Native-resolution rendering hotfix: keep gameplay artwork sharp. */
 .game-screen{
   -webkit-backdrop-filter:none!important;
@@ -336,11 +310,6 @@
 .game-screen.active.runner-active .game-shell {
   width: min(100vw, calc((100dvh - 245px) * .72));
   max-width: 100vw;
-}
-
-.game-screen.active.runner-active #runner3dCanvas {
-  width: 100%;
-  height: 100%;
 }
 
 @media (max-width: 520px) {
@@ -490,3 +459,23 @@
 .leaderboard-empty{padding:22px 12px;text-align:center;color:#bdc9dd;font:10px 'DM Mono',monospace;line-height:1.7}
 .leaderboard-footnote{margin:14px 0 0;color:#8997b0;text-align:center;font:8px 'DM Mono',monospace;letter-spacing:.4px}
 @media(max-width:520px){.game-screen.active .game-bottom{gap:8px}.game-bottom-actions{gap:6px}.game-screen.active .leaderboard-mini{min-height:36px;padding:0 9px;font-size:8px}.game-screen.active .restart-mini{padding:0 9px}.leaderboard-panel{padding:16px;border-radius:17px}}
+
+/* Luna Run: refined controls for the single-canvas runner. */
+.game-screen.active.runner-active .runner-controls p {
+  color: #aebfce;
+  font: 8px 'DM Mono', monospace;
+  letter-spacing: .45px;
+}
+.game-screen.active.runner-active .runner-tools button,
+.game-screen.active.runner-active .runner-pad button {
+  min-height: 43px;
+  border-color: rgba(153, 220, 225, .24);
+  background: linear-gradient(160deg, #19354c, #101f34);
+  color: #e8f4f1;
+}
+.game-screen.active.runner-active .runner-pad #runnerJump {
+  background: linear-gradient(135deg, #168ca7, #365ed5);
+}
+.game-screen.active.runner-active .runner-pad #runnerRoll {
+  background: linear-gradient(135deg, #b35a37, #8a356d);
+}
