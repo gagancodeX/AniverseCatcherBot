@@ -247,7 +247,6 @@ async def leaderboard_callback(update, context):
     if len(parts) == 3 and parts[1] == "game":
         slug = parts[2]
         if slug not in GAMES:
-            await query.answer("That game is not available.", show_alert=True)
             return
         try:
             timeout = aiohttp.ClientTimeout(total=12)
@@ -291,7 +290,7 @@ async def _send_group_digest(bot, chat_id, session):
     text = "\n".join(sections).strip()
     await bot.send_message(
         chat_id=chat_id,
-        text=text[:4000],
+        text=text,
         parse_mode="HTML",
         disable_web_page_preview=True,
     )
