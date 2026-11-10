@@ -604,9 +604,17 @@ def load_modules() -> None:
 
 
 def start_pyrogram_client() -> None:
-    """Start Pyrogram once without an application-level FloodWait sleep/retry loop."""
+    """Start Pyrogram and synchronize saved rarity labels before serving updates."""
     bot_client.start()
     LOGGER("LUNA").info("Pyrogram client connected successfully.")
+
+    from LUNA.modules.rarity import migrate_rarity_labels
+
+    migrated_count = bot_client.loop.run_until_complete(migrate_rarity_labels())
+    LOGGER("LUNA").info(
+        "Rarity label migration complete; updated %s stored values.",
+        migrated_count,
+    )
 
 
 def main() -> None:
