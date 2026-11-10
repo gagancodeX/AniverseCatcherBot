@@ -19,12 +19,12 @@
   const soundToggle = $('soundToggle');
   const GAME_API_BASE = 'https://aniversecatcherbot.onrender.com';
   const games = {
-    flappy:{title:'FLAPPY LUNA',symbol:'☾',hint:'TAP TO FLY · SPACE TO FLAP',start:'Tap to flap through the glowing moon gates. Every gate is a point.',over:'The night got you. One more flight?',color:'#cfb2ff'},
-    runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Change lanes, jump over barriers and collect moon coins.',over:'The run is over. Ready for another dash?',color:'#f4c98b'},
-    jumper:{title:'SKY JUMPER',symbol:'✧',hint:'TAP LEFT / RIGHT SIDE · ARROW KEYS',start:'Keep bouncing upward. Land on platforms and keep climbing.',over:'You reached the clouds. Try to climb higher!',color:'#9ce9ff'},
-    space:{title:'STAR DEFENDER',symbol:'✦',hint:'DRAG TO MOVE · AUTO FIRE',start:'Slide your ship across the sky and dodge the incoming swarm.',over:'The stars are quiet again. Launch another mission?',color:'#9ce9ff'},
-    brick:{title:'NEON BREAKER',symbol:'▰',hint:'TAP TO LAUNCH · DRAG TO MOVE THE PADDLE',start:'Tap the playfield to launch the orb, then drag to guide the paddle and clear every glowing block.',over:'The orb slipped away. Reset and try again.',color:'#f4a9df'},
-    racer:{title:'NEON RACER',symbol:'◈',hint:'SWIPE LEFT / RIGHT · ARROW KEYS',start:'Three lanes. Endless neon. Avoid traffic and collect stars.',over:'The road ends here. Can you beat your record?',color:'#f4a9df'}
+    flappy:{title:'FLAPPY BIRD 🐦',symbol:'🐦',hint:'TAP TO FLY · SPACE TO FLAP',start:'Guide your little bird through the moonlit gates. One clean flight, one more high score.',over:'The night caught your bird. Ready for another flight?',color:'#cfb2ff'},
+    runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Dash through the lunar rails, dodge trains and collect glowing coins.',over:'Your run has ended. The next record is yours to chase.',color:'#f4c98b'},
+    jumper:{title:'LUNA THE NINJA 🥷',symbol:'🥷',hint:'TAP LEFT / RIGHT SIDE · ARROW KEYS',start:'Leap from platform to platform through the moonlit skyline. Keep climbing.',over:'Your ninja journey pauses here. Climb higher next round!',color:'#9ce9ff'},
+    space:{title:'LUNAR ECLIPSE ☾',symbol:'☾',hint:'DRAG TO MOVE · AUTO FIRE',start:'Survive the lunar eclipse, guide your ship through the cosmic swarm and protect your score.',over:'The eclipse has passed. Ready for another mission?',color:'#9ce9ff'},
+    brick:{title:'BREAKER BALL ◈',symbol:'◈',hint:'TAP TO LAUNCH · DRAG TO MOVE THE PADDLE',start:'Launch the glowing ball, guide your paddle and clear every lunar block.',over:'The ball slipped away. Reset and break your record.',color:'#f4a9df'},
+    racer:{title:'RACE BLAZE 🚗',symbol:'🚗',hint:'SWIPE LEFT / RIGHT · ARROW KEYS',start:'Own the curves, overtake traffic and chase a new night-drive record.',over:'The road has cooled down. Ready to race again?',color:'#f4a9df'}
   };
   const keys = Object.create(null);
   let current = null, state = 'menu', raf = 0, lastTime = 0, score = 0, coins = 0, distance = 0, soundOn = false, audio = null;
