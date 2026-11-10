@@ -234,13 +234,14 @@
     draw(meshes.cylinder,m,color,emission||0,metal||0,0);
   }
   function worldZ(z){return 31-clamp(z,-.2,1.18)*31;}
-  function drawWorld(theme,time){
-    draw(meshes.city,identity,'#35445d',0,.12,3);draw(meshes.cityWindows,identity,theme.lamp,.42,.08,0);sphere(-3.2,10.1,-29,1.18,1.18,1.18,theme.accent,.68,0);draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
-    draw(meshes.sleepers,identity,'#6c4e3b',0,.08,2);draw(meshes.railBeds,identity,'#303b43',0,.5,1);
-    draw(meshes.rails,identity,'#c0cbd0',.05,.92,1);draw(meshes.clips,identity,'#d2a95e',.03,.75,0);
+  function drawWorld(theme,time,speed){
+    const worldFlow=(time||0)*(.36+(speed||430)/1900),tieOffset=worldFlow%1.55,stationOffset=worldFlow%22;
+    draw(meshes.city,identity,'#35445d',0,.12,3);draw(meshes.cityWindows,identity,theme.lamp,.42,.08,0);sphere(2.2,14.3,-29,1.10,1.10,1.10,theme.accent,.72,0);draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
+    draw(meshes.sleepers,translate(0,0,tieOffset),'#6c4e3b',0,.08,2);draw(meshes.railBeds,identity,'#303b43',0,.5,1);
+    draw(meshes.rails,identity,'#c0cbd0',.05,.92,1);draw(meshes.clips,translate(0,0,tieOffset),'#d2a95e',.03,.75,0);
     draw(meshes.buildings,identity,'#45546b',0,.18,3);draw(meshes.windows,identity,theme.lamp,.23,.1,0);
-    draw(meshes.posts,identity,'#384754',0,.55,1);draw(meshes.beams,identity,'#485b67',0,.62,1);
-    draw(meshes.wires,identity,'#242e3d',0,.7,0);draw(meshes.lamps,identity,theme.lamp,.85,.2,0);draw(meshes.signs,identity,'#183a4b',0,.32,1);
+    draw(meshes.posts,translate(0,0,stationOffset),'#384754',0,.55,1);draw(meshes.beams,translate(0,0,stationOffset),'#485b67',0,.62,1);
+    draw(meshes.wires,translate(0,0,stationOffset),'#242e3d',0,.7,0);draw(meshes.lamps,translate(0,0,stationOffset),theme.lamp,.85,.2,0);draw(meshes.signs,translate(0,0,stationOffset%18),'#183a4b',0,.32,1);
     // Gantry-mounted lamps are part of the shared static station geometry.
     for(let i=0;i<4;i++){const z=23-i*15;box(-7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);box(7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);}
     for(let i=0;i<10;i++){const z=25-i*6.7,x=(i%2?1:-1)*(8.1+(i%3)*1.2),h=1.8+(i%4)*.55;box(x,h/2,z,.75,h,.65,i%2?'#294a53':'#365b55',0,.05,2);sphere(x,h+.32,z,.52,.23,.5,'#477b66',0,.02);}
@@ -398,7 +399,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniform3fv(uniforms.fog,hexColor(theme.fog));
     const shake=data.shake||0,eye=[Math.sin((data.time||0)*38)*shake*.004,6.15+Math.cos((data.time||0)*31)*shake*.003,11.8];
     viewMatrix=lookAt(eye,[0,1.10,-17.5],[0,1,0]);projectionMatrix=perspective(54*Math.PI/180,canvas.width/canvas.height,.1,110);
-    drawWorld(theme,data.time||0);drawChaseTrain(theme,data.time||0);
+    drawWorld(theme,data.time||0,data.speed||430);drawChaseTrain(theme,data.time||0);
     (data.pickups||[]).filter(item=>item.z<1.14).forEach(item=>drawPickup(item,theme,data.time||0));
     (data.obstacles||[]).filter(item=>item.z<1.14).forEach(item=>{
       if(item.type==='train')drawTrain(item,theme,data.time||0);else if(item.type==='barrier')drawBarrier(item);else if(item.type==='overhead')drawOverhead(item);else if(item.type==='ramp')drawRamp(item);
