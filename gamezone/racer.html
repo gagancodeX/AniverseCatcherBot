@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07101e">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <title>Neon Racer · Luna GameZone</title>
   <style>
   :root{color-scheme:dark;--mint:#78f2d3;--gold:#ffd18a;--ink:#081321}
@@ -23,17 +24,21 @@
   .race-back{padding:0 13px;font-size:10px;font-weight:900;letter-spacing:.8px}
   .race-brand{margin-left:auto;padding:0 14px;font-size:10px;font-weight:900;letter-spacing:2px}
   .race-brand span{color:var(--mint);margin-left:5px}
-  #hud{position:absolute;z-index:5;top:58px;left:10px;right:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:center;gap:6px;pointer-events:none}
+  #hud{position:absolute;z-index:5;top:58px;left:10px;right:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));justify-content:center;gap:6px;pointer-events:none}
   .hud{min-width:0;min-height:38px;padding:6px 8px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:rgba(8,16,29,.74);color:#c5d4e1;text-align:center;font-size:8px;font-weight:850;letter-spacing:.8px;text-transform:uppercase;backdrop-filter:blur(12px);box-shadow:0 5px 18px rgba(0,0,0,.12)}
   .hud .value{display:inline-block;margin-right:3px;color:#fff4d8;font-size:15px;letter-spacing:0}
   #last_lap_time{display:none!important}
-  #fast_lap_time{display:block!important}
+  #fast_lap_time{display:none!important}
+  .hidden-lap{display:none!important}
+  .race-lives strong{display:block;margin-top:3px;color:#ffb0bf;font-size:13px;letter-spacing:2px;line-height:1.1}
+  .race-leaderboard{pointer-events:auto;min-height:36px;padding:0 10px;border:1px solid rgba(194,172,255,.4);border-radius:11px;background:linear-gradient(145deg,rgba(92,73,147,.92),rgba(39,36,82,.94));color:#f1eaff;font-size:9px;font-weight:900;letter-spacing:.5px;box-shadow:0 5px 17px rgba(0,0,0,.25);cursor:pointer}
   .boost-hud{display:flex;flex-direction:column;justify-content:center;gap:3px;color:var(--mint)}
   .boost-hud strong{font-size:14px;line-height:1;color:#edfff9}
   .boost-track{display:block;height:3px;width:100%;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.18)}
   .boost-track i{display:block;width:100%;height:100%;border-radius:99px;background:linear-gradient(90deg,#4ce6bd,#e5fca0);box-shadow:0 0 8px rgba(95,255,205,.7)}
   #instructions{position:absolute;z-index:4;top:105px;left:50%;transform:translateX(-50%);padding:6px 11px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,16,29,.52);color:#f0e8da;font-size:8px;font-weight:850;letter-spacing:.8px;white-space:nowrap;pointer-events:none;backdrop-filter:blur(8px)}
   .desktop-instructions{display:none}
+  .touch-instructions{position:absolute;z-index:4;top:150px;left:50%;transform:translateX(-50%);padding:6px 11px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(8,16,29,.52);color:#f0e8da;font-size:8px;font-weight:850;letter-spacing:.8px;white-space:nowrap;pointer-events:none;backdrop-filter:blur(8px)}
   .race-mobile-controls{position:absolute;z-index:6;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-between;padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right));pointer-events:none}
   .race-mobile-controls:before{content:"";position:absolute;z-index:-1;left:8px;right:8px;bottom:-10px;height:150px;border-radius:30px;background:linear-gradient(180deg,transparent,rgba(4,13,26,.2) 22%,rgba(4,13,26,.62));filter:blur(8px);pointer-events:none}
   .steer-cluster{display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:auto}
@@ -62,6 +67,33 @@
   .race-credit{position:absolute;z-index:5;right:13px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 128px);color:rgba(255,255,255,.48);font-size:7px;font-weight:800;letter-spacing:1.1px;pointer-events:none;text-shadow:0 2px 5px rgba(0,0,0,.6)}
   #fps,.hidden-tweaks,#music,#mute{display:none!important}
   @media (hover:hover) and (pointer:fine){.touch-instructions{display:none}.desktop-instructions{display:block}}
+  .race-over[hidden]{display:none!important}
+  .race-over{position:absolute;z-index:20;inset:0;display:grid;place-items:center;padding:20px;background:rgba(4,10,20,.78);backdrop-filter:blur(9px)}
+  .race-over-card{width:min(390px,100%);padding:26px 22px;border:1px solid rgba(255,205,160,.4);border-radius:22px;background:linear-gradient(155deg,#26354b,#101a2e 70%);box-shadow:0 25px 90px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.12);text-align:center}
+  .race-over-kicker{color:#85f4d8;font-size:9px;font-weight:900;letter-spacing:2px}
+  .race-over-card h1{margin:12px 0 5px;color:#fff0d1;font-size:clamp(25px,5vw,34px);letter-spacing:1px}
+  .race-over-card p{margin:0 0 18px;color:#b9c8d8;font-size:11px}
+  .race-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+  .race-result-grid div{padding:12px 8px;border:1px solid rgba(255,255,255,.13);border-radius:13px;background:rgba(8,20,35,.72)}
+  .race-result-grid small{display:block;color:#93a5bc;font-size:8px;font-weight:900;letter-spacing:1px}
+  .race-result-grid strong{display:block;margin-top:5px;color:#ffe0a1;font-size:23px;font-variant-numeric:tabular-nums}
+  .race-again,.race-view-leaderboard{display:block;width:100%;min-height:47px;margin-top:9px;border:1px solid rgba(255,226,170,.7);border-radius:13px;background:linear-gradient(135deg,#ffe0a0,#d58d48);color:#24170e;font-weight:950;letter-spacing:1px;box-shadow:0 5px 0 #754124;cursor:pointer}
+  .race-view-leaderboard{border-color:rgba(194,172,255,.45);background:linear-gradient(145deg,#64509a,#3a326a);color:#f5efff;box-shadow:0 5px 0 #231d45}
+  .race-leaderboard-modal{position:absolute;z-index:25;inset:0;display:none;align-items:center;justify-content:center;padding:18px}
+  .race-leaderboard-modal.active{display:flex}
+  .race-leaderboard-backdrop{position:absolute;inset:0;border:0;background:rgba(2,7,15,.8);backdrop-filter:blur(9px)}
+  .race-leaderboard-panel{position:relative;z-index:1;width:min(420px,100%);max-height:82%;overflow:auto;padding:18px;border:1px solid rgba(190,170,255,.32);border-radius:19px;background:linear-gradient(160deg,#1c2440,#0b1427 75%);box-shadow:0 28px 90px rgba(0,0,0,.55);color:#f4f3ff}
+  .race-leaderboard-panel header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .race-leaderboard-panel header small{color:#b8a2ff;font-size:8px;font-weight:900;letter-spacing:1px}
+  .race-leaderboard-panel h2{margin:6px 0 0;color:#fff2d8;font-size:17px}
+  .race-leaderboard-panel header button{width:32px;height:32px;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:#202b45;color:#fff;font-size:22px}
+  #raceLeaderboardList{display:flex;flex-direction:column;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .race-leaderboard-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px 10px;border:1px solid rgba(198,210,244,.11);border-radius:11px;background:rgba(30,43,70,.72)}
+  .race-leaderboard-row .rank{color:#d9cbff;font-weight:900;font-variant-numeric:tabular-nums}
+  .race-leaderboard-row .name{overflow:hidden;color:#f4f2ff;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+  .race-leaderboard-row .score{color:#ffe0a0;font-weight:900;font-variant-numeric:tabular-nums}
+  .race-leaderboard-empty{padding:20px 8px;text-align:center;color:#bdc9dd;font-size:10px;line-height:1.7}
+  .race-leaderboard-panel>p{margin:0;color:#8997b0;text-align:center;font-size:8px;letter-spacing:.4px}
   @media (orientation:landscape) and (max-height:560px){
     .race-topbar{top:6px}
     #hud{top:49px;max-width:560px;margin:auto}
@@ -76,7 +108,7 @@
     .race-credit{bottom:104px}
   }
   @media(max-width:370px){
-    #hud{left:6px;right:6px;gap:4px}
+    #hud{left:6px;right:6px;gap:4px;top:56px}
     .hud{padding:5px 4px;font-size:7px}
     .hud .value,.boost-hud strong{font-size:13px}
     .steer-pad{width:102px;height:102px}
@@ -95,13 +127,17 @@
     </div>
     <header class="race-topbar">
       <a class="race-back" href="/" aria-label="Back to Luna GameZone">← GAMEZONE</a>
+      <button type="button" class="race-leaderboard" id="raceLeaderboardButton">🏆 TOP 10</button>
       <div class="race-brand">☾ LUNA <span>RACE</span></div>
     </header>
     <div id="hud">
       <span id="speed" class="hud"><span id="speed_value" class="value">0</span> MPH</span>
       <span id="current_lap_time" class="hud">TIME <span id="current_lap_time_value" class="value">0.0</span></span>
-      <span id="fast_lap_time" class="hud">BEST <span id="fast_lap_time_value" class="value">0.0</span></span>
+      <span id="raceScore" class="hud">SCORE <span id="raceScoreValue" class="value">0</span></span>
+      <span id="raceLives" class="hud race-lives">LIVES <strong id="raceLivesValue">♥ ♥ ♥</strong></span>
+      <span id="raceBest" class="hud">BEST <span id="raceBestValue" class="value">0</span></span>
       <div id="boostHud" class="hud boost-hud"><span>NITRO</span><strong id="boostValue">100%</strong><span class="boost-track"><i id="boostFill"></i></span></div>
+      <span id="fast_lap_time" class="hud hidden-lap">LAP <span id="fast_lap_time_value" class="value">0.0</span></span>
       <span id="last_lap_time" class="hud">LAST <span id="last_lap_time_value" class="value">0.0</span></span>
     </div>
     <div class="touch-instructions">DRAG THE WHEEL · HOLD GAS · TAP NITRO</div>
@@ -120,6 +156,27 @@
       </div>
     </div>
     <div class="race-credit">CURVES · HILLS · TRAFFIC · NITRO</div>
+    <section class="race-over" id="raceOver" hidden>
+      <div class="race-over-card">
+        <div class="race-over-kicker">☾ LUNA RACE</div>
+        <h1>RACE OVER</h1>
+        <p>Three crashes. Your run is finished.</p>
+        <div class="race-result-grid">
+          <div><small>YOUR SCORE</small><strong id="raceFinalScore">0</strong></div>
+          <div><small>BEST SCORE</small><strong id="raceFinalBest">0</strong></div>
+        </div>
+        <button type="button" id="raceRestart" class="race-again">↻ RACE AGAIN</button>
+        <button type="button" id="raceOverLeaderboard" class="race-view-leaderboard">🏆 VIEW LEADERBOARD</button>
+      </div>
+    </section>
+    <section class="race-leaderboard-modal" id="raceLeaderboardModal" aria-hidden="true">
+      <button type="button" class="race-leaderboard-backdrop" id="raceLeaderboardBackdrop" aria-label="Close leaderboard"></button>
+      <div class="race-leaderboard-panel">
+        <header><div><small>GLOBAL RANKINGS / NEON RACER</small><h2>TOP 10 DRIVERS</h2></div><button type="button" id="raceLeaderboardClose" aria-label="Close">×</button></header>
+        <ol id="raceLeaderboardList"><li class="race-leaderboard-empty">Loading scores…</li></ol>
+        <p>Best score per player · Luna GameZone</p>
+      </div>
+    </section>
     <div id="fps" aria-hidden="true"></div>
     <div class="hidden-tweaks" aria-hidden="true">
       <select id="resolution"><option value="fine">Fine</option><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select>
