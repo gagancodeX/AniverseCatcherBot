@@ -1104,8 +1104,17 @@
     game.obstacles=game.obstacles.filter(o=>o.z<1.1);setScore(Math.floor(distance/35)+coins);
   }
   function draw(){
-    if(!current)return;
-    if(current==='flappy')drawFlappy();else if(current==='runner')drawSubwayRunner();else if(current==='racer')drawRunner(true);else if(current==='jumper')drawJumper();else if(current==='space')drawSpace();else if(current==='brick')drawBrick();
+    if(!current){
+      if(window.LunaRun3D)window.LunaRun3D.hide();
+      return;
+    }
+    if(current!=='runner'&&window.LunaRun3D)window.LunaRun3D.hide();
+    if(current==='flappy')drawFlappy();
+    else if(current==='runner')drawSubwayRunner();
+    else if(current==='racer')drawRunner(true);
+    else if(current==='jumper')drawJumper();
+    else if(current==='space')drawSpace();
+    else if(current==='brick')drawBrick();
   }
   function update(dt){
     if(current==='flappy')updateFlappy(dt);
@@ -2492,24 +2501,56 @@
   }
 
   function drawSubwayRunner(){
-    if(game.runnerMode==='select'){lunaRunDrawSelect();return;}
-    const shake=game.runnerShake||0;
-    const laneSway=runClamp((game.targetLane??1)-(game.laneVisual??1),-1,1);
-    ctx.save();ctx.translate((shake?Math.sin(game.time*47)*shake:0)+laneSway*3.5,shake?Math.cos(game.time*39)*shake*.55:0);
-    ctx.rotate(laneSway*.0025);
-    lunaRunDrawBackdrop();lunaRunDrawStationArchitecture();lunaRunDrawTracks();lunaRunDrawStationSign();lunaRunDrawSpeedLines();
-    game.pickups.filter(item=>item.type==='coin'||item.type==='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawCoin);
-    game.pickups.filter(item=>item.type!=='coin'&&item.type!=='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawPickup);
-    game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawObstacle);
-    const lane=game.laneVisual===undefined?1:game.laneVisual,track=runProject(lane,.965);
-    const lift=(game.jump||0)*.85+(game.runnerEffects&&game.runnerEffects.jet>0?125:0)+(game.rideT>0?105:0);
-    lunaRunDrawFX();
-    lunaRunDrawHeroBack(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
-      game.slide>0,game.jump>30||game.rideT>0,
-      !!(game.runnerEffects&&game.runnerEffects.jet>0),
-      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.36,1-lift/250));
-    if(game.runnerFlash>0){ctx.fillStyle='rgba(255,224,195,'+(game.runnerFlash*.30)+')';ctx.fillRect(0,0,W,H);}
-    ctx.restore();
+    if(game.runnerMode==='select'){
+      if(window.LunaRun3D)window.LunaRun3D.hide();
+      lunaRunDrawSelect();
+      return;
+    }
+    const renderer=window.LunaRun3D;
+    const rendered=renderer&&renderer.render({
+      stage:game.runnerStage||0,
+      time:game.time||0,
+      speed:game.speed||430,
+      distance:game.runnerDistance||0,
+      lane:game.laneVisual===undefined?1:game.laneVisual,
+      targetLane:game.targetLane===undefined?1:game.targetLane,
+      jump:game.jump||0,
+      slide:game.slide||0,
+      rideT:game.rideT||0,
+      effects:game.runnerEffects||{},
+      hero:RUN_HEROES[game.heroIndex]||RUN_HEROES[0],
+      obstacles:game.obstacles||[],
+      pickups:game.pickups||[],
+      runnerInvul:game.runnerInvul||0,
+      shake:game.runnerShake||0,
+      flash:game.runnerFlash||0,
+      coins:coins,
+      mode:game.runnerMode
+    });
+    if(!rendered){
+      const shake=game.runnerShake||0;
+      const laneSway=runClamp((game.targetLane??1)-(game.laneVisual??1),-1,1);
+      ctx.save();
+      ctx.translate((shake?Math.sin(game.time*47)*shake:0)+laneSway*3.5,shake?Math.cos(game.time*39)*shake*.55:0);
+      ctx.rotate(laneSway*.0025);
+      lunaRunDrawBackdrop();lunaRunDrawStationArchitecture();lunaRunDrawTracks();lunaRunDrawStationSign();lunaRunDrawSpeedLines();
+      game.pickups.filter(item=>item.type==='coin'||item.type==='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawCoin);
+      game.pickups.filter(item=>item.type!=='coin'&&item.type!=='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawPickup);
+      game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawObstacle);
+      const lane=game.laneVisual===undefined?1:game.laneVisual,track=runProject(lane,.965);
+      const lift=(game.jump||0)*.85+(game.runnerEffects&&game.runnerEffects.jet>0?125:0)+(game.rideT>0?105:0);
+      lunaRunDrawFX();
+      lunaRunDrawHeroBack(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
+        game.slide>0,game.jump>30||game.rideT>0,
+        !!(game.runnerEffects&&game.runnerEffects.jet>0),
+        !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.36,1-lift/250));
+      if(game.runnerFlash>0){ctx.fillStyle='rgba(255,224,195,'+(game.runnerFlash*.30)+')';ctx.fillRect(0,0,W,H);}
+      ctx.restore();
+    }else{
+      ctx.clearRect(0,0,W,H);
+      lunaRunDrawFX();
+      if(game.runnerFlash>0){ctx.fillStyle='rgba(255,224,195,'+(game.runnerFlash*.30)+')';ctx.fillRect(0,0,W,H);}
+    }
     lunaRunDrawHUD();
     if(game.runnerMode==='paused')lunaRunDrawOverlay('PAUSED','Your run is paused.','RESUME',null);
     else if(game.runnerMode==='over'){
