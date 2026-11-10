@@ -77,7 +77,7 @@
     return {p,n};
   }
   function makeSphere(){
-    const p=[],n=[],lat=12,lon=18;
+    const p=[],n=[],lat=20,lon=28;
     for(let y=0;y<lat;y++)for(let x=0;x<lon;x++){
       const a0=Math.PI*y/lat-Math.PI/2,a1=Math.PI*(y+1)/lat-Math.PI/2,b0=2*Math.PI*x/lon,b1=2*Math.PI*(x+1)/lon;
       const point=(a,b)=>[Math.cos(a)*Math.cos(b),Math.sin(a),Math.cos(a)*Math.sin(b)];
@@ -167,14 +167,14 @@
     if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}gl.viewport(0,0,width,height);
   }
   function buildWorld(){
-    const gravel=[{x:0,y:-.28,z:3,w:10.8,h:.34,d:76}],sleepers=[],railBeds=[],rails=[],clips=[],platforms=[],posts=[],beams=[],lampHousings=[],buildingBoxes=[],windowBoxes=[],signBoxes=[],wireBoxes=[];
+    const gravel=[{x:0,y:-.28,z:3,w:10.8,h:.34,d:76}],sleepers=[],railBeds=[],rails=[],clips=[],platforms=[],posts=[],beams=[],lampHousings=[],buildingBoxes=[],windowBoxes=[],signBoxes=[],wireBoxes=[],cityBoxes=[],cityWindows=[];
     const laneXs=[-2.55,0,2.55];
     for(let z=38;z>-30;z-=1.55){sleepers.push({x:0,y:-.02,z,w:9.9,h:.17,d:.48});laneXs.forEach(lane=>[-.79,.79].forEach(off=>clips.push({x:lane+off,y:.105,z,w:.34,h:.09,d:.24})));}
     laneXs.forEach(lane=>[-.79,.79].forEach(off=>{const x=lane+off;railBeds.push({x,y:.12,z:3,w:.28,h:.23,d:70});rails.push({x,y:.255,z:3,w:.14,h:.09,d:70});}));
     platforms.push({x:-5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:-6.12,y:-.16,z:3,w:.22,h:.13,d:72},{x:6.12,y:-.16,z:3,w:.22,h:.13,d:72});
     // Space overhead gantries farther apart: one clean crossbeam per station span.
-    for(let i=0;i<8;i++){
-      const z=27-i*8.1;
+    for(let i=0;i<4;i++){
+      const z=27-i*18;
       [-1,1].forEach(side=>{
         posts.push({x:side*5.2,y:2.35,z,w:.18,h:4.7,d:.18});
         lampHousings.push({x:side*4.88,y:4.1,z,w:.34,h:.16,d:.46});
@@ -193,6 +193,15 @@
         }
       }
     }
+    // Distant skyline fills the horizon without crowding the three playable tracks.
+    for(let i=0;i<17;i++){
+      const x=-24+i*3,variant=(i*7)%5,w=2.2+(variant%2)*.55,h=4.4+variant*1.08,z=-34-(i%3)*1.4;
+      cityBoxes.push({x,y:h/2-.05,z,w,h,d:2.0});
+      const cols=2+(variant%2);
+      for(let row=0;row<Math.floor(h/1.25);row++)for(let col=0;col<cols;col++){
+        cityWindows.push({x:x+(col-(cols-1)/2)*(w/(cols+.3)),y:.75+row*1.02,z:z+1.035,w:.20,h:.34,d:.025});
+      }
+    }
     // Station signs sit beside the platforms, never across the playable lanes.
     for(let z=24;z>-24;z-=18){
       [-1,1].forEach(side=>{
@@ -204,7 +213,7 @@
     }
     meshes.gravel=makeBoxBatch(gravel);meshes.sleepers=makeBoxBatch(sleepers);meshes.railBeds=makeBoxBatch(railBeds);meshes.rails=makeBoxBatch(rails);
     meshes.clips=makeBoxBatch(clips);meshes.platforms=makeBoxBatch(platforms);meshes.posts=makeBoxBatch(posts);meshes.beams=makeBoxBatch(beams);
-    meshes.lamps=makeBoxBatch(lampHousings);meshes.buildings=makeBoxBatch(buildingBoxes);meshes.windows=makeBoxBatch(windowBoxes);meshes.signs=makeBoxBatch(signBoxes);meshes.wires=makeBoxBatch(wireBoxes);
+    meshes.lamps=makeBoxBatch(lampHousings);meshes.buildings=makeBoxBatch(buildingBoxes);meshes.windows=makeBoxBatch(windowBoxes);meshes.signs=makeBoxBatch(signBoxes);meshes.wires=makeBoxBatch(wireBoxes);meshes.city=makeBoxBatch(cityBoxes);meshes.cityWindows=makeBoxBatch(cityWindows);
   }
   let viewMatrix=matIdentity(),projectionMatrix=matIdentity();
   function draw(mesh,model,color,emission,metal,pattern){
@@ -226,7 +235,7 @@
   }
   function worldZ(z){return 31-clamp(z,-.2,1.18)*31;}
   function drawWorld(theme,time){
-    draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
+    draw(meshes.city,identity,'#35445d',0,.12,3);draw(meshes.cityWindows,identity,theme.lamp,.42,.08,0);sphere(-8.8,8.7,-29,1.35,1.35,1.35,theme.accent,.62,0);draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
     draw(meshes.sleepers,identity,'#6c4e3b',0,.08,2);draw(meshes.railBeds,identity,'#303b43',0,.5,1);
     draw(meshes.rails,identity,'#c0cbd0',.05,.92,1);draw(meshes.clips,identity,'#d2a95e',.03,.75,0);
     draw(meshes.buildings,identity,'#45546b',0,.18,3);draw(meshes.windows,identity,theme.lamp,.23,.1,0);
@@ -236,22 +245,54 @@
     for(let i=0;i<4;i++){const z=23-i*15;box(-7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);box(7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);}
     for(let i=0;i<10;i++){const z=25-i*6.7,x=(i%2?1:-1)*(8.1+(i%3)*1.2),h=1.8+(i%4)*.55;box(x,h/2,z,.75,h,.65,i%2?'#294a53':'#365b55',0,.05,2);sphere(x,h+.32,z,.52,.23,.5,'#477b66',0,.02);}
   }
-  function drawTrain(obstacle,theme,time){
-    const x=(obstacle.lane-1)*2.55,z=worldZ(obstacle.z),wobble=Math.sin(time*2.3+z*.1)*.006,body=theme.train;
-    box(x,1.77,z-1.1,2.28,3.52,9.2,body,0,.42,1,0,wobble,0);
-    box(x,3.55,z-1.1,2.12,.18,8.95,'#a9bcc1',0,.78,1);
-    box(x,2.58,z+3.56,1.86,1.12,.08,'#14394d',.06,.45,1);box(x,2.56,z+3.61,.06,.98,.06,'#b7d9d8',.05,.4,0);
-    box(x,1.55,z+3.67,1.92,.55,.12,'#1b5261',0,.52,1);box(x,1.12,z+3.69,2.16,.14,.18,'#e0b65d',.02,.62,1);
-    box(x,.44,z+3.72,2.22,.25,.5,'#35434c',0,.7,0);box(x-.78,.78,z+3.78,.27,.2,.08,theme.lamp,.9,.1,0);box(x+.78,.78,z+3.78,.27,.2,.08,theme.lamp,.9,.1,0);
-    box(x,2.02,z+3.72,.18,.34,.08,'#d0d9d5',.08,.35,0);
-    for(let side=-1;side<=1;side+=2){
-      box(x+side*1.16,1.76,z-1.05,.10,2.88,8.72,'#123b4b',0,.3,1);
-      for(let i=0;i<4;i++){const wz=z+2.5-i*2.05;box(x+side*1.22,2.62,wz,.055,.76,1.28,'#8fc6cd',.08,.28,0);box(x+side*1.26,2.61,wz,.035,.08,1.18,'#f2ce83',.1,.1,0);box(x+side*1.22,1.42,wz,.055,.78,.94,'#1d4e5d',0,.35,1);}
-      box(x+side*1.22,.25,z-1.1,.18,.28,7.4,'#202e38',0,.65,0);
-      for(let i=0;i<2;i++){const wz=z+1.8-i*5.3;segment([x+side*1.19,.43,wz],[x+side*1.19,.43,wz+.72],.24,'#161f29',0,.8);segment([x+side*1.30,.43,wz],[x+side*1.30,.43,wz+.72],.13,'#a2b2b5',.02,.9);}
+  function drawTrainModel(x,z,theme,time,s=1){
+    const b=(dx,y,dz,w,h,d,color,emission,metal,pattern,rx,ry,rz)=>box(
+      x+dx*s,y*s,z+dz*s,w*s,h*s,d*s,color,emission,metal,pattern,rx,ry,rz
+    );
+    // Rounded commuter body, polished roof and continuous destination stripe.
+    b(0,1.66,-.72,2.28,3.30,8.65,theme.train,0,.48,1);
+    b(0,3.33,-.72,2.18,.16,8.35,'#aebfc4',.02,.86,1);
+    b(0,1.88,-.72,2.34,.12,8.30,'#d9b66f',.02,.72,0);
+    b(0,.72,-.72,2.35,.22,8.28,'#263744',0,.72,1);
+    // Front cab faces the runner, with a wide windscreen and warm headlamps.
+    b(0,2.55,3.63,1.94,1.12,.14,'#15374a',.04,.52,1);
+    b(0,2.61,3.715,1.67,.76,.035,'#8bcbd4',.12,.34,0);
+    b(0,2.62,3.742,.075,.70,.025,'#d6e5de',.08,.18,0);
+    b(0,1.66,3.69,1.98,.52,.15,'#185366',0,.54,1);
+    b(0,1.28,3.76,2.22,.17,.30,'#d6ae65',.02,.68,1);
+    b(0,.52,3.72,2.24,.25,.42,'#283946',0,.76,0);
+    b(0,.97,3.81,.34,.16,.06,'#fff0bd',.8,.06,0);
+    for(const side of [-1,1]){
+      b(side*1.16,1.68,-.72,.10,2.72,8.24,'#153f50',0,.35,1);
+      b(side*1.205,1.96,-.72,.055,.10,8.0,'#d3b16c',.02,.4,0);
+      for(let i=0;i<5;i++){
+        const wz=2.55-i*1.72;
+        b(side*1.225,2.54,wz,.045,.72,1.08,'#8bcbd4',.10,.3,0);
+        b(side*1.255,2.54,wz,.025,.055,1.02,'#f1d69a',.08,.1,0);
+      }
+      for(let i=0;i<2;i++){
+        const wz=.95-i*4.05;
+        sphere(x+side*1.13*s,.40*s,(z+wz*s),.27*s,.27*s,.34*s,'#172631',0,.72);
+        sphere(x+side*1.18*s,.40*s,(z+wz*s),.12*s,.12*s,.36*s,'#8fa6af',.02,.88);
+      }
     }
-    for(let i=0;i<3;i++)box(x,3.72,z+1.8-i*2.2,.52,.17,.72,'#52616b',0,.7,1);
-    box(x,1.02,z+4.02,1.25,.08,.11,'#fff0b2',.5,.1,0);
+    // Front safety stripe, coupler and twin lamps make the locomotive readable at distance.
+    b(-.78,.84,3.80,.24,.22,.08,theme.lamp,.95,.06,0);
+    b(.78,.84,3.80,.24,.22,.08,theme.lamp,.95,.06,0);
+    b(0,.20,3.88,.56,.18,.32,'#202c35',0,.52,0);
+    b(0,3.47,-.68,.88,.13,7.95,'#657985',.02,.74,1);
+    for(let i=0;i<3;i++)b(0,3.58,-2.45+i*1.7,.40,.10,.48,'#65747c',0,.76,1);
+  }
+  function drawTrain(obstacle,theme,time){
+    drawTrainModel((obstacle.lane-1)*2.55,worldZ(obstacle.z),theme,time,1);
+  }
+  function drawChaseTrain(theme,time){
+    // A distant locomotive loops toward the runner along the centre rail.
+    const approach=(time*.12)%1,z=-18.2+approach*6.1;
+    drawTrainModel(0,z,theme,time,.66);
+    const pulse=.72+Math.sin(time*5.5)*.18;
+    sphere(-.52,.66,z+2.42,.11,.11,.08,theme.lamp,pulse,0);
+    sphere(.52,.66,z+2.42,.11,.11,.08,theme.lamp,pulse,0);
   }
   function drawBarrier(obstacle){
     const x=(obstacle.lane-1)*2.55,z=worldZ(obstacle.z);
@@ -284,33 +325,69 @@
   }
   function drawHero(data,theme){
     const hero=data.hero||{body:'#9069b8',shine:'#d8b8f0',dark:'#302746',scarf:'#f1c58b',hair:'#28233c',skin:'#e8b99c',pack:'#5c9f9d',accent:'#ffe3a6'};
-    const x=(data.lane-1)*2.55,z=.25,time=data.time||0,phase=time*12.8,laneLean=clamp((data.targetLane-data.lane)*.16,-.18,.18);
-    const jump=clamp((data.jump||0)/86,0,1.95)+(data.effects&&data.effects.jet>0?1.25:0)+(data.rideT>0?.2:0),slide=data.slide>0,baseY=jump+(slide?-.32:0);
+    const x=(data.lane-1)*2.55,z=.25,time=data.time||0,phase=time*12.8,gait=Math.sin(phase),gait2=Math.cos(phase);
+    const laneLean=clamp((data.targetLane-data.lane)*.16,-.18,.18);
+    const jump=clamp((data.jump||0)/86,0,1.95)+(data.effects&&data.effects.jet>0?1.25:0)+(data.rideT>0?.2:0);
+    const slide=data.slide>0,baseY=jump+(slide?-.32:0),bob=Math.abs(gait)*.055;
     sphere(x,.035,z,.62,.055,.78,'#0b1d28',0,.1);
-    if(data.effects&&data.effects.board>0){box(x,.22,z,.98,.14,1.48,'#1e667b',.15,.65,0,0,Math.sin(time*5)*.12,0);box(x,.30,z,.74,.035,1.12,'#8deaff',.36,.35,0);}
-    const torsoY=1.28+baseY,headY=2.03+baseY-(slide?.24:0),bodyScale=slide?.72:1,gait=Math.sin(phase),gait2=Math.cos(phase);
-    box(x,torsoY,z,.72,.92*bodyScale,.48,hero.body,data.runnerInvul>0?.13:0,.18,1,0,0,laneLean);
-    box(x,torsoY+.16,z-.255,.54,.12,.035,hero.shine,.05,.1,0,0,0,laneLean);box(x,torsoY-.24,z-.26,.50,.10,.035,hero.dark,0,.1,0,0,0,laneLean);
-    box(x,torsoY+.48,z+.31,.52,.62,.25,hero.pack,0,.16,1,0,0,laneLean);box(x,torsoY+.48,z+.445,.35,.28,.035,hero.dark,0,.1,0);box(x,torsoY+.55,z+.47,.18,.055,.025,hero.accent,.15,.15,0);
-    sphere(x,headY,z,.34,.39,.32,hero.skin,0,.03);sphere(x,headY+.23,z+.04,.355,.24,.34,hero.hair,0,.05);
-    sphere(x-.25,headY+.10,z+.06,.12,.18,.21,hero.hair,0,0);sphere(x+.24,headY+.12,z+.06,.11,.16,.20,hero.hair,0,0);
-    box(x,headY-.28,z-.04,.34,.08,.28,hero.skin,0,0,0);box(x,1.72+baseY,z,.46,.16,.55,hero.scarf,.08,.16,0,0,0,laneLean);
-    box(x+.34,1.78+baseY,z+.48,.18,.10,.88,hero.scarf,.04,.1,0,.05,0,Math.sin(phase)*.24);
-    box(x-.34,1.76+baseY,z+.44,.16,.10,.64,hero.accent,.05,.1,0,-.08,0,-Math.sin(phase)*.18);
+    if(data.effects&&data.effects.board>0){
+      box(x,.22,z,.98,.14,1.48,'#1e667b',.15,.65,0,0,Math.sin(time*5)*.12,0);
+      box(x,.30,z,.74,.035,1.12,'#8deaff',.36,.35,0);
+    }
+    const torsoY=1.27+baseY+bob,headY=2.04+baseY+bob-(slide?.24:0),bodyScale=slide?.74:1;
+    // Soft silhouette replaces the square torso; panel seams retain the runner's outfit identity.
+    sphere(x,torsoY,z,.43,.57*bodyScale,.31,hero.body,data.runnerInvul>0?.14:0,.18);
+    sphere(x,torsoY+.02,z+.245,.31,.45*bodyScale,.145,hero.pack,0,.16);
+    box(x,torsoY+.04,z+.386,.055,.62*bodyScale,.025,hero.dark,0,.12,0,0,0,laneLean);
+    box(x-.18,torsoY+.25,z+.34,.075,.45,.035,hero.shine,.05,.12,0,0,0,-.16);
+    box(x+.18,torsoY+.25,z+.34,.075,.45,.035,hero.shine,.05,.12,0,0,0,.16);
+    box(x,torsoY-.24,z+.36,.48,.10,.045,hero.dark,0,.1,0);
+    // Backpack straps, top roll and compact side pouches.
+    sphere(x,torsoY+.48,z+.34,.33,.16,.22,hero.dark,0,.12);
+    box(x-.29,torsoY+.06,z+.30,.11,.52,.09,hero.accent,.02,.15,0,0,0,-.12);
+    box(x+.29,torsoY+.06,z+.30,.11,.52,.09,hero.accent,.02,.15,0,0,0,.12);
+    sphere(x-.36,torsoY-.18,z+.27,.11,.16,.12,hero.shine,0,.1);
+    sphere(x+.36,torsoY-.18,z+.27,.11,.16,.12,hero.shine,0,.1);
+    // Head, neck and layered hair silhouette from the rear.
+    sphere(x,headY-.36,z,.20,.20,.20,hero.skin,0,.02);
+    sphere(x,headY,z,.345,.395,.325,hero.skin,0,.03);
+    sphere(x,headY+.22,z+.055,.365,.245,.355,hero.hair,0,.06);
+    sphere(x-.25,headY+.10,z+.08,.13,.18,.22,hero.hair,0,.02);
+    sphere(x+.25,headY+.10,z+.08,.13,.18,.22,hero.hair,0,.02);
+    sphere(x-.13,headY-.08,z+.285,.105,.19,.09,hero.hair,0,.02);
+    sphere(x+.13,headY-.08,z+.285,.105,.19,.09,hero.hair,0,.02);
+    // Scarf folds and a pair of animated tails stream behind the runner.
+    box(x,1.69+baseY+bob,z,.49,.17,.54,hero.scarf,.08,.16,0,0,0,laneLean);
+    box(x+.37,1.76+baseY+bob,z+.48,.16,.10,.92,hero.scarf,.06,.1,0,.05,0,Math.sin(phase)*.30);
+    box(x-.37,1.73+baseY+bob,z+.43,.15,.09,.76,hero.accent,.06,.1,0,-.08,0,-Math.sin(phase)*.25);
     const hipL=[x-.20,.94+baseY,z],hipR=[x+.20,.94+baseY,z];
-    const kneeL=[x-.22+gait*.12,.52+baseY+Math.max(0,-gait)*.10,z+gait*.20],kneeR=[x+.22-gait*.12,.52+baseY+Math.max(0,gait)*.10,z-gait*.20];
-    const ankleL=[x-.22+gait*.28,.15+baseY+Math.max(0,-gait)*.16,z+gait*.43],ankleR=[x+.22-gait*.28,.15+baseY+Math.max(0,gait)*.16,z-gait*.43];
-    segment(hipL,kneeL,.14,hero.dark,0,.05);segment(kneeL,ankleL,.115,hero.body,0,.05);segment(hipR,kneeR,.14,hero.dark,0,.05);segment(kneeR,ankleR,.115,hero.body,0,.05);
-    sphere(kneeL[0],kneeL[1],kneeL[2],.15,.15,.15,hero.body,0,0);sphere(kneeR[0],kneeR[1],kneeR[2],.15,.15,.15,hero.body,0,0);
-    box(ankleL[0],ankleL[1]-.025,ankleL[2]-.13,.32,.19,.52,'#202b3e',.02,.28,0,0,-gait*.18,0);
-    box(ankleR[0],ankleR[1]-.025,ankleR[2]-.13,.32,.19,.52,'#202b3e',.02,.28,0,0,gait*.18,0);
-    box(ankleL[0],ankleL[1]+.075,ankleL[2]-.32,.22,.045,.12,hero.accent,.08,.18,0);box(ankleR[0],ankleR[1]+.075,ankleR[2]-.32,.22,.045,.12,hero.accent,.08,.18,0);
-    const shoulderY=1.55+baseY-(slide?.25:0),shoulderL=[x-.42,shoulderY,z],shoulderR=[x+.42,shoulderY,z];
-    const elbowL=[x-.58+gait2*.10,shoulderY-.32+gait*.18,z-gait*.18],elbowR=[x+.58-gait2*.10,shoulderY-.32-gait*.18,z+gait*.18];
-    const handL=[x-.57+gait2*.25,shoulderY-.66+gait*.22,z-gait*.38],handR=[x+.57-gait2*.25,shoulderY-.66-gait*.22,z+gait*.38];
-    segment(shoulderL,elbowL,.105,hero.body,0,.04);segment(elbowL,handL,.085,hero.skin,0,0);segment(shoulderR,elbowR,.105,hero.body,0,.04);segment(elbowR,handR,.085,hero.skin,0,0);
-    sphere(handL[0],handL[1],handL[2],.12,.12,.12,hero.skin,0,0);sphere(handR[0],handR[1],handR[2],.12,.12,.12,hero.skin,0,0);
-    if(data.effects&&data.effects.jet>0){box(x-.25,1.28+baseY,z+.55,.22,.56,.24,'#c16b35',.12,.25,0,0,0,-.10);box(x+.25,1.28+baseY,z+.55,.22,.56,.24,'#c16b35',.12,.25,0,0,0,.10);sphere(x-.25,.82+baseY,z+.58,.10,.32,.10,'#ffb14f',.85,0);sphere(x+.25,.82+baseY,z+.58,.10,.32,.10,'#ffb14f',.85,0);}
+    const kneeL=[x-.22+gait*.15,.52+baseY+Math.max(0,-gait)*.12,z+gait*.22];
+    const kneeR=[x+.22-gait*.15,.52+baseY+Math.max(0,gait)*.12,z-gait*.22];
+    const ankleL=[x-.22+gait*.30,.15+baseY+Math.max(0,-gait)*.17,z+gait*.45];
+    const ankleR=[x+.22-gait*.30,.15+baseY+Math.max(0,gait)*.17,z-gait*.45];
+    segment(hipL,kneeL,.145,hero.dark,0,.05);segment(kneeL,ankleL,.12,hero.body,0,.05);
+    segment(hipR,kneeR,.145,hero.dark,0,.05);segment(kneeR,ankleR,.12,hero.body,0,.05);
+    sphere(kneeL[0],kneeL[1],kneeL[2],.15,.15,.15,hero.body,0,0);
+    sphere(kneeR[0],kneeR[1],kneeR[2],.15,.15,.15,hero.body,0,0);
+    box(ankleL[0],ankleL[1]-.025,ankleL[2]-.13,.34,.20,.55,'#202b3e',.02,.28,0,0,-gait*.18,0);
+    box(ankleR[0],ankleR[1]-.025,ankleR[2]-.13,.34,.20,.55,'#202b3e',.02,.28,0,0,gait*.18,0);
+    box(ankleL[0],ankleL[1]+.075,ankleL[2]-.32,.23,.045,.13,hero.accent,.10,.18,0);
+    box(ankleR[0],ankleR[1]+.075,ankleR[2]-.32,.23,.045,.13,hero.accent,.10,.18,0);
+    const shoulderY=1.54+baseY+bob-(slide?.25:0),shoulderL=[x-.40,shoulderY,z],shoulderR=[x+.40,shoulderY,z];
+    const elbowL=[x-.57+gait2*.12,shoulderY-.31+gait*.20,z-gait*.19];
+    const elbowR=[x+.57-gait2*.12,shoulderY-.31-gait*.20,z+gait*.19];
+    const handL=[x-.58+gait2*.25,shoulderY-.64+gait*.24,z-gait*.40];
+    const handR=[x+.58-gait2*.25,shoulderY-.64-gait*.24,z+gait*.40];
+    segment(shoulderL,elbowL,.12,hero.body,0,.04);segment(elbowL,handL,.09,hero.skin,0,0);
+    segment(shoulderR,elbowR,.12,hero.body,0,.04);segment(elbowR,handR,.09,hero.skin,0,0);
+    sphere(handL[0],handL[1],handL[2],.12,.12,.12,hero.skin,0,0);
+    sphere(handR[0],handR[1],handR[2],.12,.12,.12,hero.skin,0,0);
+    if(data.effects&&data.effects.jet>0){
+      box(x-.25,1.28+baseY,z+.55,.22,.56,.24,'#c16b35',.12,.25,0,0,0,-.10);
+      box(x+.25,1.28+baseY,z+.55,.22,.56,.24,'#c16b35',.12,.25,0,0,0,.10);
+      sphere(x-.25,.82+baseY,z+.58,.10,.32,.10,'#ffb14f',.85,0);
+      sphere(x+.25,.82+baseY,z+.58,.10,.32,.10,'#ffb14f',.85,0);
+    }
     if(data.runnerInvul>0)draw(meshes.torus,compose(x,1.12+baseY,z,.95,.95,.95,Math.PI/2,time*2.2,0),'#a8efff',.45,.2,0);
   }
   function render(data){
@@ -321,7 +398,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniform3fv(uniforms.fog,hexColor(theme.fog));
     const shake=data.shake||0,eye=[Math.sin((data.time||0)*38)*shake*.004,6.15+Math.cos((data.time||0)*31)*shake*.003,11.8];
     viewMatrix=lookAt(eye,[0,1.10,-17.5],[0,1,0]);projectionMatrix=perspective(54*Math.PI/180,canvas.width/canvas.height,.1,110);
-    drawWorld(theme,data.time||0);
+    drawWorld(theme,data.time||0);drawChaseTrain(theme,data.time||0);
     (data.pickups||[]).filter(item=>item.z<1.14).forEach(item=>drawPickup(item,theme,data.time||0));
     (data.obstacles||[]).filter(item=>item.z<1.14).forEach(item=>{
       if(item.type==='train')drawTrain(item,theme,data.time||0);else if(item.type==='barrier')drawBarrier(item);else if(item.type==='overhead')drawOverhead(item);else if(item.type==='ramp')drawRamp(item);
