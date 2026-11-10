@@ -85,6 +85,7 @@ try {
 
   await page.goto('http://127.0.0.1:' + port + '/?game=luna_run', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('#gameScreen')?.classList.contains('active'), null, { timeout: 10000 });
+  await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.LunaRun3D && window.LunaRun3D.isReady(), null, { timeout: 15000 });
   await page.waitForTimeout(1500);
 
@@ -117,7 +118,6 @@ try {
   assert.ok(Number(renderer.overlayZ) > Number(renderer.rendererZ), 'Start/pause overlay is not above the WebGL canvas');
   record('WebGL renderer initialization', JSON.stringify(renderer));
 
-  await page.keyboard.press('Enter');
   await page.waitForTimeout(500);
   await page.locator('#runnerPauseBtn').click();
   await page.waitForFunction(() => document.querySelector('#runnerPauseBtn')?.textContent.includes('RESUME'));
