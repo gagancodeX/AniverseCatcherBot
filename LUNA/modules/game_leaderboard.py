@@ -195,9 +195,14 @@ async def leaderboard_callback(update, context):
     query = update.callback_query
     if not query or not query.data:
         return
-    await query.answer()
     parts = query.data.split(":")
     chat = query.message.chat if query.message else None
+
+    if len(parts) == 3 and parts[1] == "auto" and not _is_group(chat):
+        await query.answer("Enable automatic updates from a group chat.", show_alert=True)
+        return
+
+    await query.answer()
 
     if len(parts) == 2 and parts[1] == "menu":
         enabled = _is_group(chat) and await _auto_is_enabled(chat.id)
@@ -223,9 +228,6 @@ async def leaderboard_callback(update, context):
         return
 
     if len(parts) == 3 and parts[1] == "auto":
-        if not _is_group(chat):
-            await query.answer("Enable automatic updates from a group chat.", show_alert=True)
-            return
         enabled = parts[2] == "on"
         await _set_auto(chat, enabled)
         await query.edit_message_text(
@@ -271,7 +273,7 @@ async def leaderboard_callback(update, context):
 
 async def _send_group_digest(bot, chat_id, session):
     sections = [
-        "✦ <b>LUNA · GAMEZONE WEEKLY? NO — LIVE LEADERBOARDS</b> ✦",
+        "✦ <b>LUNA · LIVE GAMEZONE LEADERBOARDS</b> ✦",
         "<i>Group arcade rankings · refreshed every 6 hours</i>",
         "",
     ]
