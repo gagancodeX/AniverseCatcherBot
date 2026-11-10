@@ -121,6 +121,10 @@ USER_COMMANDS = [
         "description": "🎮 Open all Luna arcade games"
     },
     {
+        "command": "leaderboard",
+        "description": "🏆 View GameZone Top 10 rankings"
+    },
+    {
         "command": "rank",
         "description": "🏆 View collector rankings"
     },
