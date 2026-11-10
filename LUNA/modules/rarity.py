@@ -47,8 +47,8 @@ async def migrate_rarity_labels():
 
         vault_result = await user_collection.update_many(
             {"characters.rarity": old_label},
-            {"$set": {"characters.$[owned_character].rarity": new_label}},
-            array_filters=[{"owned_character.rarity": old_label}],
+            {"$set": {"characters.$[ownedcharacter].rarity": new_label}},
+            array_filters=[{"ownedcharacter.rarity": old_label}],
         )
         modified += vault_result.modified_count
 
@@ -68,8 +68,8 @@ async def migrate_rarity_labels():
 
         vault_result = await user_collection.update_many(
             {"characters.rarity": removed_label},
-            {"$set": {"characters.$[owned_character].rarity": archived_label}},
-            array_filters=[{"owned_character.rarity": removed_label}],
+            {"$set": {"characters.$[ownedcharacter].rarity": archived_label}},
+            array_filters=[{"ownedcharacter.rarity": removed_label}],
         )
         modified += vault_result.modified_count
 
