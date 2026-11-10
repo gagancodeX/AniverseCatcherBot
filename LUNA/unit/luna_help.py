@@ -306,20 +306,27 @@ Each result includes:
 
 Admins can approve or reject the request using the provided buttons.
 
-➤ Rarity options:
-- ⚪️ Common
-- 🟣 Rare
-- 🟡 Legendary
-- 🟢 Medium
-- 💮 Special Edition
-- 🔮 Limited Edition
-- 🎐 Celestial
-- 💖 Valentine
-- 🎃 Halloween
-- ❄️ Winter
-- 🌧 Rainy
-- 💸 Expensive
-- 👑 V. I. P.
+➤ Rarity options (use the number with /upload):
+- 1 · ⚪️ Origin Edition
+- 2 · 🟣 Phantom Edition
+- 3 · 🟡 Vanguard Edition
+- 4 · 🟢 Arcane Edition
+- 5 · 💮 Zenith Edition
+- 6 · 🔮 Ethereal Edition
+- 7 · 💎 Mythic Edition
+- 8 · 🌤 Summer
+- 9 · 🌌 Divine Edition
+- 10 · ❄️ Winter
+- 11 · 💝 Valentine
+- 12 · 🎃 Halloween
+- 13 · 🎄 Christmas Special
+- 14 · ♾️ Infinity Edition
+- 15 · 🎭 Cosplay Edition
+- 16 · 🎊 Event Exclusive
+- 18 · 🎬 Cinematic Edition
+- 19 · ✨ Radiant Edition
+- 20 · 🌧️ Rainfall Edition
+- 22 · 🍭 Winter Event
 
 ➤ Admin Commands:
 - Approve a pending character request.
