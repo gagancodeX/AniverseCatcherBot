@@ -2137,6 +2137,13 @@
       lunaRunText(item.data.mark,x+25.5,135,10,'#fff','center');
       ctx.fillStyle=item.data.color;ctx.fillRect(x+7,148,37*runClamp(item.remaining/item.data.duration,0,1),2);
     });
+    if((game.runnerDistance||0)<1700&&game.runnerMode==='run'){
+      const opacity=1-runClamp((game.runnerDistance||0)/1700,0,1);
+      ctx.save();ctx.globalAlpha=opacity;
+      lunaRunPanel(186,968,348,24,'rgba(7,18,31,.68)','rgba(221,238,229,.18)',8);
+      lunaRunText('SWIPE  ← →  MOVE   ·   ↑  JUMP   ·   ↓  SLIDE   ·   TAP  PAUSE',360,980,7,'#dce9e2','center','"DM Mono",monospace');
+      ctx.restore();
+    }
     ctx.restore();
   }
   function lunaRunDrawSelect(){
