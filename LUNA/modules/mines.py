@@ -9,29 +9,7 @@ import uuid
 import re
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from LUNA import app, user_collection, collection
-
-# Rarity Map
-rarity_map = {
-    1: "⚪️ Common",
-    2: "🟣 Rare",
-    3: "🟡 Legendary",      
-    4: "🟢 Medium",  
-    5: "💮 Special Edition", 
-    6: "🔮 Limited Edition", 
-    7: "💸 Premium Edition", 
-    8: "🌤 Summer",
-    9: "🎐 Celestial", 
-    10: "❄️ Winter", 
-    11: "💝 Valentine", 
-    12: "🎃 Halloween", 
-    13: "🎄 Christmas Special", 
-    14: "🪐 Omniversal", 
-    15: "🎭 Cosplay Master 🎭",
-    16: "🧧 Events",
-    17: "🍑 Echhi",
-    18: "🎗️ AMV Edition",
-}
+from LUNA import app, user_collection, collection, rarity_map
 
 # Game settings
 GRID_SIZE = 4      # Upgraded to 4x4 Grid
@@ -114,9 +92,9 @@ async def get_random_character(user_id, safe_opened):
             rarities = [r for r in rarities if r is not None]
         else:
             if safe_opened < 6:
-                rarities = ['⚪️ Common', '🟣 Rare', '🟢 Medium', '🟡 Legendary']
+                rarities = [rarity_map[1], rarity_map[2], rarity_map[4], rarity_map[3]]
             else:
-                rarities = ['💮 Special Edition', '🔮 Limited Edition', '💸 Premium Edition', '🎐 Celestial',]
+                rarities = [rarity_map[5], rarity_map[6], rarity_map[7], rarity_map[9]]
 
         if not rarities:
             return None
