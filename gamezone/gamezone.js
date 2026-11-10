@@ -1954,7 +1954,7 @@
       const z=.08+i*.145;
       const left=runProject(0,z),right=runProject(2,z);
       const scale=.18+z*.95;
-      const roofY=298+z*72;
+      const roofY=Math.max(258,left.y-248*scale);
       const pillarW=3+z*5;
       const sideOffset=left.laneWidth*.72;
       const leftX=left.x-sideOffset,rightX=right.x+sideOffset;
@@ -1984,7 +1984,6 @@
       ctx.fillRect(leftX-pillarW*.8,lampY,Math.max(2,pillarW*.7),2+z);
       ctx.fillRect(rightX+pillarW*.1,lampY,Math.max(2,pillarW*.7),2+z);
       ctx.shadowBlur=0;
-      void scale;
     }
 
     // Three overhead power lines, with a small rhythmic sag between gantries.
@@ -2059,7 +2058,10 @@
   }
   function lunaRunDrawTrain(obstacle){
     const p=runProject(obstacle.lane,obstacle.z);
-    const s=p.scale,w=206*s,h=298*s,x=p.x,y=p.y;
+    const s=p.scale,w=206*s,h=298*s;
+    const sway=Math.sin(game.time*4.2+obstacle.lane*1.7)*1.25*s;
+    const x=p.x+sway,y=p.y;
+    const pulse=.78+.22*Math.sin(game.time*7.5+obstacle.lane);
     const fade=runClamp((obstacle.z+.10)/.28,.58,1);
     ctx.save();
     ctx.globalAlpha=fade;
@@ -2068,7 +2070,7 @@
 
     // Headlights cast a restrained beam onto the rails as the train approaches.
     const beam=ctx.createRadialGradient(x,y-h*.12,2,x,y-h*.12,w*.66);
-    beam.addColorStop(0,'rgba(255,230,164,.18)');
+    beam.addColorStop(0,'rgba(255,230,164,'+(0.10+pulse*.13)+')');
     beam.addColorStop(1,'rgba(255,230,164,0)');
     ctx.fillStyle=beam;ctx.fillRect(x-w*.76,y-h*.28,w*1.52,h*.44);
 
