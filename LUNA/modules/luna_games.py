@@ -1,7 +1,7 @@
 """Native Telegram Gaming Platform integration for Luna's arcade."""
 import os
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler, CommandHandler
 from LUNA import application
 
@@ -49,16 +49,12 @@ async def open_gamezone(update, context):
         await message.reply_text("Luna GameZone is not configured yet. Please try again later.")
         return
 
-    if chat and chat.type == "private":
-        button = InlineKeyboardButton(
-            "🎮  OPEN LUNA GAMEZONE",
-            web_app=WebAppInfo(url=base_url),
-        )
-    else:
-        button = InlineKeyboardButton(
-            "🎮  OPEN LUNA GAMEZONE",
-            url=base_url,
-        )
+    # Launch the native inline game picker in the current chat.
+    # The inline query handler returns all six registered Telegram games.
+    button = InlineKeyboardButton(
+        "🎮  PLAY ALL GAMES",
+        switch_inline_query_current_chat="games",
+    )
 
     text = (
         "✦ <b>LUNA · GAMEZONE</b> ✦\n\n"
