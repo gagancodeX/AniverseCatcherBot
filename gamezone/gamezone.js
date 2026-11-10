@@ -2025,13 +2025,13 @@
     if(highlight){ctx.strokeStyle=highlight;ctx.lineWidth=Math.max(2,width*.18);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
   }
   function lunaRunDrawHero(index,x,groundY,scale,phase,sliding,jumping,jet,board,invulnerable,groundShadowY,groundShadowScale){
-    const hero=RUN_HEROES[index]||RUN_HEROES[0],stride=Math.sin(phase||0);
+    const hero=RUN_HEROES[index]||RUN_HEROES[0],stride=Math.sin(phase||0),swing=Math.cos(phase||0);
     const shadowY=Number.isFinite(groundShadowY)?groundShadowY:groundY;
     const shadowScale=Number.isFinite(groundShadowScale)?runClamp(groundShadowScale,.38,1):1;
     const laneDrift=runClamp((game.targetLane===undefined?(game.lane||1):game.targetLane)-(game.laneVisual===undefined?(game.lane||1):game.laneVisual),-1,1);
     const jumpTilt=jumping?runClamp(-(game.jumpV||0)/6200,-.12,.12):0;
     const lean=laneDrift*.13+jumpTilt;
-    const bob=jumping?Math.sin((phase||0)*2)*1.8:Math.abs(Math.sin((phase||0)*2))*3.2;
+    const bob=jumping?Math.sin((phase||0)*2)*2.8:Math.abs(Math.sin((phase||0)*2))*5.2;
     ctx.save();ctx.globalAlpha=.72;ctx.fillStyle='rgba(4,9,17,.44)';
     ctx.beginPath();ctx.ellipse(x,shadowY+5,(42+(jumping?12:0))*shadowScale,10*shadowScale,0,0,Math.PI*2);ctx.fill();ctx.restore();
     ctx.save();ctx.translate(x,groundY-bob);ctx.rotate(lean);
@@ -2060,13 +2060,17 @@
 
     lunaRunPanel(19,-133,32,54,hero.pack,'rgba(255,255,255,.26)',9);
     ctx.fillStyle=hero.scarf;ctx.beginPath();ctx.moveTo(-17,-132);
-    ctx.bezierCurveTo(-43,-147-9*stride,-55,-128+7*stride,-83,-115+11*stride);
-    ctx.lineTo(-73,-104+9*stride);ctx.bezierCurveTo(-55,-111+7*stride,-38,-106-7*stride,-15,-113);ctx.closePath();ctx.fill();
+    ctx.bezierCurveTo(-43,-147-15*stride,-58,-128+10*stride,-83,-115+15*stride);
+    ctx.lineTo(-73,-104+12*stride);ctx.bezierCurveTo(-55,-111+10*stride,-38,-106-10*stride,-15,-113);ctx.closePath();ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,.34)';ctx.lineWidth=2;ctx.stroke();
-    lunaRunLimb(-23,-125,-37-11*stride,-86+5*stride,17,hero.body,hero.shine);
-    lunaRunLimb(23,-125,36+11*stride,-88-5*stride,17,hero.body,hero.shine);
-    ctx.fillStyle=hero.skin;ctx.beginPath();ctx.arc(-38-11*stride,-82+5*stride,9,0,Math.PI*2);
-    ctx.arc(37+11*stride,-84-5*stride,9,0,Math.PI*2);ctx.fill();
+    const leftElbow={x:-34-15*stride,y:-105+8*swing},rightElbow={x:34+15*stride,y:-105-8*swing};
+    const leftHand={x:-43-22*stride,y:-79+12*swing},rightHand={x:43+22*stride,y:-79-12*swing};
+    lunaRunLimb(-23,-125,leftElbow.x,leftElbow.y,15,hero.body,hero.shine);
+    lunaRunLimb(leftElbow.x,leftElbow.y,leftHand.x,leftHand.y,12,hero.body,hero.shine);
+    lunaRunLimb(23,-125,rightElbow.x,rightElbow.y,15,hero.body,hero.shine);
+    lunaRunLimb(rightElbow.x,rightElbow.y,rightHand.x,rightHand.y,12,hero.body,hero.shine);
+    ctx.fillStyle=hero.skin;ctx.beginPath();ctx.arc(leftHand.x,leftHand.y,8.5,0,Math.PI*2);
+    ctx.arc(rightHand.x,rightHand.y,8.5,0,Math.PI*2);ctx.fill();
 
     const jacket=ctx.createLinearGradient(-26,-145,27,-63);
     jacket.addColorStop(0,hero.shine);jacket.addColorStop(.42,hero.body);jacket.addColorStop(1,hero.dark);
@@ -2076,13 +2080,19 @@
     ctx.fillStyle=hero.scarf;ctx.beginPath();ctx.moveTo(-26,-138);ctx.lineTo(0,-126);ctx.lineTo(25,-138);
     ctx.lineTo(17,-120);ctx.lineTo(0,-113);ctx.lineTo(-17,-120);ctx.closePath();ctx.fill();
 
-    const left=-21-17*stride,right=21+17*stride;
-    lunaRunLimb(-12,-69,left,-34,18,hero.dark,'rgba(255,255,255,.12)');
-    lunaRunLimb(12,-69,right,-34,18,hero.dark,'rgba(255,255,255,.12)');
-    lunaRunLimb(left,-34,-27-25*stride,-12,14,hero.body,hero.shine);
-    lunaRunLimb(right,-34,27+25*stride,-12,14,hero.body,hero.shine);
-    lunaRunPanel(-45-25*stride,-18,29,13,hero.accent,'rgba(255,255,255,.55)',6);
-    lunaRunPanel(17+25*stride,-18,29,13,hero.accent,'rgba(255,255,255,.55)',6);
+    const leftKnee={x:-21-25*stride,y:-39-13*Math.max(0,swing)},rightKnee={x:21+25*stride,y:-39-13*Math.max(0,-swing)};
+    const leftAnkle={x:-29+27*stride,y:-10-17*Math.max(0,swing)},rightAnkle={x:29-27*stride,y:-10-17*Math.max(0,-swing)};
+    lunaRunLimb(-12,-69,leftKnee.x,leftKnee.y,19,hero.dark,'rgba(255,255,255,.13)');
+    lunaRunLimb(leftKnee.x,leftKnee.y,leftAnkle.x,leftAnkle.y,14,hero.body,hero.shine);
+    lunaRunLimb(12,-69,rightKnee.x,rightKnee.y,19,hero.dark,'rgba(255,255,255,.13)');
+    lunaRunLimb(rightKnee.x,rightKnee.y,rightAnkle.x,rightAnkle.y,14,hero.body,hero.shine);
+    [[leftAnkle.x,leftAnkle.y,stride],[rightAnkle.x,rightAnkle.y,-stride]].forEach(([sx,sy,footPhase])=>{
+      ctx.save();ctx.translate(sx,sy);ctx.rotate(-footPhase*.20);
+      lunaRunPanel(-17,-7,34,15,hero.accent,'rgba(255,255,255,.62)',6);
+      lunaRunPanel(-12,-10,22,5,'#fff4d9','rgba(255,255,255,.25)',3);
+      ctx.restore();
+    });
+    ctx.save();ctx.translate(0,-169);ctx.rotate(stride*.035+laneDrift*.045);ctx.translate(0,169);
     ctx.fillStyle=hero.skin;ctx.beginPath();ctx.ellipse(0,-169,25,29,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=hero.hair;ctx.beginPath();ctx.moveTo(-26,-173);ctx.quadraticCurveTo(-31,-205,-5,-211);
     ctx.quadraticCurveTo(25,-212,29,-184);ctx.lineTo(22,-170);ctx.quadraticCurveTo(8,-187,0,-177);
@@ -2093,6 +2103,7 @@
     ctx.fillStyle='#352b38';ctx.beginPath();ctx.ellipse(-9,-169,3,4,0,0,Math.PI*2);ctx.ellipse(9,-169,3,4,0,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='rgba(92,48,52,.65)';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-5,-157);ctx.quadraticCurveTo(0,-154,5,-157);ctx.stroke();
     lunaRunPanel(-22,-198,44,6,hero.accent,null,3);
+    ctx.restore();
     if(invulnerable){
       ctx.strokeStyle='rgba(170,239,255,.78)';ctx.lineWidth=3;ctx.shadowBlur=18;ctx.shadowColor='#8deaff';
       ctx.beginPath();ctx.ellipse(0,-102,54,115,0,0,Math.PI*2);ctx.stroke();
