@@ -22,7 +22,7 @@
     flappy:{title:'FLAPPY BIRD 🐦',symbol:'🐦',hint:'TAP TO FLY · SPACE TO FLAP',start:'Guide your little bird through the moonlit gates. One clean flight, one more high score.',over:'The night caught your bird. Ready for another flight?',color:'#cfb2ff'},
     runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Dash through the lunar rails, dodge trains and collect glowing coins.',over:'Your run has ended. The next record is yours to chase.',color:'#f4c98b'},
     jumper:{title:'LUNA THE NINJA 🥷',symbol:'🥷',hint:'TAP LEFT / RIGHT SIDE · ARROW KEYS',start:'Leap from platform to platform through the moonlit skyline. Keep climbing.',over:'Your ninja journey pauses here. Climb higher next round!',color:'#9ce9ff'},
-    space:{title:'LUNAR ECLIPSE ☾',symbol:'☾',hint:'DRAG TO MOVE · AUTO FIRE',start:'Survive the lunar eclipse, guide your ship through the cosmic swarm and protect your score.',over:'The eclipse has passed. Ready for another mission?',color:'#9ce9ff'},
+    space:{title:'LUNA STAR DEFENDER ☾',symbol:'☾',hint:'DRAG TO MOVE · AUTO FIRE',start:'Survive the lunar eclipse, guide your ship through the cosmic swarm and protect your score.',over:'The eclipse has passed. Ready for another mission?',color:'#9ce9ff'},
     brick:{title:'BREAKER BALL ◈',symbol:'◈',hint:'TAP TO LAUNCH · DRAG TO MOVE THE PADDLE',start:'Launch the glowing ball, guide your paddle and clear every lunar block.',over:'The ball slipped away. Reset and break your record.',color:'#f4a9df'},
     racer:{title:'RACE BLAZE 🚗',symbol:'🚗',hint:'SWIPE LEFT / RIGHT · ARROW KEYS',start:'Own the curves, overtake traffic and chase a new night-drive record.',over:'The road has cooled down. Ready to race again?',color:'#f4a9df'}
   };
