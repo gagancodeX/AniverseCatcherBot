@@ -1984,14 +1984,16 @@
     ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
     if(highlight){ctx.strokeStyle=highlight;ctx.lineWidth=Math.max(2,width*.18);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
   }
-  function lunaRunDrawHero(index,x,groundY,scale,phase,sliding,jumping,jet,board,invulnerable){
+  function lunaRunDrawHero(index,x,groundY,scale,phase,sliding,jumping,jet,board,invulnerable,groundShadowY,groundShadowScale){
     const hero=RUN_HEROES[index]||RUN_HEROES[0],stride=Math.sin(phase||0);
+    const shadowY=Number.isFinite(groundShadowY)?groundShadowY:groundY;
+    const shadowScale=Number.isFinite(groundShadowScale)?runClamp(groundShadowScale,.38,1):1;
     const laneDrift=runClamp((game.targetLane===undefined?(game.lane||1):game.targetLane)-(game.laneVisual===undefined?(game.lane||1):game.laneVisual),-1,1);
     const jumpTilt=jumping?runClamp(-(game.jumpV||0)/6200,-.12,.12):0;
     const lean=laneDrift*.13+jumpTilt;
     const bob=jumping?Math.sin((phase||0)*2)*1.8:Math.abs(Math.sin((phase||0)*2))*3.2;
     ctx.save();ctx.globalAlpha=.72;ctx.fillStyle='rgba(4,9,17,.44)';
-    ctx.beginPath();ctx.ellipse(x,groundY+5,42+(jumping?12:0),10,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.beginPath();ctx.ellipse(x,shadowY+5,(42+(jumping?12:0))*shadowScale,10*shadowScale,0,0,Math.PI*2);ctx.fill();ctx.restore();
     ctx.save();ctx.translate(x,groundY-bob);ctx.rotate(lean);
     ctx.scale(scale,scale*(sliding?.66:1));if(sliding)ctx.translate(0,49);
     if(!jumping&&!sliding&&game.runnerMode==='run'){
@@ -2142,7 +2144,7 @@
     lunaRunDrawHero(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
       game.slide>0,game.jump>30||game.rideT>0,
       !!(game.runnerEffects&&game.runnerEffects.jet>0),
-      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0);
+      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.38,1-lift/250));
     lunaRunDrawHUD();
     if(game.runnerMode==='paused')lunaRunDrawOverlay('PAUSED','Your run is paused.','RESUME',null);
     else if(game.runnerMode==='over'){
