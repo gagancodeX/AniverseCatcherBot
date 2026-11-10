@@ -1,7 +1,8 @@
 """Native Telegram Gaming Platform integration for Luna's arcade."""
 import os
 
-from telegram.ext import CallbackQueryHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import CallbackQueryHandler, CommandHandler
 from LUNA import application
 
 
@@ -34,6 +35,46 @@ async def launch_luna_game(update, context):
 
     await query.answer(url=f"{base_url}/?game={game_slug}")
 
+
+
+
+async def open_gamezone(update, context):
+    """Open the full Luna arcade as a Telegram Web App."""
+    base_url = os.getenv("GAMEZONE_URL", "").strip().rstrip("/")
+    message = update.effective_message
+    chat = update.effective_chat
+    if not message:
+        return
+    if not base_url.startswith("https://"):
+        await message.reply_text("Luna GameZone is not configured yet. Please try again later.")
+        return
+
+    if chat and chat.type == "private":
+        button = InlineKeyboardButton(
+            "🎮  OPEN LUNA GAMEZONE",
+            web_app=WebAppInfo(url=base_url),
+        )
+    else:
+        button = InlineKeyboardButton(
+            "🎮  OPEN LUNA GAMEZONE",
+            url=base_url,
+        )
+
+    text = (
+        "✦ <b>LUNA · GAMEZONE</b> ✦\n\n"
+        "Choose your game and chase a new high score.\n"
+        "Six arcade games · Personal bests · Separate game leaderboards"
+    )
+    await message.reply_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([[button]]),
+        parse_mode="HTML",
+        disable_web_page_preview=True,
+    )
+
+# The Web App button provides Telegram initData so scores can be tied to a
+# verified player account. In groups, fall back to a normal URL button.
+application.add_handler(CommandHandler("gamezone", open_gamezone))
 
 # PTB 20.6 predates CallbackQueryHandler.game_pattern. Register a broad
 # fallback handler in a later group and only process Telegram game callbacks.
