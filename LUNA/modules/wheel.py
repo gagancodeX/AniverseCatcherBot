@@ -5,7 +5,7 @@
 
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
-from LUNA import app, user_collection, collection
+from LUNA import app, user_collection, collection, rarity_map
 import random
 import asyncio
 
@@ -36,7 +36,7 @@ async def get_drop_character():
         pipeline = [
             {
                 '$match': {
-                    'rarity': {'$in': ['🟡 Legendary', '🎐 Celestial', '🔮 Limited Edition', '💮 Special Edition']}, 
+                    'rarity': {'$in': [rarity_map[3], rarity_map[9], rarity_map[6], rarity_map[5]]}, 
                     'img_url': {'$exists': True, '$ne': ''}, 
                     'id': {'$exists': True}, 
                     'name': {'$exists': True, '$ne': ''}, 
@@ -76,7 +76,7 @@ async def spin_wheel(client: Client, message: Message):
             "🎰 <b>Reels:</b>\n"
             "• Bust: 0.0x | Half Loss: 0.5x | Push: 1.0x\n"
             "• Win: 1.5x | Double: 2.0x | Jackpot: 5.0x\n"
-            "• Waifu Drop: Random Legendary/Celestial waifu!\n\n"
+            "• Waifu Drop: Random Vanguard/Divine waifu!\n\n"
             "⚠️ Min bet: 100 | Max bet: 50,000</blockquote>",
             parse_mode=enums.ParseMode.HTML,
             quote=True
