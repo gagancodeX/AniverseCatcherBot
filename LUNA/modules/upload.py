@@ -10,39 +10,21 @@ from LUNA import (
 )
 from LUNA.unit.luna_watermark import get_watermarked_photo
 
-WRONG_FORMAT_TEXT = """✦ LUNA · CHARACTER UPLOAD ✦
+RARITY_GUIDE = "\n".join(
+    f"{number}: {label}" for number, label in sorted(rarity_map.items())
+)
+
+WRONG_FORMAT_TEXT = f"""✦ LUNA · CHARACTER UPLOAD ✦
 
 Reply to a character image/video, then use:
-/upload character-name anime-name rarity-number
+\u002fupload character-name anime-name rarity-number
 
 Example:
-/upload shinobu-kocho Demon-slayer 3
+\u002fupload shinobu-kocho Demon-slayer 3
 
-Use hyphens between words in names. Choose the rarity number from the map below.
+Use hyphens between words in names. Choose a rarity number from this list:
 
-rarity_map = {
-    1: "⚪️ Common",
-    2: "🟣 Rare",
-    3: "🟡 Legendary",
-    4: "🟢 Medium",
-    5: "💮 Special Edition",
-    6: "🔮 Limited Edition",
-    7: "💸 Premium Edition",
-    8: "🌤 Summer",
-    9: "🎐 Celestial",
-    10: "❄️ Winter",
-    11: "💝 Valentine",
-    12: "🎃 Halloween",
-    13: "🎄 Christmas Special",
-    14: "🪐 Omniversal",
-    15: "🎭 Cosplay Master 🎭",
-    16: "🧧 Events",
-    17: "🍑 Echhi",
-    18: "🎗️ AMV Edition",
-    19: "🌟 Luminous",
-    20: "🌧 Rainy",
-    22: "🍭 Winter event",
-}
+{RARITY_GUIDE}
 """
 
 
