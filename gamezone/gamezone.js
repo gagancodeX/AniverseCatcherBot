@@ -2504,10 +2504,10 @@
     const lane=game.laneVisual===undefined?1:game.laneVisual,track=runProject(lane,.965);
     const lift=(game.jump||0)*.85+(game.runnerEffects&&game.runnerEffects.jet>0?125:0)+(game.rideT>0?105:0);
     lunaRunDrawFX();
-    lunaRunDrawHero(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
+    lunaRunDrawHeroBack(game.heroIndex,track.x,track.y-7-lift,Math.max(.94,track.scale*.88),game.time*13,
       game.slide>0,game.jump>30||game.rideT>0,
       !!(game.runnerEffects&&game.runnerEffects.jet>0),
-      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.38,1-lift/250),true);
+      !!(game.runnerEffects&&game.runnerEffects.board>0),game.runnerInvul>0,track.y-7,Math.max(.36,1-lift/250));
     if(game.runnerFlash>0){ctx.fillStyle='rgba(255,224,195,'+(game.runnerFlash*.30)+')';ctx.fillRect(0,0,W,H);}
     ctx.restore();
     lunaRunDrawHUD();
