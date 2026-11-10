@@ -1948,6 +1948,88 @@
     edgeFade.addColorStop(1,'rgba(5,12,21,.38)');
     ctx.fillStyle=edgeFade;ctx.fillRect(0,830,W,170);
   }
+  function lunaRunDrawStationArchitecture(){
+    // Platform canopy and catenary supports recede toward a single vanishing point.
+    for(let i=0;i<7;i++){
+      const z=.08+i*.145;
+      const left=runProject(0,z),right=runProject(2,z);
+      const scale=.18+z*.95;
+      const roofY=298+z*72;
+      const pillarW=3+z*5;
+      const sideOffset=left.laneWidth*.72;
+      const leftX=left.x-sideOffset,rightX=right.x+sideOffset;
+      const steel=ctx.createLinearGradient(leftX,0,leftX+pillarW*2,0);
+      steel.addColorStop(0,'#172b38');steel.addColorStop(.48,'#8fa5a0');steel.addColorStop(1,'#213b46');
+      ctx.fillStyle='rgba(3,9,17,.32)';
+      ctx.fillRect(leftX-pillarW,roofY+2,pillarW*2,left.y-roofY+20);
+      ctx.fillStyle=steel;
+      ctx.fillRect(leftX-pillarW*.5,roofY,pillarW,Math.max(12,left.y-roofY));
+      ctx.fillRect(rightX-pillarW*.5,roofY,pillarW,Math.max(12,right.y-roofY));
+      const beam=ctx.createLinearGradient(0,roofY,0,roofY+pillarW*2);
+      beam.addColorStop(0,'#9eb1aa');beam.addColorStop(.5,'#405c64');beam.addColorStop(1,'#142c3c');
+      ctx.fillStyle=beam;
+      ctx.fillRect(leftX-pillarW,roofY,rightX-leftX+pillarW*2,pillarW*1.45);
+      ctx.fillStyle=runStage().accent;
+      ctx.shadowBlur=8+z*8;ctx.shadowColor=runStage().accent;
+      ctx.fillRect(leftX-pillarW,roofY+pillarW*1.1,pillarW*2,.9+z*2);
+      ctx.fillRect(rightX-pillarW,roofY+pillarW*1.1,pillarW*2,.9+z*2);
+      ctx.shadowBlur=0;
+      // Small maintenance brackets give the supports believable structure.
+      ctx.fillStyle='rgba(8,19,30,.76)';
+      ctx.fillRect(leftX-pillarW*1.8,roofY+pillarW*2,pillarW*2.6,pillarW*.72);
+      ctx.fillRect(rightX-pillarW*.8,roofY+pillarW*2,pillarW*2.6,pillarW*.72);
+      const lampY=roofY+pillarW*2.8;
+      ctx.fillStyle='rgba(255,232,184,.88)';
+      ctx.shadowBlur=7+z*8;ctx.shadowColor='#ffe5af';
+      ctx.fillRect(leftX-pillarW*.8,lampY,Math.max(2,pillarW*.7),2+z);
+      ctx.fillRect(rightX+pillarW*.1,lampY,Math.max(2,pillarW*.7),2+z);
+      ctx.shadowBlur=0;
+      void scale;
+    }
+
+    // Three overhead power lines, with a small rhythmic sag between gantries.
+    ctx.save();
+    ctx.lineCap='round';
+    for(let line=0;line<3;line++){
+      const offset=(line-1)*16;
+      const g=ctx.createLinearGradient(0,264+offset,0,348+offset);
+      g.addColorStop(0,'rgba(16,31,44,.95)');
+      g.addColorStop(.55,'rgba(114,145,147,.85)');
+      g.addColorStop(1,'rgba(24,44,54,.94)');
+      ctx.strokeStyle=g;ctx.lineWidth=line===1?2.5:1.6;
+      ctx.beginPath();
+      ctx.moveTo(0,282+offset);
+      ctx.quadraticCurveTo(360,316+offset,720,282+offset);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Platform edge lighting and station fascia create a readable horizon.
+    const fascia=ctx.createLinearGradient(0,335,0,380);
+    fascia.addColorStop(0,'rgba(14,30,43,.1)');
+    fascia.addColorStop(.35,'rgba(9,24,37,.82)');
+    fascia.addColorStop(1,'rgba(22,43,49,.55)');
+    ctx.fillStyle=fascia;ctx.fillRect(0,337,W,42);
+    ctx.fillStyle='rgba(239,205,143,.62)';ctx.fillRect(0,372,W,2);
+    for(let i=0;i<16;i++){
+      const x=i*52+((game.runnerDistance||0)*.025)%52;
+      ctx.fillStyle='rgba(255,226,166,.22)';
+      ctx.fillRect(x,362,23,2);
+      ctx.fillStyle='#ffe6b4';ctx.shadowBlur=6;ctx.shadowColor='#ffe6b4';
+      ctx.fillRect(x+5,361,11,2);ctx.shadowBlur=0;
+    }
+    // Distant signal lamps: restrained, non-flashing colour cues.
+    [-1,1].forEach(side=>{
+      const x=360+side*226;
+      ctx.fillStyle='#172b38';ctx.fillRect(x-3,294,6,83);
+      lunaRunPanel(x-11,292,22,34,'#11273b','rgba(223,237,222,.35)',5);
+      ctx.fillStyle=side<0?'#f1b66e':'#82e0c5';
+      ctx.shadowBlur=10;ctx.shadowColor=ctx.fillStyle;
+      ctx.beginPath();ctx.arc(x,302,4,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;
+    });
+  }
+
   function lunaRunDrawSpeedLines(){
     const speed=game.speed||430;if(speed<560)return;
     const strength=runClamp((speed-560)/310,0,1);
@@ -2410,8 +2492,10 @@
   function drawSubwayRunner(){
     if(game.runnerMode==='select'){lunaRunDrawSelect();return;}
     const shake=game.runnerShake||0;
-    ctx.save();ctx.translate(shake?Math.sin(game.time*47)*shake:0,shake?Math.cos(game.time*39)*shake*.55:0);
-    lunaRunDrawBackdrop();lunaRunDrawTracks();lunaRunDrawStationSign();lunaRunDrawSpeedLines();
+    const laneSway=runClamp((game.targetLane??1)-(game.laneVisual??1),-1,1);
+    ctx.save();ctx.translate((shake?Math.sin(game.time*47)*shake:0)+laneSway*3.5,shake?Math.cos(game.time*39)*shake*.55:0);
+    ctx.rotate(laneSway*.0025);
+    lunaRunDrawBackdrop();lunaRunDrawStationArchitecture();lunaRunDrawTracks();lunaRunDrawStationSign();lunaRunDrawSpeedLines();
     game.pickups.filter(item=>item.type==='coin'||item.type==='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawCoin);
     game.pickups.filter(item=>item.type!=='coin'&&item.type!=='super').slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawPickup);
     game.obstacles.slice().sort((a,b)=>a.z-b.z).forEach(lunaRunDrawObstacle);
