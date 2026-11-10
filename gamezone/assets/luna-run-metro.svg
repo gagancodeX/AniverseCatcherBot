@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 520">
+<defs>
+  <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1">
+    <stop stop-color="#d6e5df"/><stop offset=".18" stop-color="#69b6b1"/><stop offset=".58" stop-color="#23768b"/><stop offset="1" stop-color="#102c43"/>
+  </linearGradient>
+  <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#244a60"/><stop offset=".52" stop-color="#123247"/><stop offset="1" stop-color="#091e31"/>
+  </linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2=".85" y2="1">
+    <stop stop-color="#e7fbec"/><stop offset=".28" stop-color="#9bd9d2"/><stop offset=".7" stop-color="#477f91"/><stop offset="1" stop-color="#193a55"/>
+  </linearGradient>
+  <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#fff4cf"/><stop offset=".22" stop-color="#d7b978"/><stop offset=".48" stop-color="#54727b"/><stop offset="1" stop-color="#132b3b"/>
+  </linearGradient>
+  <linearGradient id="nose" x1="0" y1="0" x2="1" y2="1">
+    <stop stop-color="#79d5ca"/><stop offset=".42" stop-color="#2c8996"/><stop offset="1" stop-color="#153e59"/>
+  </linearGradient>
+  <linearGradient id="light" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#fffde0"/><stop offset="1" stop-color="#e8b85b"/>
+  </linearGradient>
+</defs>
+<!-- Roof and long tapered car body -->
+<path d="M146 18 Q180 4 214 18 L339 362 Q354 410 325 461 Q180 499 35 461 Q6 410 21 362Z" fill="#071827" opacity=".65"/>
+<path d="M148 22 Q180 8 212 22 L326 352 Q344 398 318 444 Q180 482 42 444 Q16 398 34 352Z" fill="url(#shell)" stroke="#d3e9dd" stroke-width="5"/>
+<path d="M151 31 Q180 20 209 31 L290 269 L70 269Z" fill="#193b50" stroke="#9ccdc3" stroke-width="3"/>
+<!-- Roof equipment and twin roof seams -->
+<path d="M180 22V264" stroke="#e5f2d9" stroke-opacity=".48" stroke-width="3"/>
+<path d="M160 36 89 270M200 36 271 270" stroke="#15384b" stroke-width="5" opacity=".8"/>
+<path d="M169 41 111 255M191 41 249 255" stroke="#a9d5c8" stroke-width="2" opacity=".5"/>
+<path d="M180 16 180 2M162 13 198 13" stroke="#253d4b" stroke-width="5" stroke-linecap="round"/>
+<!-- Side windows, tapering with perspective -->
+<g fill="#1a3b51" stroke="#b6ded2" stroke-width="3">
+  <path d="M144 62 164 58 186 125 159 130Z"/>
+  <path d="M116 145 152 140 167 189 132 195Z"/>
+  <path d="M95 213 128 208 139 248 108 253Z"/>
+  <path d="M216 58 236 62 201 130 174 125Z"/>
+  <path d="M208 140 244 145 228 195 193 189Z"/>
+  <path d="M232 208 265 213 252 253 221 248Z"/>
+</g>
+<g fill="#d7f1df" opacity=".6">
+  <path d="M150 67 159 65 176 121 166 123Z"/>
+  <path d="M222 65 231 67 214 123 204 121Z"/>
+  <path d="M123 150 137 148 150 188 137 190Z"/>
+  <path d="M223 148 237 150 223 190 210 188Z"/>
+</g>
+<!-- Front cab fascia -->
+<path d="M42 277 Q180 253 318 277 L328 402 Q324 430 303 443 Q180 470 57 443 Q36 430 32 402Z" fill="url(#face)" stroke="#e2ebd8" stroke-width="5"/>
+<path d="M54 289 Q180 268 306 289 L312 365 Q180 380 48 365Z" fill="#0b2438" stroke="#90c9c2" stroke-width="4"/>
+<!-- Panoramic windscreen -->
+<path d="M66 298 Q180 279 294 298 L299 352 Q180 367 61 352Z" fill="url(#glass)" stroke="#d7f0df" stroke-width="4"/>
+<path d="M180 291V359" stroke="#234f64" stroke-width="5"/>
+<path d="M74 304 Q113 294 148 296 L139 312 Q105 313 81 323Z" fill="#fff" opacity=".38"/>
+<path d="M202 297 Q252 300 285 309 L289 320 Q245 310 208 311Z" fill="#fff" opacity=".22"/>
+<path d="M62 358 Q180 372 298 358" stroke="#e5f5dc" stroke-width="3" opacity=".72" fill="none"/>
+<!-- Destination display -->
+<rect x="117" y="382" width="126" height="24" rx="5" fill="#081c2b" stroke="#7caca8" stroke-width="2"/>
+<text x="180" y="399" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="800" letter-spacing="2" fill="#f9d989">LUNA METRO</text>
+<!-- Sculpted lower nose and bumper -->
+<path d="M49 410 Q180 429 311 410 L302 443 Q180 472 58 443Z" fill="url(#nose)" stroke="#b9d9cb" stroke-width="3"/>
+<path d="M67 425 Q180 443 293 425" stroke="#e9d9a8" stroke-width="4" fill="none" opacity=".8"/>
+<path d="M81 450 Q180 468 279 450" stroke="#0c2638" stroke-width="9" stroke-linecap="round" fill="none"/>
+<path d="M103 462 Q180 476 257 462" stroke="#91b7b2" stroke-width="4" fill="none"/>
+<!-- Headlamps -->
+<g>
+  <path d="M50 397 87 402 82 423 46 417Z" fill="#143147" stroke="#9cc9bd" stroke-width="3"/>
+  <path d="M273 402 310 397 314 417 278 423Z" fill="#143147" stroke="#9cc9bd" stroke-width="3"/>
+  <path d="M54 402 79 406 76 415 51 412Z" fill="url(#light)"/>
+  <path d="M281 406 306 402 309 412 284 415Z" fill="url(#light)"/>
+  <path d="M56 408 32 414 40 430 66 419Z" fill="#fff1b5" opacity=".23"/>
+  <path d="M304 408 328 414 320 430 294 419Z" fill="#fff1b5" opacity=".23"/>
+</g>
+<!-- Coupler and undercarriage -->
+<path d="M92 445 268 445 254 477 106 477Z" fill="#132b3b" stroke="#627f84" stroke-width="3"/>
+<rect x="155" y="468" width="50" height="24" rx="6" fill="#263e4a" stroke="#9bb7ad" stroke-width="3"/>
+<path d="M166 490 194 490 205 505 155 505Z" fill="#0b1b2a" stroke="#779096" stroke-width="3"/>
+<path d="M100 453 81 472M260 453 279 472" stroke="#152536" stroke-width="8" stroke-linecap="round"/>
+<!-- Panel seams and service markings -->
+<path d="M37 374 45 420M323 374 315 420" stroke="#e1e9d6" stroke-width="2" opacity=".48"/>
+<path d="M62 384 103 391M298 384 257 391" stroke="#9ac5b9" stroke-width="2" opacity=".45"/>
+<g fill="#f2d18b">
+  <circle cx="93" cy="432" r="3"/><circle cx="267" cy="432" r="3"/>
+  <circle cx="123" cy="438" r="2.5"/><circle cx="237" cy="438" r="2.5"/>
+</g>
+<!-- Subtle reflected edge highlights -->
+<path d="M148 29 36 360M212 29 324 360" stroke="#f0fff0" stroke-width="3" opacity=".42" fill="none"/>
+</svg>
