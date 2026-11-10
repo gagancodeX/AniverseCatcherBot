@@ -8,7 +8,7 @@ from pyrogram import Client, filters, types as t
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 from LUNA import bot_client as bot
-from LUNA import user_collection, collection, user_nguess_progress, user_guess_progress, FORCE_JOIN as chat, FORCE_JOIN_LINK
+from LUNA import user_collection, collection, user_nguess_progress, user_guess_progress, FORCE_JOIN as chat, FORCE_JOIN_LINK, rarity_map
 from LUNA.unit.luna_watermark import get_watermarked_photo
 
 claim_lock = {}
@@ -21,7 +21,9 @@ async def format_time_delta(delta):
     return f"{int(hours)}h {int(minutes)}m {int(seconds)}s" if hours or minutes or seconds else "0s"
 
 # Fetch unique characters not yet claimed by the user
-async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡 Legendary', '🟢 Medium']):
+async def get_unique_characters(user_id, target_rarities=None):
+    if target_rarities is None:
+        target_rarities = [rarity_map[1], rarity_map[3], rarity_map[4]]
     try:
         # Get the already claimed character ids
         user_data = await user_collection.find_one({'id': user_id}, {'characters.id': 1})
