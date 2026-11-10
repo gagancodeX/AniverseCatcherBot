@@ -93,7 +93,7 @@
     if(!games[id])return;
     if(id==='racer'){window.location.href='/racer.html';return;}
     current=id;state='ready';screen.classList.remove('runner-3d-active');screen.classList.add('active');screen.classList.toggle('runner-active',id==='runner');screen.setAttribute('aria-hidden','false');$('runnerControls').hidden=id!=='runner';
-    if(id==='runner'){$('runnerPauseBtn').textContent='Ⅱ PAUSE';$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';}
+    if(id==='runner'){syncRunnerPauseButton();$('runnerSoundBtn').textContent=soundOn?'♫ SOUND ON':'♫ SOUND OFF';}
     $('gameTitle').textContent=games[id].title;$('controlHint').textContent=games[id].hint;$('overlaySymbol').textContent=games[id].symbol;
     $('overlayTitle').textContent='READY TO PLAY?';$('overlayText').textContent=games[id].start;$('overlayEyebrow').textContent='LUNA ARCADE · '+id.toUpperCase();
     $('startButton').innerHTML='START GAME <span>→</span>';overlay.classList.remove('hidden');
@@ -327,7 +327,16 @@
   }
   function pointerUpHandler(e){
     if(!pointerDown)return;pointerDown=false;
-    if(swipeStart&&(current==='runner'||current==='racer')){const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;if(Math.abs(dx)>25||Math.abs(dy)>25){if(Math.abs(dx)>Math.abs(dy))action(dx>0?1:-1,0);else action(0,dy)}}
+    if(swipeStart&&(current==='runner'||current==='racer')){
+      const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;
+      if(Math.abs(dx)>25||Math.abs(dy)>25){
+        if(Math.abs(dx)>Math.abs(dy))action(dx>0?1:-1,0);
+        else action(0,dy);
+      }else if(current==='runner'&&state==='playing'&&game.runnerMode==='run'){
+        // A light tap pauses; tap again to resume. Swipe gestures remain movement.
+        game.runnerMode='paused';syncRunnerPauseButton();
+      }
+    }
     if(current==='jumper')game.player.vx=0;
     swipeStart=null;
   }
@@ -1798,7 +1807,7 @@
 
     // Three parallax skyline layers; all windows are placed deterministically.
     for(let layer=0;layer<3;layer++){
-      const step=78-layer*12,shift=((game.runnerDistance||0)*(.0025+layer*.004))%step,base=370+layer*43;
+      const step=78-layer*12,shift=((game.runnerDistance||0)*(.012+layer*.006))%step,base=370+layer*43;
       for(let i=-2;i<13;i++){
         const x=i*step-shift,seed=Math.abs((i*29+layer*41+900)%97);
         const width=42+(seed%25),height=58+(seed%7)*15,top=base-height;
@@ -1895,37 +1904,52 @@
     ctx.fillStyle=runStage().accent;ctx.font='700 11px "DM Mono",monospace';
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('LUNA  /  '+runStage().name,360,304);ctx.restore();
   }
-  function lunaRunDrawTrainCar(lane,z,front){
-    if(z<-.02)return;
-    const p=runProject(lane,z),s=p.scale,w=166*s,h=210*s,x=p.x,y=p.y,left=x-w/2,top=y-h;
-    ctx.save();
-    ctx.globalAlpha=.32;ctx.fillStyle='#07111c';ctx.beginPath();ctx.ellipse(x+w*.07,y-2,w*.57,Math.max(4,15*s),0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-    lunaRunPoly([[left+w*.88,top+h*.1],[left+w,top+h*.12],[left+w,y-h*.07],[left+w*.88,y]],'#123b51');
-    const body=ctx.createLinearGradient(left,top,left+w,top+h);
-    body.addColorStop(0,'#79d1c8');body.addColorStop(.18,'#328f9f');body.addColorStop(.62,'#21677f');body.addColorStop(1,'#143d5b');
-    ctx.shadowBlur=20*s;ctx.shadowColor='rgba(69,205,216,.26)';
-    lunaRunPanel(left,top,w,h,body,'rgba(224,247,236,.82)',11*s);ctx.shadowBlur=0;
-    lunaRunPanel(left+w*.1,top+h*.09,w*.8,h*.38,'#14394d','rgba(212,243,236,.48)',8*s);
-    const glass=ctx.createLinearGradient(0,top+h*.1,0,top+h*.44);
-    glass.addColorStop(0,'#c7f0e8');glass.addColorStop(.42,'#70b9c3');glass.addColorStop(1,'#28566d');
-    lunaRunPanel(left+w*.14,top+h*.13,w*.72,h*.28,glass,'rgba(238,255,244,.72)',6*s);
-    ctx.fillStyle='rgba(255,255,255,.42)';ctx.fillRect(left+w*.18,top+h*.15,w*.24,Math.max(1,3*s));
-    ctx.fillStyle='#183f52';ctx.fillRect(x-w*.025,top+h*.13,w*.05,h*.27);
-    ctx.fillStyle='#e9bd62';ctx.fillRect(left+w*.08,top+h*.58,w*.84,Math.max(2,7*s));
-    ctx.fillStyle='#fff1bd';ctx.fillRect(left+w*.12,top+h*.60,w*.76,Math.max(1,2*s));
-    lunaRunPanel(left+w*.34,top+h*.71,w*.32,h*.18,'#1a4960','rgba(226,244,229,.36)',5*s);
-    ctx.strokeStyle='rgba(240,252,236,.65)';ctx.lineWidth=Math.max(1,2*s);
-    ctx.beginPath();ctx.moveTo(x,top+h*.72);ctx.lineTo(x,top+h*.87);ctx.stroke();
-    ctx.fillStyle='#fff0b2';ctx.shadowBlur=16*s;ctx.shadowColor='#fff0b2';
-    ctx.beginPath();ctx.arc(left+w*.24,top+h*.87,5*s,0,Math.PI*2);ctx.arc(left+w*.76,top+h*.87,5*s,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-    ctx.fillStyle='#142a3a';ctx.fillRect(left+w*.09,top+h*.94,w*.82,Math.max(2,9*s));
-    if(front){ctx.fillStyle='#f3d18a';ctx.font='700 '+Math.max(6,9*s)+'px "DM Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('LUNA METRO',x,top+h*.51);}
-    ctx.restore();
+  const LUNA_RUN_METRO_IMAGE = new Image();
+  let lunaRunMetroRequested = false;
+  function lunaRunGetMetroImage(){
+    if(!lunaRunMetroRequested){
+      lunaRunMetroRequested=true;
+      LUNA_RUN_METRO_IMAGE.decoding='async';
+      LUNA_RUN_METRO_IMAGE.src='/assets/luna-run-metro.svg';
+    }
+    return LUNA_RUN_METRO_IMAGE.complete&&LUNA_RUN_METRO_IMAGE.naturalWidth
+      ?LUNA_RUN_METRO_IMAGE:null;
   }
   function lunaRunDrawTrain(obstacle){
-    lunaRunDrawTrainCar(obstacle.lane,Math.max(0,obstacle.z-.32),false);
-    lunaRunDrawTrainCar(obstacle.lane,Math.max(0,obstacle.z-.16),false);
-    lunaRunDrawTrainCar(obstacle.lane,obstacle.z,true);
+    const p=runProject(obstacle.lane,obstacle.z);
+    const s=p.scale,w=206*s,h=298*s,x=p.x,y=p.y;
+    const fade=runClamp((obstacle.z+.10)/.28,.58,1);
+    ctx.save();
+    ctx.globalAlpha=fade;
+    ctx.fillStyle='rgba(2,8,15,.46)';
+    ctx.beginPath();ctx.ellipse(x,y-2,w*.43,Math.max(4,12*s),0,0,Math.PI*2);ctx.fill();
+
+    // Headlights cast a restrained beam onto the rails as the train approaches.
+    const beam=ctx.createRadialGradient(x,y-h*.12,2,x,y-h*.12,w*.66);
+    beam.addColorStop(0,'rgba(255,230,164,.18)');
+    beam.addColorStop(1,'rgba(255,230,164,0)');
+    ctx.fillStyle=beam;ctx.fillRect(x-w*.76,y-h*.28,w*1.52,h*.44);
+
+    const image=lunaRunGetMetroImage();
+    if(image){
+      ctx.shadowColor='rgba(4,13,22,.55)';
+      ctx.shadowBlur=13*s;
+      ctx.drawImage(image,x-w/2,y-h,w,h);
+    }else{
+      // Refined vector fallback while the authored metro artwork loads.
+      const shell=ctx.createLinearGradient(x-w/2,y-h,x+w/2,y);
+      shell.addColorStop(0,'#d0e7d9');shell.addColorStop(.24,'#56b4b0');
+      shell.addColorStop(.72,'#1c6079');shell.addColorStop(1,'#0d293e');
+      lunaRunPoly([[x-w*.19,y-h],[x+w*.19,y-h],[x+w*.5,y-h*.18],
+        [x+w*.44,y],[x-w*.44,y],[x-w*.5,y-h*.18]],shell,'#d5e8d9',Math.max(1,3*s));
+      lunaRunPanel(x-w*.35,y-h*.43,w*.7,h*.2,'#153b52','#b9dcd1',7*s);
+      lunaRunPanel(x-w*.30,y-h*.40,w*.60,h*.14,'#8ac9c4','#e5f3dc',5*s);
+      lunaRunPanel(x-w*.34,y-h*.13,w*.68,h*.09,'#18374a','#9ac8bd',5*s);
+      ctx.fillStyle='#fff0b4';ctx.shadowBlur=14*s;ctx.shadowColor='#ffe3a0';
+      ctx.beginPath();ctx.arc(x-w*.29,y-h*.08,4*s,0,Math.PI*2);
+      ctx.arc(x+w*.29,y-h*.08,4*s,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
   }
   function lunaRunDrawBarrier(obstacle){
     const p=runProject(obstacle.lane,obstacle.z),s=p.scale,w=132*s,h=43*s,x=p.x,y=p.y-13*s;
