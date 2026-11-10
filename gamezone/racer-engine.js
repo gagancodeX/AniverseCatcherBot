@@ -53,6 +53,14 @@
     var keyBoost       = false;
     var nitro          = 100;
     var boostMultiplier = 1;
+    var raceLives = 3;
+    var raceDistance = 0;
+    var raceScore = 0;
+    var raceCollisionCooldown = 0;
+    var raceCrashed = false;
+    var raceSaved = false;
+    var raceDifficultyLevel = 0;
+    var raceBestScore = Util.toInt((Dom.storage.luna_racer_best || 0), 0);
 
     var hud = {
       speed:            { value: null, dom: Dom.get('speed_value')            },
@@ -66,6 +74,8 @@
     //=========================================================================
 
     function update(dt) {
+      if (raceCrashed) return;
+      raceCollisionCooldown = Math.max(0, raceCollisionCooldown - dt);
 
       var n, car, carW, sprite, spriteW;
       var playerSegment = findSegment(position+playerZ);
@@ -90,6 +100,17 @@
       var dx            = dt * 2 * speedPercent;
       var startPosition = position;
 
+      raceDistance += dt * speed;
+      raceScore = Math.floor(raceDistance / 3000);
+      updateRaceHud();
+      var difficultyLevel = Math.floor(raceDistance / 90000);
+      if (difficultyLevel > raceDifficultyLevel) {
+        raceDifficultyLevel = difficultyLevel;
+        totalCars = Math.min(112, 52 + raceDifficultyLevel * 6);
+        resetCars();
+        playerSegment = findSegment(position + playerZ);
+      }
+
       updateCars(dt, playerSegment, playerW);
 
       position = Util.increase(position, dt * speed, trackLength);
@@ -113,20 +134,23 @@
           sprite  = playerSegment.sprites[n];
           spriteW = sprite.source.w * SPRITES.SCALE;
           if (Util.overlap(playerX, playerW, sprite.offset + spriteW/2 * (sprite.offset > 0 ? 1 : -1), spriteW)) {
+            if (registerRaceCrash()) return;
             speed = maxSpeed/5;
-            position = Util.increase(playerSegment.p1.world.z, -playerZ, trackLength); // stop in front of sprite (at front of segment)
+            position = Util.increase(playerSegment.p1.world.z, -playerZ, trackLength);
             break;
           }
         }
       }
 
-      for(n = 0 ; n < playerSegment.cars.length ; n++) {
-        car  = playerSegment.cars[n];
-        carW = car.sprite.w * SPRITES.SCALE;
-        if (speed > car.speed) {
-          if (Util.overlap(playerX, playerW, car.offset, carW, 0.8)) {
-            speed    = car.speed * (car.speed/speed);
-            position = Util.increase(car.z, -playerZ, trackLength);
+      if (raceCollisionCooldown <= 0) {
+        for(n = 0 ; n < playerSegment.cars.length ; n++) {
+          car  = playerSegment.cars[n];
+          carW = car.sprite.w * SPRITES.SCALE;
+          if (speed > car.speed && Util.overlap(playerX, playerW, car.offset, carW, 0.8)) {
+            if (registerRaceCrash()) return;
+            speed = Math.min(speed, maxSpeed * 0.24);
+            position = Util.increase(car.z, -playerZ - segmentLength * 0.25, trackLength);
+            playerX = Util.limit(playerX + (playerX < car.offset ? -0.18 : 0.18), -1, 1);
             break;
           }
         }
@@ -237,6 +261,54 @@
         hud[key].value = value;
         Dom.set(hud[key].dom, value);
       }
+    }
+
+    function updateRaceHud() {
+      var scoreNode = Dom.get('raceScoreValue');
+      var livesNode = Dom.get('raceLivesValue');
+      var bestNode = Dom.get('raceBestValue');
+      if (scoreNode) scoreNode.innerHTML = raceScore.toLocaleString();
+      if (livesNode) livesNode.innerHTML = raceLives > 0 ? ('♥ '.repeat(raceLives)).trim() : '0';
+      if (bestNode) bestNode.innerHTML = raceBestScore.toLocaleString();
+    }
+
+    function registerRaceCrash() {
+      if (raceCrashed || raceCollisionCooldown > 0) return false;
+      raceLives = Math.max(0, raceLives - 1);
+      raceCollisionCooldown = 1.35;
+      updateRaceHud();
+      if (raceLives <= 0) {
+        finishRace();
+        return true;
+      }
+      return false;
+    }
+
+    function finishRace() {
+      if (raceCrashed) return;
+      raceCrashed = true;
+      keyLeft = keyRight = keyFaster = keySlower = keyBoost = false;
+      raceScore = Math.floor(raceDistance / 3000);
+      raceBestScore = Math.max(raceBestScore, raceScore);
+      Dom.storage.luna_racer_best = raceBestScore;
+      updateRaceHud();
+      if (!raceSaved) {
+        raceSaved = true;
+        try {
+          var records = JSON.parse(Dom.storage.luna_arcade_v1 || '{}');
+          records.best = records.best || {};
+          records.best.racer = Math.max(Util.toInt(records.best.racer, 0), raceScore);
+          records.played = Util.toInt(records.played, 0) + 1;
+          Dom.storage.luna_arcade_v1 = JSON.stringify(records);
+        } catch (_) {}
+        if (window.lunaSubmitGameScore) window.lunaSubmitGameScore('racer', raceScore);
+      }
+      var overlay = Dom.get('raceOver');
+      var finalScore = Dom.get('raceFinalScore');
+      var bestScore = Dom.get('raceFinalBest');
+      if (finalScore) finalScore.innerHTML = raceScore.toLocaleString();
+      if (bestScore) bestScore.innerHTML = raceBestScore.toLocaleString();
+      if (overlay) overlay.hidden = false;
     }
 
     function updateBoostHud(active) {
@@ -623,4 +695,26 @@
 
   
     // Expose the source engine's resize hook to the Luna touch shell.
+    window.raceRestart = function() {
+      raceLives = 3;
+      raceDistance = 0;
+      raceScore = 0;
+      raceCollisionCooldown = 0;
+      raceCrashed = false;
+      raceSaved = false;
+      raceDifficultyLevel = 0;
+      totalCars = 52;
+      nitro = 100;
+      boostMultiplier = 1;
+      speed = 0;
+      playerX = 0;
+      position = 0;
+      currentLapTime = 0;
+      lastLapTime = null;
+      keyLeft = keyRight = keyFaster = keySlower = keyBoost = false;
+      resetRoad();
+      updateRaceHud();
+      updateBoostHud(false);
+    };
+
     window.raceReset = reset;
