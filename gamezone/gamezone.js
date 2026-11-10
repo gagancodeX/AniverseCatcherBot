@@ -267,7 +267,7 @@
     if(game.spaceTrailClock>.045){game.spaceTrailClock=0;spawnSpaceBurst(p.x,p.y+45,'#86ddf3',2)}
     if(game.spaceInvuln>0&&game.lives>0)p.shieldPulse=(p.shieldPulse||0)+dt;
   }
-  function updateBrick(dt){  function updateBrick(dt){
+  function updateBrick(dt){
     const p=game.paddle,b=game.ball;
     if(pointerDown)p.x+=(pointerX-p.x)*Math.min(1,dt*14);
     p.x=Math.max(p.w/2+8,Math.min(W-p.w/2-8,p.x));
@@ -664,7 +664,7 @@
     for(const side of [-1,1]){ctx.fillStyle='#8be3ec';ctx.fillRect(side*55-7,-9,14,7);ctx.fillStyle='#ffdaa1';ctx.fillRect(side*81,8,16,6);const jet=ctx.createLinearGradient(0,18,0,83);jet.addColorStop(0,'rgba(255,215,154,.85)');jet.addColorStop(1,'rgba(255,118,157,0)');ctx.fillStyle=jet;ctx.beginPath();ctx.moveTo(side*34,25);ctx.lineTo(side*47,36);ctx.lineTo(side*34,84);ctx.lineTo(side*21,36);ctx.closePath();ctx.fill()}
     ctx.restore();const width=240,ratio=Math.max(0,boss.hp/boss.maxHp);ctx.save();ctx.fillStyle='rgba(5,8,24,.8)';ctx.fillRect(W/2-width/2,260,width,12);ctx.fillStyle=artGrad(W/2-width/2,0,W/2+width/2,0,[[0,'#e98c9e'],[1,'#ffdc9e']]);ctx.fillRect(W/2-width/2,260,width*ratio,12);ctx.strokeStyle='rgba(255,245,224,.78)';ctx.lineWidth=2;ctx.strokeRect(W/2-width/2,260,width,12);ctx.fillStyle='#ffe9c4';ctx.font='bold 13px "DM Mono"';ctx.textAlign='center';ctx.fillText('ECLIPSE DREADNOUGHT',W/2,250);ctx.restore();
   }
-  function drawSpace(){  function drawSpace(){
+  function drawSpace(){
     drawSpaceBackdrop();
     game.bullets.forEach(b=>{ctx.save();ctx.shadowBlur=22;ctx.shadowColor='#8ceaff';const beam=ctx.createLinearGradient(b.x,b.y-18,b.x,b.y+22);beam.addColorStop(0,'rgba(130,238,255,0)');beam.addColorStop(.42,'#e9ffff');beam.addColorStop(1,'#78d9ff');ctx.strokeStyle=beam;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(b.x,b.y-18);ctx.lineTo(b.x,b.y+22);ctx.stroke();artGlow(b.x,b.y,3.5,'#f8ffff',.9);ctx.restore()});
     game.enemies.forEach(e=>{if(!e.dead)drawCosmicVisitor(e)});
@@ -677,7 +677,7 @@
     if(game.spaceBossWarning>0){ctx.textAlign='center';ctx.fillStyle='rgba(10,12,32,.76)';ctx.beginPath();ctx.roundRect(185,350,350,48,12);ctx.fill();ctx.fillStyle='#ffd49d';ctx.font='bold 17px "DM Mono"';ctx.fillText('⚠  DREADNOUGHT INBOUND',360,380)}
     ctx.restore();
   }
-  function drawBrickBackdrop(){  function drawBrickBackdrop(){
+  function drawBrickBackdrop(){
     const g=artGrad(0,0,0,H,[[0,'#18213a'],[.55,'#101a30'],[1,'#0d172a']]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
     for(let x=0;x<W;x+=60){ctx.strokeStyle='rgba(172,194,218,.055)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
     for(let y=0;y<H;y+=60){ctx.strokeStyle='rgba(172,194,218,.055)';ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
