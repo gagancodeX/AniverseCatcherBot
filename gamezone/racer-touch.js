@@ -3,9 +3,91 @@
   "use strict";
   const canvas = document.getElementById("canvas");
   const stage = document.getElementById("racerStage");
+  const BOT_API_BASE = "https://aniversecatcherbot.onrender.com";
   const steerPad = document.getElementById("steerPad");
   const steerWheel = document.getElementById("steerWheel");
   const activeKeys = new Set();
+
+  window.lunaSubmitGameScore = function(gameId, score) {
+    const initData = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData;
+    if (!initData) return Promise.resolve(null);
+    return fetch(BOT_API_BASE + "/api/game-score", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({initData, game: gameId, score: Math.max(0, Math.floor(Number(score) || 0))})
+    }).catch(() => null);
+  };
+
+  async function showRaceLeaderboard() {
+    const modal = document.getElementById("raceLeaderboardModal");
+    const list = document.getElementById("raceLeaderboardList");
+    if (!modal || !list) return;
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    list.replaceChildren();
+    const loading = document.createElement("li");
+    loading.className = "race-leaderboard-empty";
+    loading.textContent = "Loading scores…";
+    list.appendChild(loading);
+    try {
+      const response = await fetch(BOT_API_BASE + "/api/game-leaderboard?game=racer", {cache:"no-store"});
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error("Unavailable");
+      list.replaceChildren();
+      if (!payload.entries.length) {
+        const empty = document.createElement("li");
+        empty.className = "race-leaderboard-empty";
+        empty.textContent = "No drivers yet. Set the first record!";
+        list.appendChild(empty);
+        return;
+      }
+      payload.entries.forEach(entry => {
+        const row = document.createElement("li");
+        row.className = "race-leaderboard-row";
+        const rank = document.createElement("span");
+        rank.className = "rank";
+        rank.textContent = "#" + entry.rank;
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = entry.name || "Driver";
+        const score = document.createElement("strong");
+        score.className = "score";
+        score.textContent = Number(entry.score || 0).toLocaleString();
+        row.append(rank, name, score);
+        list.appendChild(row);
+      });
+    } catch (_) {
+      list.replaceChildren();
+      const failed = document.createElement("li");
+      failed.className = "race-leaderboard-empty";
+      failed.textContent = "Open Neon Racer from /gamezone in Telegram to load the leaderboard.";
+      list.appendChild(failed);
+    }
+  }
+
+  function closeRaceLeaderboard() {
+    const modal = document.getElementById("raceLeaderboardModal");
+    if (modal) {
+      modal.classList.remove("active");
+      modal.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  const raceOver = document.getElementById("raceOver");
+  const restartButton = document.getElementById("raceRestart");
+  if (restartButton) restartButton.addEventListener("click", () => {
+    releaseAll();
+    if (typeof window.raceRestart === "function") window.raceRestart();
+    if (raceOver) raceOver.hidden = true;
+  });
+  const topButton = document.getElementById("raceLeaderboardButton");
+  const overTopButton = document.getElementById("raceOverLeaderboard");
+  if (topButton) topButton.addEventListener("click", showRaceLeaderboard);
+  if (overTopButton) overTopButton.addEventListener("click", showRaceLeaderboard);
+  const closeButton = document.getElementById("raceLeaderboardClose");
+  const backdrop = document.getElementById("raceLeaderboardBackdrop");
+  if (closeButton) closeButton.addEventListener("click", closeRaceLeaderboard);
+  if (backdrop) backdrop.addEventListener("click", closeRaceLeaderboard);
 
   function setKey(name, value) {
     window[name] = value;
