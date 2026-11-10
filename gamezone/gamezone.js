@@ -102,7 +102,7 @@
   }
   function closeGame(){
     if(current==='runner'&&state==='playing'&&game.runnerMode==='over'&&!game.runnerSaved){
-      setScore(Math.floor((game.runnerDistance||0)/45)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*2);
+      setScore(Math.floor((game.runnerDistance||0)/90)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins);
       runSaveResult();
     }
     state='menu';current=null;cancelAnimationFrame(raf);const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('active','runner-active','runner-3d-active');$('runnerControls').hidden=true;screen.setAttribute('aria-hidden','true');
@@ -203,7 +203,7 @@
     for(const pipe of game.pipes){const gapTop=pipe.center-pipe.gap/2,gapBottom=pipe.center+pipe.gap/2;if(p.x+p.r>pipe.x-8&&p.x-p.r<pipe.x+100&&(p.y-p.r<gapTop||p.y+p.r>gapBottom)){endGame();return}}
   }
   function updateRunner(dt,isCar){
-    game.speed=Math.min(760,game.speed+dt*8);distance+=game.speed*dt/23;setScore(Math.floor(distance/20)+coins*2);
+    game.speed=Math.min(760,game.speed+dt*8);distance+=game.speed*dt/23;setScore(Math.floor(distance/35)+coins);
     game.spawn+=dt;if(game.spawn>(isCar ? .86 : 1.02)){const lane=Math.floor(Math.random()*3);game.obstacles.push({lane,y:-80,z:Math.random()});if(Math.random()>.35)game.pickups.push({x:180+Math.floor(Math.random()*3)*180,y:-260});game.spawn=0}
     if(game.jump>0){game.jump+=game.jumpV*dt;game.jumpV-=1450*dt;if(game.jump<0){game.jump=0;game.jumpV=0}}
     if(game.slide>0)game.slide-=dt;
@@ -236,7 +236,7 @@
     game.bullets.forEach(b=>b.y-=720*dt);game.enemies.forEach(e=>e.y+=e.v*dt);game.bullets=game.bullets.filter(b=>b.y>-30);
     for(const e of game.enemies){
       if(e.dead)continue;
-      for(const b of game.bullets){if(b.dead)continue;if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){e.dead=true;b.dead=true;setScore(score+5);tone(660);break}}
+      for(const b of game.bullets){if(b.dead)continue;if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){e.dead=true;b.dead=true;setScore(score+3);tone(660);break}}
       if(!e.dead&&e.y>p.y-30&&e.y<p.y+30&&Math.abs(e.x-p.x)<48){e.dead=true;game.lives--;tone(120,.15);if(game.lives<=0){endGame();return}}
     }
     game.enemies=game.enemies.filter(e=>!e.dead&&e.y<H+40);game.bullets=game.bullets.filter(b=>!b.dead);
@@ -694,7 +694,7 @@
       return c.y<H+35;
     });
     game.obstacles=game.obstacles.filter(o=>o.y<H+100);
-    setScore(Math.floor(distance/20)+coins*2);
+    setScore(Math.floor(distance/35)+coins);
   }
 
 
@@ -945,7 +945,7 @@
     const activeLane=Math.round(game.laneVisual);
     for(const o of game.obstacles){if(o.lane!==activeLane||o.z<.875||o.z>1.03)continue;if(o.type==='barrier'&&game.jump>78)continue;if(o.type==='overhead'&&game.slide>0)continue;endGame();return}
     game.pickups=game.pickups.filter(c=>{if(c.lane===activeLane&&c.z>.86&&c.z<1.02){coins++;tone(880);return false}return c.z<1.1});
-    game.obstacles=game.obstacles.filter(o=>o.z<1.1);setScore(Math.floor(distance/20)+coins*2);
+    game.obstacles=game.obstacles.filter(o=>o.z<1.1);setScore(Math.floor(distance/35)+coins);
   }
   function draw(){
     if(!current)return;
@@ -1285,7 +1285,7 @@
   }
   function runSaveResult(){
     if(game.runnerSaved)return;
-    setScore(Math.floor((game.runnerDistance||0)/45)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*2);
+    setScore(Math.floor((game.runnerDistance||0)/90)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins);
     game.runnerSaved=true;saveResult();game.runnerBest=bestOf('runner');
   }
   function runRetry(){
@@ -1386,7 +1386,7 @@
       }
     }
     game.obstacles=game.obstacles.filter(o=>o.z<1.15);
-    setScore(Math.floor(game.runnerDistance/45)*(game.runnerEffects.x2>0?2:1)+coins*2);
+    setScore(Math.floor(game.runnerDistance/90)*(game.runnerEffects.x2>0?2:1)+coins);
   }
   function action(dx,dy){
     if(state!=='playing')return;
