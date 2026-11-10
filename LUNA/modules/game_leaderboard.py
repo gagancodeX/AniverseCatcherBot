@@ -16,8 +16,9 @@ LOGGER = logging.getLogger(__name__)
 
 AUTO_INTERVAL_SECONDS = 6 * 60 * 60
 AUTO_INTERVAL_LABEL = "6 hours"
-GAMEZONE_URL = os.getenv(
-    "GAMEZONE_URL", "https://luna-gamezone.onrender.com"
+# Leaderboard data is served by the bot's score API, not the static GameZone site.
+GAME_API_BASE_URL = os.getenv(
+    "GAME_API_BASE_URL", "https://aniversecatcherbot.onrender.com"
 ).strip().rstrip("/")
 
 GAMES = {
@@ -37,9 +38,9 @@ def _is_group(chat):
 async def _get_entries(session, slug):
     if slug not in GAMES:
         raise ValueError("Unknown game.")
-    if not GAMEZONE_URL.startswith("https://"):
-        raise RuntimeError("GameZone URL is not configured.")
-    url = f"{GAMEZONE_URL}/api/game-leaderboard"
+    if not GAME_API_BASE_URL.startswith("https://"):
+        raise RuntimeError("Game API URL is not configured.")
+    url = f"{GAME_API_BASE_URL}/api/game-leaderboard"
     async with session.get(url, params={"game": slug}) as response:
         payload = await response.json(content_type=None)
         if response.status != 200 or not payload.get("ok"):
