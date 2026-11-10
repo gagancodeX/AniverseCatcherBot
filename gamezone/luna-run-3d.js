@@ -91,9 +91,9 @@
       const a=i/segments*Math.PI*2,b=(i+1)/segments*Math.PI*2;
       const p0=[Math.cos(a),-.5,Math.sin(a)],p1=[Math.cos(b),-.5,Math.sin(b)],p2=[Math.cos(b),.5,Math.sin(b)],p3=[Math.cos(a),.5,Math.sin(a)];
       const n0=[Math.cos(a),0,Math.sin(a)],n1=[Math.cos(b),0,Math.sin(b)];
-      [[p0,n0],[p1,n1],[p2,n1],[p0,n0],[p2,n1],[p3,n0]].forEach(v=>{p.push(...v[0]);n.push(...v[1]);});
-      p.push(0,-.5,0,...p1,...p0);n.push(0,-1,0,0,-1,0,0,-1,0);
-      p.push(0,.5,0,...p3,...p2);n.push(0,1,0,0,1,0,0,1,0);
+      [[p0,n0],[p2,n1],[p1,n1],[p0,n0],[p3,n0],[p2,n1]].forEach(v=>{p.push(...v[0]);n.push(...v[1]);});
+      p.push(0,-.5,0,...p0,...p1);n.push(0,-1,0,0,-1,0,0,-1,0);
+      p.push(0,.5,0,...p2,...p3);n.push(0,1,0,0,1,0,0,1,0);
     }return makeMesh(p,n);
   }
   function makeTorus(){
