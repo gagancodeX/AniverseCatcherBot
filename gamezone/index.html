@@ -130,9 +130,21 @@
       </section>
       <div class="game-bottom">
         <div class="control-hint" id="controlHint">TAP TO PLAY</div>
-        <button type="button" class="restart-mini" id="restartButton" aria-label="Restart current game"><span aria-hidden="true">↻</span> RESTART</button>
+        <div class="game-bottom-actions">
+          <button type="button" class="leaderboard-mini" id="leaderboardButton" aria-label="View this game's leaderboard">🏆 TOP 10</button>
+          <button type="button" class="restart-mini" id="restartButton" aria-label="Restart current game"><span aria-hidden="true">↻</span> RESTART</button>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div class="leaderboard-modal" id="leaderboardModal" aria-hidden="true">
+    <button type="button" class="leaderboard-backdrop" id="leaderboardBackdrop" aria-label="Close leaderboard"></button>
+    <section class="leaderboard-panel" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+      <header class="leaderboard-header"><div><small id="leaderboardGame">GLOBAL RANKINGS</small><h2 id="leaderboardTitle">GAME · TOP 10</h2></div><button type="button" id="closeLeaderboard" aria-label="Close leaderboard">×</button></header>
+      <ol id="leaderboardList" class="leaderboard-list"><li class="leaderboard-empty">Loading scores…</li></ol>
+      <p class="leaderboard-footnote">Best score per player · Updated from Luna GameZone</p>
+    </section>
   </div>
 
   <script src="gamezone.js"></script>
