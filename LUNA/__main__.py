@@ -414,12 +414,107 @@ def sync_bot_profile() -> None:
 
 
 def start_health_server() -> None:
-    """Keep Render's HTTP health check responsive while Telegram connects."""
+    """Serve Render health checks and the verified GameZone score API."""
+    from datetime import datetime, timezone
+    from urllib.parse import parse_qs, urlsplit
+
+    from pymongo import DESCENDING, MongoClient
+
+    from LUNA.game_scores import MAX_SCORE, VALID_GAMES, verify_telegram_init_data
+
     port = int(os.environ.get("PORT", "10000"))
+    gamezone_origin = os.environ.get(
+        "GAMEZONE_URL", "https://luna-gamezone.onrender.com"
+    ).strip().rstrip("/")
+    mongo_client = MongoClient(
+        LUNA.mongo_url,
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+    )
+    score_collection = mongo_client[LUNA.DB_NAME]["game_scores"]
+
+    try:
+        score_collection.create_index(
+            [("game", 1), ("user_id", 1)],
+            unique=True,
+            name="game_user_unique",
+        )
+        score_collection.create_index(
+            [("game", 1), ("best_score", DESCENDING)],
+            name="game_best_score",
+        )
+    except Exception as exc:
+        LOGGER("LUNA").warning("Game leaderboard index setup failed: %s", exc)
 
     class HealthHandler(BaseHTTPRequestHandler):
+        def _send_json(self, status, payload):
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            origin = self.headers.get("Origin", "")
+            if origin == gamezone_origin:
+                self.send_header("Access-Control-Allow-Origin", gamezone_origin)
+                self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_OPTIONS(self):
+            if self.headers.get("Origin", "") != gamezone_origin:
+                self._send_json(403, {"ok": False, "error": "Origin not allowed."})
+                return
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", gamezone_origin)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Vary", "Origin")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
         def do_GET(self):
-            if self.path == "/ready" and not BOT_READY:
+            parsed = urlsplit(self.path)
+            if parsed.path == "/api/game-leaderboard":
+                params = parse_qs(parsed.query)
+                game = (params.get("game") or [""])[0].strip().lower()
+                if game not in VALID_GAMES:
+                    self._send_json(400, {"ok": False, "error": "Unknown game."})
+                    return
+                try:
+                    rows = list(
+                        score_collection.find(
+                            {"game": game},
+                            {
+                                "_id": 0,
+                                "first_name": 1,
+                                "username": 1,
+                                "best_score": 1,
+                                "plays": 1,
+                            },
+                        )
+                        .sort([("best_score", DESCENDING), ("updated_at", 1)])
+                        .limit(10)
+                    )
+                    entries = [
+                        {
+                            "rank": index,
+                            "name": row.get("first_name") or "Player",
+                            "username": row.get("username") or "",
+                            "score": int(row.get("best_score", 0)),
+                            "plays": int(row.get("plays", 0)),
+                        }
+                        for index, row in enumerate(rows, start=1)
+                    ]
+                    self._send_json(200, {"ok": True, "game": game, "entries": entries})
+                except Exception as exc:
+                    LOGGER("LUNA").warning("Game leaderboard query failed: %s", exc)
+                    self._send_json(503, {"ok": False, "error": "Leaderboard is temporarily unavailable."})
+                return
+
+            if parsed.path == "/ready" and not BOT_READY:
                 self.send_response(503)
                 body = b"Telegram bot is still starting"
             else:
@@ -430,6 +525,59 @@ def start_health_server() -> None:
             self.end_headers()
             self.wfile.write(body)
 
+        def do_POST(self):
+            if urlsplit(self.path).path != "/api/game-score":
+                self._send_json(404, {"ok": False, "error": "Not found."})
+                return
+            if self.headers.get("Origin", "") != gamezone_origin:
+                self._send_json(403, {"ok": False, "error": "Open GameZone from the Luna bot."})
+                return
+
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length <= 0 or length > 8192:
+                    raise ValueError("Invalid request size.")
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+                game = str(payload.get("game", "")).strip().lower()
+                score = payload.get("score")
+                if game not in VALID_GAMES:
+                    raise ValueError("Unknown game.")
+                if isinstance(score, bool) or not isinstance(score, int) or score < 0 or score > MAX_SCORE:
+                    raise ValueError("Score is outside the accepted range.")
+
+                user = verify_telegram_init_data(payload.get("initData"), TOKEN)
+                now = datetime.now(timezone.utc)
+                score_collection.update_one(
+                    {"game": game, "user_id": user["id"]},
+                    {
+                        "$max": {"best_score": score},
+                        "$set": {
+                            "first_name": user["first_name"],
+                            "username": user["username"],
+                            "updated_at": now,
+                            "last_score": score,
+                        },
+                        "$setOnInsert": {"created_at": now},
+                        "$inc": {"plays": 1},
+                    },
+                    upsert=True,
+                )
+                best = score_collection.find_one(
+                    {"game": game, "user_id": user["id"]},
+                    {"_id": 0, "best_score": 1},
+                )
+                self._send_json(
+                    200,
+                    {"ok": True, "game": game, "best_score": int((best or {}).get("best_score", score))},
+                )
+            except ValueError as exc:
+                self._send_json(400, {"ok": False, "error": str(exc)})
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                self._send_json(400, {"ok": False, "error": "Invalid request body."})
+            except Exception as exc:
+                LOGGER("LUNA").warning("Game score submission failed: %s", exc)
+                self._send_json(503, {"ok": False, "error": "Score could not be saved right now."})
+
         def log_message(self, format, *args):
             pass
 
@@ -439,8 +587,7 @@ def start_health_server() -> None:
         daemon=True,
         name="render-health-server",
     ).start()
-    LOGGER("LUNA").info("Render health endpoint listening on port %s", port)
-
+    LOGGER("LUNA").info("Render health and GameZone score API listening on port %s", port)
 
 def load_modules() -> None:
     for module_name in ALL_MODULES:
