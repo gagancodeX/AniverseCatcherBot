@@ -4,12 +4,12 @@
 # ==========================================
 
 rarity_map = {
-    1: "⚪️ Origin Edition",
-    2: "🟣 Phantom Edition",
-    3: "🟡 Vanguard Edition",
-    4: "🟢 Arcane Edition",
-    5: "💮 Zenith Edition",
-    6: "🔮 Ethereal Edition",
+    1: "🌱 Origin Edition",
+    2: "👻 Phantom Edition",
+    3: "⚔️ Vanguard Edition",
+    4: "🧿 Arcane Edition",
+    5: "👑 Zenith Edition",
+    6: "🪽 Ethereal Edition",
     7: "💎 Mythic Edition",
     8: "🌤 Summer",
     9: "🌌 Divine Edition",
@@ -29,12 +29,12 @@ rarity_map = {
 RARITY_NAMES = list(rarity_map.values())
 
 rarity_map2 = {
-    "⚪️ Origin Edition": "⚪️",
-    "🟣 Phantom Edition": "🟣",
-    "🟡 Vanguard Edition": "🟡",
-    "🟢 Arcane Edition": "🟢",
-    "💮 Zenith Edition": "💮",
-    "🔮 Ethereal Edition": "🔮",
+    "🌱 Origin Edition": "🌱",
+    "👻 Phantom Edition": "👻",
+    "⚔️ Vanguard Edition": "⚔️",
+    "🧿 Arcane Edition": "🧿",
+    "👑 Zenith Edition": "👑",
+    "🪽 Ethereal Edition": "🪽",
     "💎 Mythic Edition": "💎",
     "🌤 Summer": "🌤",
     "🌌 Divine Edition": "🌌",
