@@ -23,7 +23,6 @@ rarity_map = {
     18: "🎬 Cinematic Edition",
     19: "✨ Radiant Edition",
     20: "🌧️ Rainfall Edition",
-    22: "🍭 Winter Event",
 }
 
 # Keep rarity names and emoji lookups synchronized with the canonical map.
@@ -49,5 +48,4 @@ rarity_map2 = {
     "🎬 Cinematic Edition": "🎬",
     "✨ Radiant Edition": "✨",
     "🌧️ Rainfall Edition": "🌧️",
-    "🍭 Winter Event": "🍭",
 }
