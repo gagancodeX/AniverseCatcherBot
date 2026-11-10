@@ -26,6 +26,12 @@ LEGACY_RARITY_RENAMES = {
     "🍭 Winter event": rarity_map[22],
 }
 
+# The retired rarity is kept as archived data so existing character records
+# remain intact without exposing the removed category in rarity selection.
+REMOVED_RARITY_LABELS = {
+    "🍑 Echhi": "🗃️ Archived / Unassigned",
+}
+
 
 async def migrate_rarity_labels():
     """Rename legacy labels in the archive, saved vaults, and stored filters."""
@@ -48,6 +54,27 @@ async def migrate_rarity_labels():
         filter_result = await user_collection.update_many(
             {"filter_rarity": old_label},
             {"$set": {"filter_rarity": new_label}},
+        )
+        modified += filter_result.modified_count
+
+    # Retire removed rarity labels without deleting any characters from the archive.
+    for removed_label, archived_label in REMOVED_RARITY_LABELS.items():
+        archive_result = await collection.update_many(
+            {"rarity": removed_label},
+            {"$set": {"rarity": archived_label}},
+        )
+        modified += archive_result.modified_count
+
+        vault_result = await user_collection.update_many(
+            {"characters.rarity": removed_label},
+            {"$set": {"characters.$[owned_character].rarity": archived_label}},
+            array_filters=[{"owned_character.rarity": removed_label}],
+        )
+        modified += vault_result.modified_count
+
+        filter_result = await user_collection.update_many(
+            {"filter_rarity": removed_label},
+            {"$set": {"filter_rarity": None}},
         )
         modified += filter_result.modified_count
 
