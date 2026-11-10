@@ -172,9 +172,15 @@
     for(let z=38;z>-30;z-=1.55){sleepers.push({x:0,y:-.02,z,w:9.9,h:.17,d:.48});laneXs.forEach(lane=>[-.79,.79].forEach(off=>clips.push({x:lane+off,y:.105,z,w:.34,h:.09,d:.24})));}
     laneXs.forEach(lane=>[-.79,.79].forEach(off=>{const x=lane+off;railBeds.push({x,y:.12,z:3,w:.28,h:.23,d:70});rails.push({x,y:.255,z:3,w:.14,h:.09,d:70});}));
     platforms.push({x:-5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:-6.12,y:-.16,z:3,w:.22,h:.13,d:72},{x:6.12,y:-.16,z:3,w:.22,h:.13,d:72});
-    for(let i=0;i<17;i++){
-      const z=28-i*3.45;
-      [-1,1].forEach(side=>{posts.push({x:side*5.2,y:2.35,z,w:.22,h:4.7,d:.22});beams.push({x:side*2.65,y:4.62,z,w:5.3,h:.16,d:.18});lampHousings.push({x:side*4.88,y:4.1,z,w:.42,h:.2,d:.65});wireBoxes.push({x:0,y:4.95,z,w:10.4,h:.035,d:.035});});
+    // Space overhead gantries farther apart: one clean crossbeam per station span.
+    for(let i=0;i<8;i++){
+      const z=27-i*8.1;
+      [-1,1].forEach(side=>{
+        posts.push({x:side*5.2,y:2.35,z,w:.18,h:4.7,d:.18});
+        lampHousings.push({x:side*4.88,y:4.1,z,w:.34,h:.16,d:.46});
+      });
+      beams.push({x:0,y:4.58,z,w:10.35,h:.095,d:.14});
+      wireBoxes.push({x:0,y:5.02,z,w:10.2,h:.018,d:.018});
     }
     for(let sideIndex=0;sideIndex<2;sideIndex++){
       const side=sideIndex===0?-1:1;
@@ -218,7 +224,7 @@
     draw(meshes.buildings,identity,'#45546b',0,.18,3);draw(meshes.windows,identity,theme.lamp,.23,.1,0);
     draw(meshes.posts,identity,'#384754',0,.55,1);draw(meshes.beams,identity,'#485b67',0,.62,1);
     draw(meshes.wires,identity,'#242e3d',0,.7,0);draw(meshes.lamps,identity,theme.lamp,.85,.2,0);draw(meshes.signs,identity,'#183a4b',0,.32,1);
-    for(let i=0;i<6;i++){const z=24-i*9,glow=.55+.18*Math.sin(time*3+i);box(-5.2,3.95,z,.42,.22,.52,theme.lamp,glow,.15,0);box(5.2,3.95,z,.42,.22,.52,theme.lamp,glow,.15,0);}
+    // Gantry-mounted lamps are part of the shared static station geometry.
     for(let i=0;i<4;i++){const z=23-i*15;box(-7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);box(7.2,.8,z,.16,1.6,1.1,'#3b5961',0,.12,0);}
     for(let i=0;i<10;i++){const z=25-i*6.7,x=(i%2?1:-1)*(8.1+(i%3)*1.2),h=1.8+(i%4)*.55;box(x,h/2,z,.75,h,.65,i%2?'#294a53':'#365b55',0,.05,2);sphere(x,h+.32,z,.52,.23,.5,'#477b66',0,.02);}
   }
@@ -260,7 +266,7 @@
   function drawPickup(item,theme,time){
     const x=(item.lane-1)*2.55,z=worldZ(item.z),phase=time*2.4+(item.lane||0);
     if(item.type==='coin'||item.type==='super'){
-      const y=(item.raised?2.35:1.16)+Math.sin(phase)*.06,s=item.type==='super'?1.34:1;
+      const y=(item.raised?2.35:1.16)+Math.sin(phase)*.06,s=item.type==='super'?1.08:.68;
       draw(meshes.torus,compose(x,y,z,s,s,s,0,time*3,0),item.type==='super'?'#8eeaff':'#f5c451',.45,.86,0);
       sphere(x,y,z,.20*s,.20*s,.1,'#fff0bc',.35,.5);return;
     }
