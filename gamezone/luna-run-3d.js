@@ -173,8 +173,8 @@
     laneXs.forEach(lane=>[-.79,.79].forEach(off=>{const x=lane+off;railBeds.push({x,y:.12,z:3,w:.28,h:.23,d:70});rails.push({x,y:.255,z:3,w:.14,h:.09,d:70});}));
     platforms.push({x:-5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:5.55,y:-.02,z:3,w:1.05,h:.42,d:72},{x:-6.12,y:-.16,z:3,w:.22,h:.13,d:72},{x:6.12,y:-.16,z:3,w:.22,h:.13,d:72});
     // Space overhead gantries farther apart: one clean crossbeam per station span.
-    for(let i=0;i<4;i++){
-      const z=27-i*18;
+    for(let i=0;i<3;i++){
+      const z=24-i*22;
       [-1,1].forEach(side=>{
         posts.push({x:side*5.2,y:2.35,z,w:.18,h:4.7,d:.18});
         lampHousings.push({x:side*4.88,y:4.1,z,w:.34,h:.16,d:.46});
@@ -235,7 +235,7 @@
   }
   function worldZ(z){return 31-clamp(z,-.2,1.18)*31;}
   function drawWorld(theme,time){
-    draw(meshes.city,identity,'#35445d',0,.12,3);draw(meshes.cityWindows,identity,theme.lamp,.42,.08,0);sphere(-8.8,8.7,-29,1.35,1.35,1.35,theme.accent,.62,0);draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
+    draw(meshes.city,identity,'#35445d',0,.12,3);draw(meshes.cityWindows,identity,theme.lamp,.42,.08,0);sphere(-3.2,10.1,-29,1.18,1.18,1.18,theme.accent,.68,0);draw(meshes.gravel,identity,theme.ground,0,.12,2);draw(meshes.platforms,identity,'#59656a',0,.42,3);
     draw(meshes.sleepers,identity,'#6c4e3b',0,.08,2);draw(meshes.railBeds,identity,'#303b43',0,.5,1);
     draw(meshes.rails,identity,'#c0cbd0',.05,.92,1);draw(meshes.clips,identity,'#d2a95e',.03,.75,0);
     draw(meshes.buildings,identity,'#45546b',0,.18,3);draw(meshes.windows,identity,theme.lamp,.23,.1,0);
@@ -289,7 +289,7 @@
   function drawChaseTrain(theme,time){
     // A distant locomotive loops toward the runner along the centre rail.
     const approach=(time*.12)%1,z=-18.2+approach*6.1;
-    drawTrainModel(0,z,theme,time,.66);
+    drawTrainModel(0,z,theme,time,.72);
     const pulse=.72+Math.sin(time*5.5)*.18;
     sphere(-.52,.66,z+2.42,.11,.11,.08,theme.lamp,pulse,0);
     sphere(.52,.66,z+2.42,.11,.11,.08,theme.lamp,pulse,0);
