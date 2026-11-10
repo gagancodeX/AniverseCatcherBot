@@ -17,6 +17,7 @@
   const overlay = $('gameOverlay');
   const scoreValue = $('scoreValue');
   const soundToggle = $('soundToggle');
+  const GAME_API_BASE = 'https://aniversecatcherbot.onrender.com';
   const games = {
     flappy:{title:'FLAPPY LUNA',symbol:'☾',hint:'TAP TO FLY · SPACE TO FLAP',start:'Tap to flap through the glowing moon gates. Every gate is a point.',over:'The night got you. One more flight?',color:'#cfb2ff'},
     runner:{title:'LUNA RUN',symbol:'✦',hint:'SWIPE LEFT / RIGHT · UP TO JUMP · DOWN TO SLIDE',start:'Change lanes, jump over barriers and collect moon coins.',over:'The run is over. Ready for another dash?',color:'#f4c98b'},
@@ -47,6 +48,41 @@
     records.played=Number(records.played||0)+1;
     records.coins=Number(records.coins||0)+coins;
     storage.write(records); refreshStats();
+    submitGameScore(current, score);
+  }
+  function submitGameScore(gameId, finalScore){
+    const initData=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData;
+    if(!initData||!gameId)return;
+    fetch(GAME_API_BASE+'/api/game-score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData,game:gameId,score:Math.max(0,Math.floor(Number(finalScore)||0))})}).catch(()=>{});
+  }
+  async function showGameLeaderboard(gameId){
+    if(!gameId||!games[gameId])return;
+    const modal=$('leaderboardModal'),list=$('leaderboardList');
+    $('leaderboardTitle').textContent=games[gameId].title+' · TOP 10';
+    $('leaderboardGame').textContent='GLOBAL RANKINGS / '+gameId.toUpperCase();
+    list.replaceChildren();
+    const loading=document.createElement('li');loading.className='leaderboard-empty';loading.textContent='Loading scores…';list.appendChild(loading);
+    modal.classList.add('active');modal.setAttribute('aria-hidden','false');
+    try{
+      const response=await fetch(GAME_API_BASE+'/api/game-leaderboard?game='+encodeURIComponent(gameId),{cache:'no-store'});
+      const payload=await response.json();
+      if(!response.ok||!payload.ok)throw new Error('Leaderboard unavailable');
+      list.replaceChildren();
+      if(!payload.entries.length){const empty=document.createElement('li');empty.className='leaderboard-empty';empty.textContent='No scores yet. Set the first record!';list.appendChild(empty);return}
+      payload.entries.forEach(entry=>{
+        const item=document.createElement('li');item.className='leaderboard-row';
+        const rank=document.createElement('span');rank.className='leaderboard-rank';rank.textContent=String(entry.rank).padStart(2,'0');
+        const identity=document.createElement('span');identity.className='leaderboard-player';
+        const name=document.createElement('b');name.textContent=entry.name||'Player';
+        const username=document.createElement('small');username.textContent=entry.username?'@'+entry.username:'LUNA PLAYER';
+        identity.append(name,username);
+        const points=document.createElement('strong');points.className='leaderboard-points';points.textContent=Number(entry.score||0).toLocaleString();
+        item.append(rank,identity,points);list.appendChild(item);
+      });
+    }catch(_){
+      list.replaceChildren();const failed=document.createElement('li');failed.className='leaderboard-empty';
+      failed.textContent='Leaderboard is unavailable. Open GameZone from /gamezone and try again.';list.appendChild(failed);
+    }
   }
   function setScore(value){score=Math.max(0,Math.floor(value));scoreValue.textContent=score.toLocaleString();if(current&&$('bestValue'))$('bestValue').textContent=Math.max(bestOf(current),score).toLocaleString()}
   function tone(freq,duration=.06){
@@ -66,7 +102,7 @@
   }
   function closeGame(){
     if(current==='runner'&&state==='playing'&&game.runnerMode==='over'&&!game.runnerSaved){
-      setScore(Math.floor((game.runnerDistance||0)/12)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*10);
+      setScore(Math.floor((game.runnerDistance||0)/45)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*2);
       runSaveResult();
     }
     state='menu';current=null;cancelAnimationFrame(raf);const runnerLayer=$('runner3dCanvas');if(runnerLayer)runnerLayer.style.display='none';screen.classList.remove('active','runner-active','runner-3d-active');$('runnerControls').hidden=true;screen.setAttribute('aria-hidden','true');
@@ -96,9 +132,9 @@
     if(id==='runner'){game.lane=1;game.targetLane=1;game.laneVisual=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;game.runnerMode='select';game.heroIndex=runnerClampV2(runRead('hero',0),0,2);game.runnerDistance=0;game.runnerStage=0;game.runnerEffects={magnet:0,x2:0,jet:0,shoes:0,board:0};game.runnerKeys=1;game.runnerInvul=0;game.rideT=0;game.runnerSaved=false;game.runnerBest=bestOf('runner');try{game.runnerKeys=runRead('keys',1)}catch(_){}}if(id==='racer'){game.lane=1;game.targetLane=1;game.obstacles=[];game.pickups=[];game.spawn=0;game.jump=0;game.jumpV=0;game.slide=0;game.flash=0;game.speed=430;}
     if(id==='jumper'){game.player={x:360,y:790,vx:0,vy:-620,r:23};game.platforms=[];for(let i=0;i<9;i++)game.platforms.push({x:70+Math.random()*530,y:860-i*105,w:110+Math.random()*55});game.camera=0;game.left=false;game.right=false;}
     if(id==='space'){game.player={x:360,y:840};game.bullets=[];game.enemies=[];game.spawn=0;game.fire=0;game.drag=false;game.lives=3;game.scoreTime=0;}
-    if(id==='brick'){game.paddle={x:360,y:915,w:150};game.ball={x:360,y:870,vx:220,vy:-480,r:12,stuck:true};game.bricks=[];for(let row=0;row<6;row++)for(let col=0;col<8;col++)game.bricks.push({x:43+col*80,y:145+row*48,w:69,h:25,hp:row<2?2:1,alive:true,hue:(row*35+col*9)%360});game.lives=3;}
+    if(id==='brick'){game.level=1;game.paddle={x:360,y:915,w:150};game.ball={x:360,y:870,vx:220,vy:-480,r:12,stuck:true};game.bricks=[];for(let row=0;row<6;row++)for(let col=0;col<8;col++)game.bricks.push({x:43+col*80,y:145+row*48,w:69,h:25,hp:row<2?2:1,alive:true,hue:(row*35+col*9)%360});game.lives=3;}
   }
-  function makePipe(x){const gap=245,center=250+Math.random()*440;return{x,center,gap,passed:false}}
+  function makePipe(x){const difficulty=Math.min(1,score/40),gap=Math.round(245-difficulty*72),center=250+Math.random()*440;return{x,center,gap,passed:false}}
   function bg(){
     const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b1030');g.addColorStop(.58,'#19153e');g.addColorStop(1,'#111329');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
     const glow=ctx.createRadialGradient(W*.5,H*.26,20,W*.5,H*.26,650);glow.addColorStop(0,'rgba(129,101,214,.25)');glow.addColorStop(1,'rgba(129,101,214,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
@@ -158,15 +194,16 @@
     if(current==='brick')updateBrick(dt);
   }
   function updateFlappy(dt){
-    const p=game.player;p.vy+=1500*dt;p.y+=p.vy*dt;p.rot=Math.min(.85,Math.max(-.5,p.vy/850));
-    game.spawn+=dt;if(game.spawn>1.65){game.pipes.push(makePipe(W+50));game.spawn=0}
-    game.pipes.forEach(pipe=>{pipe.x-=250*dt;if(!pipe.passed&&pipe.x+92<p.x){pipe.passed=true;setScore(score+1);tone(720)}});
+    const p=game.player,difficulty=Math.min(1,score/40),pipeSpeed=250+difficulty*105;
+    p.vy+=1500*dt;p.y+=p.vy*dt;p.rot=Math.min(.85,Math.max(-.5,p.vy/850));
+    game.spawn+=dt;if(game.spawn>Math.max(1.02,1.65-difficulty*.48)){game.pipes.push(makePipe(W+50));game.spawn=0}
+    game.pipes.forEach(pipe=>{pipe.x-=pipeSpeed*dt;if(!pipe.passed&&pipe.x+92<p.x){pipe.passed=true;game.passed=(game.passed||0)+1;setScore(score+1);tone(720)}});
     game.pipes=game.pipes.filter(p=>p.x>-130);
     if(p.y>H-95||p.y<38){endGame();return}
     for(const pipe of game.pipes){const gapTop=pipe.center-pipe.gap/2,gapBottom=pipe.center+pipe.gap/2;if(p.x+p.r>pipe.x-8&&p.x-p.r<pipe.x+100&&(p.y-p.r<gapTop||p.y+p.r>gapBottom)){endGame();return}}
   }
   function updateRunner(dt,isCar){
-    game.speed=Math.min(760,game.speed+dt*8);distance+=game.speed*dt/23;setScore(Math.floor(distance)+coins*10);
+    game.speed=Math.min(760,game.speed+dt*8);distance+=game.speed*dt/23;setScore(Math.floor(distance/20)+coins*2);
     game.spawn+=dt;if(game.spawn>(isCar ? .86 : 1.02)){const lane=Math.floor(Math.random()*3);game.obstacles.push({lane,y:-80,z:Math.random()});if(Math.random()>.35)game.pickups.push({x:180+Math.floor(Math.random()*3)*180,y:-260});game.spawn=0}
     if(game.jump>0){game.jump+=game.jumpV*dt;game.jumpV-=1450*dt;if(game.jump<0){game.jump=0;game.jumpV=0}}
     if(game.slide>0)game.slide-=dt;
@@ -180,31 +217,29 @@
   function updateJumper(dt){
     const p=game.player;p.vy+=1450*dt;p.x+=p.vx*dt;p.x=Math.max(38,Math.min(W-38,p.x));p.y+=p.vy*dt;
     if(p.vy>0){for(const plat of game.platforms){const py=plat.y;if(p.x>plat.x-20&&p.x<plat.x+plat.w+20&&p.y+24>=py&&p.y+24<=py+25){p.vy=-690;tone(500);break}}}
-    if(p.y-game.camera<420){const shift=420-(p.y-game.camera);game.camera+=shift;distance=Math.max(distance,game.camera);setScore(Math.floor(distance/10))}
+    if(p.y-game.camera<420){const shift=420-(p.y-game.camera);game.camera+=shift;distance=Math.max(distance,game.camera);setScore(Math.floor(distance/50))}
     const highest=game.camera+H;game.platforms=game.platforms.filter(pl=>pl.y-game.camera<H+100);
-    while(game.platforms.length<10){const y=Math.min(...game.platforms.map(pl=>pl.y))-105;game.platforms.push({x:35+Math.random()*550,y,w:100+Math.random()*60})}
+    const climbDifficulty=Math.min(1.5,distance/4500),platformGap=105+Math.round(climbDifficulty*20),platformWidth=Math.max(78,140-Math.round(climbDifficulty*34));
+    while(game.platforms.length<10){const y=Math.min(...game.platforms.map(pl=>pl.y))-platformGap;game.platforms.push({x:35+Math.random()*(W-platformWidth-70),y,w:platformWidth})}
     p.vx*=.88;if(p.y-game.camera>H+40){endGame()}
   }
   function updateSpace(dt){
-    const p=game.player;game.fire+=dt;if(game.fire>.18){game.bullets.push({x:p.x,y:p.y-35});game.fire=0}
-    game.spawn+=dt;if(game.spawn>.65){game.enemies.push({x:45+Math.random()*(W-90),y:-35,v:260+Math.random()*140});game.spawn=0}
-    game.bullets.forEach(b=>b.y-=720*dt);game.enemies.forEach(e=>e.y+=e.v*dt);
-    game.bullets=game.bullets.filter(b=>b.y>-30);
+    const p=game.player,difficulty=Math.min(1,game.time/90);
+    game.fire+=dt;if(game.fire>.18){game.bullets.push({x:p.x,y:p.y-35});game.fire=0}
+    game.spawn+=dt;const spawnEvery=1.02-difficulty*.48;
+    if(game.spawn>spawnEvery){
+      const enemySpeed=190+Math.random()*75+difficulty*150;
+      game.enemies.push({x:45+Math.random()*(W-90),y:-35,v:enemySpeed});
+      if(game.time>35&&Math.random()<difficulty*.28)game.enemies.push({x:45+Math.random()*(W-90),y:-130,v:enemySpeed*.92});
+      game.spawn=0;
+    }
+    game.bullets.forEach(b=>b.y-=720*dt);game.enemies.forEach(e=>e.y+=e.v*dt);game.bullets=game.bullets.filter(b=>b.y>-30);
     for(const e of game.enemies){
       if(e.dead)continue;
-      for(const b of game.bullets){
-        if(b.dead)continue;
-        if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){
-          e.dead=true;b.dead=true;setScore(score+10);tone(660);break;
-        }
-      }
-      if(!e.dead&&e.y>p.y-30&&e.y<p.y+30&&Math.abs(e.x-p.x)<48){
-        e.dead=true;game.lives--;tone(120,.15);
-        if(game.lives<=0){endGame();return}
-      }
+      for(const b of game.bullets){if(b.dead)continue;if(Math.abs(e.x-b.x)<34&&Math.abs(e.y-b.y)<35){e.dead=true;b.dead=true;setScore(score+5);tone(660);break}}
+      if(!e.dead&&e.y>p.y-30&&e.y<p.y+30&&Math.abs(e.x-p.x)<48){e.dead=true;game.lives--;tone(120,.15);if(game.lives<=0){endGame();return}}
     }
     game.enemies=game.enemies.filter(e=>!e.dead&&e.y<H+40);game.bullets=game.bullets.filter(b=>!b.dead);
-    game.scoreTime+=dt;if(game.scoreTime>=1){setScore(score+5);game.scoreTime=0}
     if(pointerDown){p.x+=(pointerX-p.x)*Math.min(1,dt*12)}p.x=Math.max(45,Math.min(W-45,p.x));
   }
   function updateBrick(dt){
@@ -229,7 +264,7 @@
       if(!brick.alive||b.x<=brick.x-b.r||b.x>=brick.x+brick.w+b.r||b.y<=brick.y-b.r||b.y>=brick.y+brick.h+b.r)continue;
       const incomingY=b.vy;
       brick.hp--;
-      if(brick.hp<=0){brick.alive=false;setScore(score+5);coins+=1}
+      if(brick.hp<=0){brick.alive=false;setScore(score+1);coins+=1}
       b.y=incomingY>0?brick.y-b.r:brick.y+brick.h+b.r;
       b.vy=-incomingY;
       tone(470);
@@ -237,9 +272,11 @@
     }
 
     if(game.bricks.every(br=>!br.alive)){
-      game.bricks.forEach(br=>{br.alive=true;br.hp=1});
-      b.vy=-Math.max(260,Math.abs(b.vy));
-      setScore(score+100);
+      game.level=(game.level||1)+1;
+      game.bricks.forEach((br,index)=>{const row=Math.floor(index/8);br.alive=true;br.hp=game.level>=3&&row<3?2:1});
+      b.vx=Math.max(-650,Math.min(650,b.vx*1.08));
+      b.vy=-Math.min(850,Math.max(260,Math.abs(b.vy)*1.06));
+      setScore(score+15);
     }
     if(b.y>H+20){
       game.lives--;
@@ -296,6 +333,10 @@
     if(current)startGame();
   });
   $('backButton').addEventListener('click',closeGame);
+  $('leaderboardButton').addEventListener('click',()=>showGameLeaderboard(current));
+  $('closeLeaderboard').addEventListener('click',()=>{$('leaderboardModal').classList.remove('active');$('leaderboardModal').setAttribute('aria-hidden','true')});
+  $('leaderboardBackdrop').addEventListener('click',()=>{$('leaderboardModal').classList.remove('active');$('leaderboardModal').setAttribute('aria-hidden','true')});
+  window.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('leaderboardModal').classList.contains('active')){$('leaderboardModal').classList.remove('active');$('leaderboardModal').setAttribute('aria-hidden','true')}});
   soundToggle.addEventListener('click',()=>{soundOn=!soundOn;soundToggle.innerHTML=(soundOn?'♫':'♪')+' <span>Sound '+(soundOn?'ON':'OFF')+'</span>';if(soundOn)tone(640)});
   window.addEventListener('resize',()=>{if(current&&state!=='playing'){draw();finishPixelFrame()}});
   if(window.Telegram&&Telegram.WebApp){
@@ -653,7 +694,7 @@
       return c.y<H+35;
     });
     game.obstacles=game.obstacles.filter(o=>o.y<H+100);
-    setScore(Math.floor(distance)+coins*10);
+    setScore(Math.floor(distance/20)+coins*2);
   }
 
 
@@ -904,7 +945,7 @@
     const activeLane=Math.round(game.laneVisual);
     for(const o of game.obstacles){if(o.lane!==activeLane||o.z<.875||o.z>1.03)continue;if(o.type==='barrier'&&game.jump>78)continue;if(o.type==='overhead'&&game.slide>0)continue;endGame();return}
     game.pickups=game.pickups.filter(c=>{if(c.lane===activeLane&&c.z>.86&&c.z<1.02){coins++;tone(880);return false}return c.z<1.1});
-    game.obstacles=game.obstacles.filter(o=>o.z<1.1);setScore(Math.floor(distance)+coins*10);
+    game.obstacles=game.obstacles.filter(o=>o.z<1.1);setScore(Math.floor(distance/20)+coins*2);
   }
   function draw(){
     if(!current)return;
@@ -1244,6 +1285,7 @@
   }
   function runSaveResult(){
     if(game.runnerSaved)return;
+    setScore(Math.floor((game.runnerDistance||0)/45)*(game.runnerEffects&&game.runnerEffects.x2>0?2:1)+coins*2);
     game.runnerSaved=true;saveResult();game.runnerBest=bestOf('runner');
   }
   function runRetry(){
@@ -1281,9 +1323,10 @@
     game.runnerStage=st;
     const travel=dt*(.36+game.speed/1900);
     game.spawn+=dt;
-    if(game.spawn>Math.max(.78,1.32-game.speed/1900)){
+    const runDifficulty=Math.min(1,(game.runnerDistance||0)/15000);
+    if(game.spawn>Math.max(.66,1.32-game.speed/1900-runDifficulty*.16)){
       const lane=Math.floor(Math.random()*3),r=Math.random();
-      const type=r<.23?'train':r<.61?'barrier':r<.83?'overhead':'ramp';
+      const type=r<(.23+runDifficulty*.08)?'train':r<(.61+runDifficulty*.04)?'barrier':r<(.83-runDifficulty*.03)?'overhead':'ramp';
       if(type==='ramp'){
          // The ramp must arrive before the train so the ride window is active
          // when the train reaches the player.
@@ -1292,6 +1335,11 @@
          game.pickups.push({lane,z:.11,type:'super',raised:true});
        }
       else game.obstacles.push({lane,z:.015,type});
+      // Later distances occasionally add a second hazard, while leaving one lane clear.
+      if(game.runnerDistance>5000&&Math.random()<Math.min(.34,(game.runnerDistance-5000)/26000)){
+        const extraLane=(lane+1+Math.floor(Math.random()*2))%3;
+        game.obstacles.push({lane:extraLane,z:-.26,type:Math.random()<.55?'barrier':'overhead'});
+      }
       // Each sequence leaves at least one readable path.
       const safeLane=(lane+1+Math.floor(Math.random()*2))%3;
       for(let i=0;i<6;i++)game.pickups.push({lane:safeLane,z:-.12+i*.105,type:i%4===3?'super':'coin'});
@@ -1338,7 +1386,7 @@
       }
     }
     game.obstacles=game.obstacles.filter(o=>o.z<1.15);
-    setScore(Math.floor(game.runnerDistance/12)*(game.runnerEffects.x2>0?2:1)+coins*10);
+    setScore(Math.floor(game.runnerDistance/45)*(game.runnerEffects.x2>0?2:1)+coins*2);
   }
   function action(dx,dy){
     if(state!=='playing')return;
