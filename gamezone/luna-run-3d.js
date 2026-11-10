@@ -193,7 +193,15 @@
         }
       }
     }
-    for(let z=27;z>-28;z-=9){signBoxes.push({x:0,y:3.1,z,w:3.5,h:.62,d:.22},{x:-1.67,y:2.78,z,w:.12,h:.38,d:.25},{x:1.67,y:2.78,z,w:.12,h:.38,d:.25});}
+    // Station signs sit beside the platforms, never across the playable lanes.
+    for(let z=24;z>-24;z-=18){
+      [-1,1].forEach(side=>{
+        signBoxes.push(
+          {x:side*6.05,y:1.55,z,w:.12,h:3.1,d:.12},
+          {x:side*6.35,y:3.05,z,w:.72,h:.46,d:.16}
+        );
+      });
+    }
     meshes.gravel=makeBoxBatch(gravel);meshes.sleepers=makeBoxBatch(sleepers);meshes.railBeds=makeBoxBatch(railBeds);meshes.rails=makeBoxBatch(rails);
     meshes.clips=makeBoxBatch(clips);meshes.platforms=makeBoxBatch(platforms);meshes.posts=makeBoxBatch(posts);meshes.beams=makeBoxBatch(beams);
     meshes.lamps=makeBoxBatch(lampHousings);meshes.buildings=makeBoxBatch(buildingBoxes);meshes.windows=makeBoxBatch(windowBoxes);meshes.signs=makeBoxBatch(signBoxes);meshes.wires=makeBoxBatch(wireBoxes);
@@ -271,8 +279,8 @@
       sphere(x,y,z,.20*s,.20*s,.1,'#fff0bc',.35,.5);return;
     }
     const meta={magnet:['#ef5575','M'],x2:['#438bff','2'],jet:['#ff9c42','J'],shoes:['#48d58c','S'],board:['#2dc9ee','B'],mystery:['#a879ef','?'],key:['#ffcf56','K']}[item.type]||['#a879ef','?'];
-    const y=1.28+Math.sin(phase)*.13;sphere(x,y,z,.35,.35,.35,meta[0],.42,.24);
-    draw(meshes.torus,compose(x,y,z,.78,.78,.78,0,time*1.4,0),meta[0],.42,.4,0);box(x,y,z,.12,.62,.12,'#ffffff',.45,.1,0,0,time*.5,0);
+    const y=1.28+Math.sin(phase)*.13;sphere(x,y,z,.27,.27,.27,meta[0],.38,.24);
+    draw(meshes.torus,compose(x,y,z,.60,.60,.60,0,time*1.4,0),meta[0],.38,.4,0);box(x,y,z,.09,.46,.09,'#ffffff',.4,.1,0,0,time*.5,0);
   }
   function drawHero(data,theme){
     const hero=data.hero||{body:'#9069b8',shine:'#d8b8f0',dark:'#302746',scarf:'#f1c58b',hair:'#28233c',skin:'#e8b99c',pack:'#5c9f9d',accent:'#ffe3a6'};
