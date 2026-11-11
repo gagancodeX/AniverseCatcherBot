@@ -3,8 +3,19 @@
 # Project: LunaCatcherBot
 # ==========================================
 
-from LUNA import app, collection, user_collection, rarity_map, RARITY_NAMES
 from pyrogram import filters, enums
+from pyrogram.types import MessageEntity
+
+from LUNA import (
+    app,
+    bot_client,
+    DATABASE_ID,
+    collection,
+    user_collection,
+    rarity_map,
+    RARITY_NAMES,
+    LOGGER,
+)
 
 
 # Existing character records keep their IDs; only their display labels change.
@@ -41,9 +52,163 @@ REMOVED_RARITY_LABELS = {
     "🍑 Echhi": "🗃️ Archived / Unassigned",
 }
 
+ALL_LEGACY_LABELS = {
+    **LEGACY_RARITY_RENAMES,
+    **REMOVED_RARITY_LABELS,
+}
+
+
+def _utf16_length(value):
+    """Telegram message entity offsets are measured in UTF-16 code units."""
+    return len(value.encode("utf-16-le")) // 2
+
+
+def _shift_caption_entities(entities, old_caption, old_label, match_index, new_label):
+    """Preserve Telegram formatting and links after replacing an emoji label."""
+    start = _utf16_length(old_caption[:match_index])
+    old_end = start + _utf16_length(old_label)
+    delta = _utf16_length(new_label) - _utf16_length(old_label)
+    shifted = []
+
+    for entity in entities or []:
+        offset = entity.offset
+        length = entity.length
+        entity_end = offset + length
+
+        if offset >= old_end:
+            offset += delta
+        elif offset <= start and entity_end >= old_end:
+            length += delta
+
+        shifted.append(
+            MessageEntity(
+                type=entity.type,
+                offset=offset,
+                length=length,
+                url=getattr(entity, "url", None),
+                user=getattr(entity, "user", None),
+                language=getattr(entity, "language", None),
+                custom_emoji_id=getattr(entity, "custom_emoji_id", None),
+            )
+        )
+
+    return shifted
+
+
+async def sync_database_channel_captions():
+    """Update old rarity labels in existing Telegram database-channel posts.
+
+    The archive stores each copied post's chat and message IDs. This allows the
+    migration to edit the original channel caption without changing its media.
+    """
+    active_labels = list(RARITY_NAMES) + list(REMOVED_RARITY_LABELS.values())
+    cursor = collection.find({
+        "rarity": {"$in": active_labels},
+        "media_message_id": {"$exists": True, "$ne": None},
+    })
+
+    characters = await cursor.to_list(length=None)
+    grouped = {}
+    for character in characters:
+        message_id = character.get("media_message_id")
+        if not message_id:
+            continue
+        chat_id = character.get("media_chat_id") or DATABASE_ID
+        if not chat_id:
+            continue
+        grouped.setdefault(chat_id, []).append(character)
+
+    edited = 0
+    seen_messages = set()
+
+    for chat_id, records in grouped.items():
+        for offset in range(0, len(records), 100):
+            batch = records[offset:offset + 100]
+            message_ids = [int(item["media_message_id"]) for item in batch]
+
+            try:
+                fetched = await bot_client.get_messages(
+                    chat_id=chat_id,
+                    message_ids=message_ids,
+                )
+            except Exception as exc:
+                LOGGER("LUNA.RARITY").warning(
+                    "Could not read database-channel messages in %s: %s",
+                    chat_id,
+                    str(exc)[:180],
+                )
+                continue
+
+            if not isinstance(fetched, list):
+                fetched = [fetched]
+            messages_by_id = {
+                message.id: message for message in fetched
+                if message and getattr(message, "id", None)
+            }
+
+            for character in batch:
+                message_id = int(character["media_message_id"])
+                message_key = (str(chat_id), message_id)
+                if message_key in seen_messages:
+                    continue
+                seen_messages.add(message_key)
+
+                message = messages_by_id.get(message_id)
+                caption = getattr(message, "caption", None) if message else None
+                current_label = character.get("rarity")
+                if not caption or not current_label:
+                    continue
+
+                replacement = None
+                match_index = None
+                for old_label, new_label in ALL_LEGACY_LABELS.items():
+                    if new_label == current_label and old_label in caption:
+                        replacement = (old_label, new_label)
+                        match_index = caption.find(old_label)
+                        break
+
+                if not replacement:
+                    continue
+
+                old_label, new_label = replacement
+                updated_caption = (
+                    caption[:match_index]
+                    + new_label
+                    + caption[match_index + len(old_label):]
+                )
+                entities = _shift_caption_entities(
+                    getattr(message, "caption_entities", None),
+                    caption,
+                    old_label,
+                    match_index,
+                    new_label,
+                )
+
+                try:
+                    await bot_client.edit_message_caption(
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        caption=updated_caption,
+                        caption_entities=entities,
+                        parse_mode=enums.ParseMode.DISABLED,
+                    )
+                    edited += 1
+                except Exception as exc:
+                    LOGGER("LUNA.RARITY").warning(
+                        "Could not update rarity caption for database post %s: %s",
+                        message_id,
+                        str(exc)[:180],
+                    )
+
+    LOGGER("LUNA.RARITY").info(
+        "Database channel rarity caption sync complete: %s message(s) edited.",
+        edited,
+    )
+    return edited
+
 
 async def migrate_rarity_labels():
-    """Rename legacy labels in the archive, saved vaults, and stored filters."""
+    """Rename old labels in the archive, vaults, filters, and channel captions."""
     modified = 0
 
     for old_label, new_label in LEGACY_RARITY_RENAMES.items():
@@ -87,6 +252,7 @@ async def migrate_rarity_labels():
         )
         modified += filter_result.modified_count
 
+    await sync_database_channel_captions()
     return modified
 
 
