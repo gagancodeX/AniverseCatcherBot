@@ -4,6 +4,7 @@
 # ==========================================
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from LUNA import collection, app, user_collection, require_power, DATABASE_ID, bot as aiogram_bot
@@ -25,16 +26,40 @@ def build_database_caption(character):
 
 async def delete_database_channel_post(client, chat_id, message_id):
     """
-    Delete a bot-authored channel post using Bot API first, then Pyrogram.
+    Delete an archive post when Telegram still permits bot deletion.
 
-    Telegram allows bots with can_post_messages to delete their own channel
-    posts through Bot API, but that API only deletes messages younger than
-    48 hours. Pyrogram remains a fallback for posts requiring channel-level
-    delete_messages rights (including older posts).
+    Bot accounts are limited to deleting messages younger than 48 hours.
+    If an older archive post is manually removed by a channel administrator,
+    a later /gdelete run recognizes that it is already absent and safely
+    completes the MongoDB/user-collection cleanup.
     """
     message_id = int(message_id)
-    bot_api_error = None
 
+    # A human channel admin may have removed the post manually after the
+    # bot's 48-hour deletion window expired. Treat confirmed absence as done.
+    existing_message = await client.get_messages(chat_id, message_id)
+    if (
+        not existing_message
+        or getattr(existing_message, "empty", False)
+        or not getattr(existing_message, "id", None)
+    ):
+        return "Database channel post was already removed manually."
+
+    sent_at = getattr(existing_message, "date", None)
+    if sent_at:
+        if sent_at.tzinfo is None:
+            sent_at = sent_at.replace(tzinfo=timezone.utc)
+        age = datetime.now(timezone.utc) - sent_at.astimezone(timezone.utc)
+        if age >= timedelta(hours=48):
+            raise RuntimeError(
+                "ARCHIVE_POST_TOO_OLD: "
+                f"this archive post was sent at {sent_at.isoformat()} and is "
+                "older than Telegram's 48-hour bot deletion limit. "
+                "Remove this post manually in the database channel, then run "
+                "the same /gdelete command again."
+            )
+
+    bot_api_error = None
     try:
         await aiogram_bot.delete_message(
             chat_id=chat_id,
@@ -231,6 +256,25 @@ async def delete_handler(client, message):
                     archive_message_id,
                 )
             except Exception as exc:
+                if str(exc).startswith("ARCHIVE_POST_TOO_OLD:"):
+                    diagnostics = await get_database_delete_diagnostics(
+                        client,
+                        archive_chat_id,
+                        archive_message_id,
+                    )
+                    return await message.reply_text(
+                        "⏳ ARCHIVE POST IS OLDER THAN 48 HOURS\n"
+                        f"Character {character_id} and all user copies are still safe.\n"
+                        "Telegram does not allow bot accounts to delete this old post, even with admin rights.\n"
+                        "Please delete only this character's archive post manually in the database channel, "
+                        "then run /gdelete "
+                        f"{character_id} again. The bot will detect that the post is already gone "
+                        "and finish the database cleanup.\n\n"
+                        f"📅 {str(exc).replace('ARCHIVE_POST_TOO_OLD: ', '')}\n\n"
+                        "🔎 LIVE DIAGNOSTICS\n"
+                        f"{diagnostics}"
+                    )
+
                 diagnostics = await get_database_delete_diagnostics(
                     client,
                     archive_chat_id,
