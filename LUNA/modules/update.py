@@ -59,6 +59,59 @@ async def delete_database_channel_post(client, chat_id, message_id):
         ) from pyrogram_error
 
 
+async def get_database_delete_diagnostics(client, chat_id, message_id):
+    """Return safe, actionable diagnostics for a failed archive-post deletion."""
+    lines = []
+    me = None
+
+    try:
+        me = await client.get_me()
+        member = await client.get_chat_member(chat_id, me.id)
+        privileges = getattr(member, "privileges", None)
+        lines.append(
+            "Bot channel role: "
+            f"{getattr(member, 'status', 'unknown')}; "
+            f"Post Messages: {getattr(privileges, 'can_post_messages', 'n/a')}; "
+            f"Delete Messages: {getattr(privileges, 'can_delete_messages', 'n/a')}"
+        )
+    except Exception as exc:
+        lines.append(f"Bot admin check failed: {str(exc)[:110]}")
+
+    try:
+        target = await client.get_messages(chat_id, int(message_id))
+        if not target or getattr(target, "empty", False):
+            lines.append("Saved channel message: not found / inaccessible")
+        else:
+            sender = getattr(target, "from_user", None)
+            sender_chat = getattr(target, "sender_chat", None)
+            if sender:
+                sender_text = f"user {sender.id}"
+                if me and sender.id == me.id:
+                    sender_text += " (this bot)"
+            elif sender_chat:
+                sender_text = f"channel/chat {sender_chat.id}"
+            else:
+                sender_text = "not exposed by Telegram"
+
+            media_kind = next(
+                (
+                    kind for kind in ("photo", "video", "document", "animation")
+                    if getattr(target, kind, None)
+                ),
+                "text/other",
+            )
+            sent_at = getattr(target, "date", None)
+            lines.append(
+                "Saved channel message: found; "
+                f"sender: {sender_text}; type: {media_kind}; "
+                f"date: {sent_at.isoformat() if sent_at else 'unknown'}"
+            )
+    except Exception as exc:
+        lines.append(f"Saved message lookup failed: {str(exc)[:110]}")
+
+    return "\\n".join(lines)
+
+
 async def sync_database_channel_post(client, character):
     """
     Keep the archive entry in DATABASE_ID in sync with MongoDB.
@@ -178,12 +231,18 @@ async def delete_handler(client, message):
                     archive_message_id,
                 )
             except Exception as exc:
+                diagnostics = await get_database_delete_diagnostics(
+                    client,
+                    archive_chat_id,
+                    archive_message_id,
+                )
                 return await message.reply_text(
                     "❌ DATABASE CHANNEL DELETE FAILED\n"
                     f"Character {character_id} was NOT deleted.\n"
-                    "Grant the bot Post Messages and Delete Messages rights in the database channel. "
-                    "Telegram's Bot API cannot delete posts older than 48 hours, and some service messages are not deletable.\n"
-                    f"Details: {str(exc)[:220]}"
+                    "The MongoDB record and user collections were left untouched.\n"
+                    f"Delete errors: {str(exc)[:220]}\n\n"
+                    "🔎 LIVE DIAGNOSTICS\n"
+                    f"{diagnostics}"
                 )
 
         delete_result = await collection.delete_one({"_id": character["_id"]})
