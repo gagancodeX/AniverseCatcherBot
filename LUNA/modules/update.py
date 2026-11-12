@@ -107,7 +107,7 @@ async def sync_database_channel_post(client, character):
         return f"channel sync failed: {str(exc)[:120]}"
 
 
-# Delete a character and remove it from users' collections.
+# Delete the archived Telegram post, the character record, and all user copies.
 @app.on_message(filters.command("gdelete"))
 @require_power("del")
 async def delete_handler(client, message):
@@ -117,20 +117,55 @@ async def delete_handler(client, message):
             return await message.reply_text("Incorrect format. Use: /gdelete ID")
 
         character_id = args[1]
-        character = await collection.find_one_and_delete({"id": character_id})
-        if character:
-            update_result = await user_collection.update_many(
-                {"characters.id": character_id},
-                {"$pull": {"characters": {"id": character_id}}},
-            )
-            await message.reply_text(
-                f"Character {character_id} deleted successfully.\n"
-                f"Removed from {update_result.modified_count} user collections."
-            )
-        else:
-            await message.reply_text(
+        character = await collection.find_one({"id": character_id})
+        if not character:
+            return await message.reply_text(
                 f"Character with ID {character_id} was not found."
             )
+
+        # Delete the exact media post saved during upload. Do this before
+        # removing MongoDB data so permission/API errors do not orphan a record.
+        archive_message_id = character.get("media_message_id")
+        channel_status = "No saved database-channel message reference."
+        if archive_message_id is not None:
+            archive_chat_id = character.get("media_chat_id") or DATABASE_ID
+            if not archive_chat_id:
+                return await message.reply_text(
+                    "❌ Cannot delete this character: its database channel is not configured. "
+                    "The character record was left untouched."
+                )
+
+            try:
+                await client.delete_messages(
+                    chat_id=archive_chat_id,
+                    message_ids=int(archive_message_id),
+                )
+                channel_status = "Database channel post deleted."
+            except Exception as exc:
+                return await message.reply_text(
+                    "❌ DATABASE CHANNEL DELETE FAILED\n"
+                    f"Character {character_id} was NOT deleted.\n"
+                    "Check that the bot can delete messages in the database channel.\n"
+                    f"Details: {str(exc)[:180]}"
+                )
+
+        delete_result = await collection.delete_one({"_id": character["_id"]})
+        if delete_result.deleted_count != 1:
+            return await message.reply_text(
+                "⚠️ The database-channel post was removed, but the character record "
+                "could not be deleted. Please check the character record before retrying."
+            )
+
+        update_result = await user_collection.update_many(
+            {"characters.id": character_id},
+            {"$pull": {"characters": {"id": character_id}}},
+        )
+
+        await message.reply_text(
+            f"✅ CHARACTER {character_id} DELETED\n"
+            f"📦 Database channel: {channel_status}\n"
+            f"👥 Removed from {update_result.modified_count} user collections."
+        )
     except Exception as exc:
         await message.reply_text(f"Error: {str(exc)}")
 
