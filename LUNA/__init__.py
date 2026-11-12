@@ -40,6 +40,8 @@ from config import (
 
 
 
+from config import DATABASE_ADMIN_SESSION
+
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
 application = Application.builder().token(TOKEN).build()
@@ -50,6 +52,19 @@ bot_client = Client(
     api_hash=api_hash,
     bot_token=TOKEN,
     workdir=PYROGRAM_WORKDIR,
+)
+# Optional human-admin session for deleting archive posts older than Telegram's bot limit.
+# The account must be a channel administrator with Delete Messages rights.
+database_admin_client = (
+    Client(
+        "LunaDatabaseAdmin",
+        api_id=api_id,
+        api_hash=api_hash,
+        session_string=DATABASE_ADMIN_SESSION,
+        workdir=PYROGRAM_WORKDIR,
+    )
+    if DATABASE_ADMIN_SESSION
+    else None
 )
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
