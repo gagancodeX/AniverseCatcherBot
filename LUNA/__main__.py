@@ -23,7 +23,7 @@ from LUNA.modules import ALL_MODULES
 BOT_READY = False
 
 BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
-BOT_NAME = "🌙 𝐋𝐮𝐧𝐚 𝐖𝐚𝐢𝐟𝐮 𝐂𝐚𝐭𝐜𝐡𝐞𝐫 ✦"
+BOT_NAME = "🌙 𝐋𝐮𝐧𝐚 𝐖𝐚𝐢𝐟𝐮 𝐂𝐚𝐭𝐜𝐡𝐞𝐫"
 
 USER_COMMANDS = [
     {
