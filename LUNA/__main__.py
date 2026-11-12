@@ -23,7 +23,8 @@ from LUNA.modules import ALL_MODULES
 BOT_READY = False
 
 BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
-BOT_NAME = "🌙 𝐋𝐮𝐧𝐚 𝐖𝐚𝐢𝐟𝐮 𝐂𝐚𝐭𝐜𝐡𝐞𝐫"
+BOT_NAME = "𝐋𝐮𝐧𝐚 𝐖𝐚𝐢𝐟𝐮 𝐂𝐚𝐭𝐜𝐡𝐞𝐫 🌙"
+ABOUT_TEXT = "✨ Catch anime characters, collect rare editions, trade with friends, and build your ultimate collection!"
 
 USER_COMMANDS = [
     {
@@ -357,15 +358,15 @@ def sync_bot_profile() -> None:
                 exc,
             )
 
-    # Telegram allows an empty short_description to remove the dedicated name for the given language.
+    # Set the bot's profile About text for the default, English and Hindi languages.
     for language_code in ABOUT_LANGUAGES:
-        payload = {"short_description": ""}
+        payload = {"short_description": ABOUT_TEXT}
         if language_code:
             payload["language_code"] = language_code
         try:
             _telegram_api_call("setMyShortDescription", payload)
             LOGGER("LUNA").info(
-                "Telegram About text cleared for language %r",
+                "Telegram About text synced for language %r",
                 language_code or "default",
             )
         except Exception as exc:
@@ -433,10 +434,10 @@ def sync_bot_profile() -> None:
         actual_about = _telegram_api_call("getMyShortDescription", {})
         actual_name = _telegram_api_call("getMyName", {})
         LOGGER("LUNA").info(
-            "Telegram profile verification: name=%r; %s default commands; About length=%s",
+            "Telegram profile verification: name=%r; %s default commands; About=%r",
             (actual_name or {}).get("name", ""),
             len(actual_commands or []),
-            len((actual_about or {}).get("short_description", "")),
+            (actual_about or {}).get("short_description", ""),
         )
     except Exception as exc:
         LOGGER("LUNA").warning("Could not verify Telegram profile settings: %s", exc)
