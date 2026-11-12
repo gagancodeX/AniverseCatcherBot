@@ -605,43 +605,9 @@ def load_modules() -> None:
 
 
 def start_pyrogram_client() -> None:
-    """Start bot/admin clients and synchronize saved rarity labels."""
+    """Start the bot client and synchronize saved rarity labels."""
     bot_client.start()
     LOGGER("LUNA").info("Pyrogram bot client connected successfully.")
-
-    # Optional user-account session is used only for deleting older archive posts.
-    if LUNA.database_admin_client:
-        try:
-            LUNA.database_admin_client.start()
-            loop = asyncio.get_event_loop()
-            admin_me = loop.run_until_complete(LUNA.database_admin_client.get_me())
-            admin_member = loop.run_until_complete(
-                LUNA.database_admin_client.get_chat_member(LUNA.DATABASE_ID, admin_me.id)
-            )
-            admin_rights = getattr(admin_member, "privileges", None)
-            status_text = str(getattr(admin_member, "status", "")).lower()
-            can_delete = status_text.endswith("administrator") and bool(
-                getattr(admin_rights, "can_delete_messages", False)
-            )
-            if can_delete:
-                LOGGER("LUNA").info(
-                    "Database admin session connected; Delete Messages right verified."
-                )
-            else:
-                LOGGER("LUNA").warning(
-                    "Database admin session is connected, but its account lacks "
-                    "administrator status or Delete Messages permission."
-                )
-        except Exception as exc:
-            LOGGER("LUNA").warning(
-                "Database admin session could not be started/verified: %s",
-                str(exc)[:180],
-            )
-            try:
-                if LUNA.database_admin_client.is_connected:
-                    LUNA.database_admin_client.stop()
-            except Exception:
-                LOGGER("LUNA").exception("Could not stop database admin session.")
 
     from LUNA.modules.rarity import migrate_rarity_labels
 
@@ -690,11 +656,6 @@ def main() -> None:
         )
     finally:
         BOT_READY = False
-        try:
-            if LUNA.database_admin_client and LUNA.database_admin_client.is_connected:
-                LUNA.database_admin_client.stop()
-        except Exception:
-            LOGGER("LUNA").exception("Error while stopping database admin client.")
         try:
             if bot_client.is_connected:
                 bot_client.stop()
