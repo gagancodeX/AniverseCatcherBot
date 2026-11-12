@@ -4,6 +4,7 @@
 # ==========================================
 
 import asyncio
+import re
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from LUNA import collection, app, user_collection, require_power, DATABASE_ID, bot as aiogram_bot
@@ -107,6 +108,37 @@ async def sync_database_channel_post(client, character):
         return f"channel sync failed: {str(exc)[:120]}"
 
 
+def _message_has_character_id(post, character_id):
+    """Match only an explicit archive ID marker, not incidental caption text."""
+    body = (getattr(post, "caption", None) or getattr(post, "text", None) or "")
+    escaped_id = re.escape(str(character_id).strip())
+    marker = re.compile(
+        rf"(?im)(?:^|[\\n|])\\s*(?:🆔\\s*)?(?:character\\s+)?"
+        rf"id\\s*[·:|]\\s*{escaped_id}(?=\\s*(?:\\||$))"
+    )
+    return bool(marker.search(body))
+
+
+def _message_has_saved_media(post, media_file_id):
+    """Validate a saved message pointer against the character's stored Telegram file."""
+    if not media_file_id:
+        return False
+    for kind in ("photo", "video", "document", "animation"):
+        media = getattr(post, kind, None)
+        if media and getattr(media, "file_id", None) == media_file_id:
+            return True
+    return False
+
+
+async def _find_character_archive_posts(client, chat_id, character_id):
+    """Find every archive post carrying this exact character ID in a channel."""
+    matches = []
+    async for post in client.get_chat_history(chat_id, limit=0):
+        if _message_has_character_id(post, character_id):
+            matches.append(post)
+    return matches
+
+
 # Delete the archived Telegram post, the character record, and all user copies.
 @app.on_message(filters.command("gdelete"))
 @require_power("del")
@@ -123,38 +155,116 @@ async def delete_handler(client, message):
                 f"Character with ID {character_id} was not found."
             )
 
-        # Match the reference bot: delete the saved channel message with the bot,
-        # then remove the character and all users' copies from MongoDB.
-        archive_message_id = character.get("media_message_id")
-        channel_status = "No saved database-channel message reference."
+        # Search the configured database channel first. Older records can retain
+        # a channel ID from a previous configuration, so check that saved channel
+        # only as a fallback. Never trust a stale message ID without validation.
+        saved_chat_id = character.get("media_chat_id")
+        saved_message_id = character.get("media_message_id")
+        archive_channels = []
+        for chat_id in (DATABASE_ID, saved_chat_id):
+            if chat_id and str(chat_id) not in [str(item) for item in archive_channels]:
+                archive_channels.append(chat_id)
 
-        if archive_message_id is not None:
-            archive_chat_id = character.get("media_chat_id") or DATABASE_ID
-            if not archive_chat_id:
-                return await message.reply_text(
-                    "❌ Cannot delete this character: database channel is not configured. "
-                    "The character record was left untouched."
-                )
+        if not archive_channels:
+            return await message.reply_text(
+                "❌ DATABASE CHANNEL NOT CONFIGURED\n"
+                f"Character {character_id} was NOT deleted.\n"
+                "The MongoDB record and user collections were left untouched."
+            )
 
+        target_chat_id = None
+        target_posts = []
+        search_errors = []
+
+        for chat_id in archive_channels:
             try:
-                await aiogram_bot.delete_message(
-                    chat_id=archive_chat_id,
-                    message_id=int(archive_message_id),
+                matches = await _find_character_archive_posts(
+                    client, chat_id, character_id
                 )
-                channel_status = "Database channel post deleted."
             except Exception as exc:
-                return await message.reply_text(
-                    "❌ DATABASE CHANNEL DELETE FAILED\n"
-                    f"Character {character_id} was NOT deleted.\n"
-                    "The MongoDB record and user collections were left untouched.\n"
-                    f"Telegram error: {str(exc)[:220]}"
+                search_errors.append(f"{chat_id}: {str(exc)[:120]}")
+                continue
+
+            if matches:
+                target_chat_id = chat_id
+                target_posts = matches
+                break
+
+            # Backward compatibility for old archive captions without an ID
+            # marker: accept the saved message only when its media file_id agrees.
+            if (
+                saved_message_id is not None
+                and saved_chat_id is not None
+                and str(chat_id) == str(saved_chat_id)
+            ):
+                try:
+                    saved_post = await client.get_messages(
+                        chat_id, int(saved_message_id), replies=0
+                    )
+                    if (
+                        saved_post
+                        and not getattr(saved_post, "empty", False)
+                        and _message_has_saved_media(
+                            saved_post, character.get("media_file_id")
+                        )
+                    ):
+                        target_chat_id = chat_id
+                        target_posts = [saved_post]
+                        break
+                except Exception as exc:
+                    search_errors.append(
+                        f"saved reference {chat_id}/{saved_message_id}: {str(exc)[:120]}"
+                    )
+
+        if not target_posts:
+            details = (
+                f"Saved reference: chat {saved_chat_id or 'unknown'}, "
+                f"message {saved_message_id or 'unknown'}."
+            )
+            if search_errors:
+                details += "\\nSearch details: " + " | ".join(search_errors)
+            return await message.reply_text(
+                "❌ DATABASE CHANNEL POST NOT FOUND\n"
+                f"Character {character_id} was NOT deleted.\n"
+                "No verified archive post for this character was found. "
+                "MongoDB and user collections were left untouched.\\n"
+                + details
+            )
+
+        # Delete the verified post(s), then ask Telegram again to confirm they
+        # are gone. A successful API response alone is not reported as success.
+        deleted_ids = []
+        try:
+            for post in target_posts:
+                await aiogram_bot.delete_message(
+                    chat_id=target_chat_id,
+                    message_id=int(post.id),
                 )
+                await asyncio.sleep(0.25)
+                verification = await client.get_messages(
+                    target_chat_id, int(post.id), replies=0
+                )
+                if verification and not getattr(verification, "empty", False):
+                    raise RuntimeError(
+                        f"Telegram returned success but message {post.id} is still present."
+                    )
+                deleted_ids.append(int(post.id))
+        except Exception as exc:
+            return await message.reply_text(
+                "❌ DATABASE CHANNEL DELETE FAILED\\n"
+                f"Character {character_id} was NOT deleted.\\n"
+                "The MongoDB record and user collections were left untouched.\\n"
+                f"Channel: {target_chat_id} | Message IDs: "
+                f"{', '.join(str(post.id) for post in target_posts)}\\n"
+                f"Telegram/verification error: {str(exc)[:180]}"
+            )
 
         delete_result = await collection.delete_one({"_id": character["_id"]})
         if delete_result.deleted_count != 1:
             return await message.reply_text(
-                "⚠️ The database-channel post was removed, but the character record "
-                "could not be deleted. Please check the character record before retrying."
+                "⚠️ The channel post was deleted and verified, but the character "
+                "record could not be deleted. Please check the character record "
+                "before retrying."
             )
 
         update_result = await user_collection.update_many(
@@ -163,13 +273,11 @@ async def delete_handler(client, message):
         )
 
         await message.reply_text(
-            f"✅ CHARACTER {character_id} DELETED\n"
-            f"📦 Database channel: {channel_status}\n"
+            f"✅ CHARACTER {character_id} DELETED\\n"
+            f"📦 Database channel: Verified deletion of {len(deleted_ids)} post(s).\\n"
+            f"🆔 Message ID(s): {', '.join(str(item) for item in deleted_ids)}\\n"
             f"👥 Removed from {update_result.modified_count} user collections."
         )
-    except Exception as exc:
-        await message.reply_text(f"Error: {str(exc)}")
-
 
 @app.on_message(filters.command("gupdate"))
 @require_power("up")
