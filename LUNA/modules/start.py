@@ -8,6 +8,9 @@ import importlib.util
 import random
 import time
 import asyncio
+import json
+import urllib.error
+import urllib.request
 from urllib.parse import urlsplit
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -90,6 +93,52 @@ def valid_button_url(value):
         return None
 
     return value
+
+
+def _telegram_api_call(method: str, payload: dict):
+    """Call the Telegram Bot API with fields not yet exposed by Pyrogram."""
+    request = urllib.request.Request(
+        f"https://api.telegram.org/bot{TOKEN}/{method}",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        details = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(
+            f"Telegram Bot API {method} failed (HTTP {exc.code}): {details}"
+        ) from exc
+
+    if not result.get("ok"):
+        raise RuntimeError(result.get("description", "Telegram rejected the request"))
+    return result.get("result")
+
+
+async def edit_help_message(query, text, buttons):
+    """Edit the help screen using Bot API button styles (green/blue)."""
+    common_payload = {
+        "chat_id": query.message.chat.id,
+        "message_id": query.message.id,
+        "parse_mode": "HTML",
+        "reply_markup": {"inline_keyboard": buttons},
+    }
+
+    await query.answer()
+    try:
+        await asyncio.to_thread(
+            _telegram_api_call,
+            "editMessageCaption",
+            {**common_payload, "caption": text},
+        )
+    except Exception:
+        await asyncio.to_thread(
+            _telegram_api_call,
+            "editMessageText",
+            {**common_payload, "text": text},
+        )
 
 
 # START_MEDIA is imported from LUNA package
@@ -260,7 +309,7 @@ def find_help_modules():
     buttons = []
     for module_name, module_data in HELP_DATA.items():
         button_name = module_data.get("HELP_NAME", "Unknown")
-        buttons.append(InlineKeyboardButton(button_name, callback_data=f"help_{module_name}"))
+        buttons.append({"text": button_name, "callback_data": f"help_{module_name}", "style": "success"})
     return [buttons[i : i + 3] for i in range(0, len(buttons), 3)]
 
 # 🔹 Help Button Click Handler
@@ -268,7 +317,7 @@ def find_help_modules():
 async def show_help_menu(client, query: CallbackQuery):
     await asyncio.sleep(1)
     buttons = find_help_modules()
-    buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
+    buttons.append([{"text": "⬅ Back", "callback_data": "back_to_home", "style": "primary"}])
 
     text = (
         "⌘ <b>LUNA COMMAND CENTER</b>\n\n"
@@ -276,18 +325,7 @@ async def show_help_menu(client, query: CallbackQuery):
         "All commands use the / prefix.</blockquote>"
     )
 
-    try:
-        await query.message.edit_caption(
-            caption=text,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-    except Exception:
-        await query.message.edit_text(
-            text=text,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
+    await edit_help_message(query, text, buttons)
 
 # 🔹 Individual Module Help Handler
 @app.on_callback_query(filters.regex(r"^help_(.+)"))
@@ -297,22 +335,11 @@ async def show_help(client, query: CallbackQuery):
     try:
         module_data = HELP_DATA.get(module_name, {})
         help_text = module_data.get("HELP", "Is module ka koi help nahi hai.")
-        buttons = [[InlineKeyboardButton("⬅ Back", callback_data="open_help")]]
+        buttons = [[{"text": "⬅ Back", "callback_data": "open_help", "style": "primary"}]]
         
         full_text = f"✦ <b>{module_data.get('HELP_NAME', module_name.upper())}</b>  /  GUIDE\n\n{help_text}"
         
-        try:
-            await query.message.edit_caption(
-                caption=full_text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML
-            )
-        except Exception:
-            await query.message.edit_text(
-                text=full_text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML
-            )
+        await edit_help_message(query, full_text, buttons)
     except Exception as e:
         await query.answer("Help load karne me error aayi!")
 
