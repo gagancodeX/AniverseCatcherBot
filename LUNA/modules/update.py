@@ -109,7 +109,7 @@ async def get_database_delete_diagnostics(client, chat_id, message_id):
     except Exception as exc:
         lines.append(f"Saved message lookup failed: {str(exc)[:110]}")
 
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 
 async def sync_database_channel_post(client, character):
