@@ -113,8 +113,8 @@ def _message_has_character_id(post, character_id):
     body = (getattr(post, "caption", None) or getattr(post, "text", None) or "")
     escaped_id = re.escape(str(character_id).strip())
     marker = re.compile(
-        rf"(?im)(?:^|[\\n|])\\s*(?:🆔\\s*)?(?:character\\s+)?"
-        rf"id\\s*[·:|]\\s*{escaped_id}(?=\\s*(?:\\||$))"
+        rf"(?im)(?:^|[\n|])\s*(?:🆔\s*)?(?:character\s+)?"
+        rf"id\s*[·:|]\s*{escaped_id}(?=\s*(?:\||$))"
     )
     return bool(marker.search(body))
 
@@ -222,12 +222,12 @@ async def delete_handler(client, message):
                 f"message {saved_message_id or 'unknown'}."
             )
             if search_errors:
-                details += "\\nSearch details: " + " | ".join(search_errors)
+                details += "\nSearch details: " + " | ".join(search_errors)
             return await message.reply_text(
                 "❌ DATABASE CHANNEL POST NOT FOUND\n"
                 f"Character {character_id} was NOT deleted.\n"
                 "No verified archive post for this character was found. "
-                "MongoDB and user collections were left untouched.\\n"
+                "MongoDB and user collections were left untouched.\n"
                 + details
             )
 
@@ -251,11 +251,11 @@ async def delete_handler(client, message):
                 deleted_ids.append(int(post.id))
         except Exception as exc:
             return await message.reply_text(
-                "❌ DATABASE CHANNEL DELETE FAILED\\n"
-                f"Character {character_id} was NOT deleted.\\n"
-                "The MongoDB record and user collections were left untouched.\\n"
+                "❌ DATABASE CHANNEL DELETE FAILED\n"
+                f"Character {character_id} was NOT deleted.\n"
+                "The MongoDB record and user collections were left untouched.\n"
                 f"Channel: {target_chat_id} | Message IDs: "
-                f"{', '.join(str(post.id) for post in target_posts)}\\n"
+                f"{', '.join(str(post.id) for post in target_posts)}\n"
                 f"Telegram/verification error: {str(exc)[:180]}"
             )
 
@@ -273,9 +273,9 @@ async def delete_handler(client, message):
         )
 
         await message.reply_text(
-            f"✅ CHARACTER {character_id} DELETED\\n"
-            f"📦 Database channel: Verified deletion of {len(deleted_ids)} post(s).\\n"
-            f"🆔 Message ID(s): {', '.join(str(item) for item in deleted_ids)}\\n"
+            f"✅ CHARACTER {character_id} DELETED\n"
+            f"📦 Database channel: Verified deletion of {len(deleted_ids)} post(s).\n"
+            f"🆔 Message ID(s): {', '.join(str(item) for item in deleted_ids)}\n"
             f"👥 Removed from {update_result.modified_count} user collections."
         )
 
