@@ -7,7 +7,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
-from LUNA import collection, app, user_collection, require_power, DATABASE_ID, bot as aiogram_bot
+from LUNA import collection, app, user_collection, require_power, DATABASE_ID, bot as aiogram_bot, database_admin_client
 from LUNA.unit.luna_rarity import rarity_map
 
 
@@ -26,60 +26,67 @@ def build_database_caption(character):
 
 async def delete_database_channel_post(client, chat_id, message_id):
     """
-    Delete an archive post when Telegram still permits bot deletion.
-
-    Bot accounts are limited to deleting messages younger than 48 hours.
-    If an older archive post is manually removed by a channel administrator,
-    a later /gdelete run recognizes that it is already absent and safely
-    completes the MongoDB/user-collection cleanup.
+    Use an authorized human-admin session for older channel posts.
+    The bot session remains the fallback for posts inside its deletion window.
     """
     message_id = int(message_id)
-
-    # A human channel admin may have removed the post manually after the
-    # bot's 48-hour deletion window expired. Treat confirmed absence as done.
     existing_message = await client.get_messages(chat_id, message_id)
     if (
         not existing_message
         or getattr(existing_message, "empty", False)
         or not getattr(existing_message, "id", None)
     ):
-        return "Database channel post was already removed manually."
+        return "Database channel post was already removed."
 
     sent_at = getattr(existing_message, "date", None)
+    is_older_than_48h = False
     if sent_at:
         if sent_at.tzinfo is None:
             sent_at = sent_at.replace(tzinfo=timezone.utc)
         age = datetime.now(timezone.utc) - sent_at.astimezone(timezone.utc)
-        if age >= timedelta(hours=48):
+        is_older_than_48h = age >= timedelta(hours=48)
+
+    if database_admin_client and database_admin_client.is_connected:
+        admin_me = await database_admin_client.get_me()
+        admin_member = await database_admin_client.get_chat_member(chat_id, admin_me.id)
+        admin_rights = getattr(admin_member, "privileges", None)
+        status_text = str(getattr(admin_member, "status", "")).lower()
+        can_delete = status_text.endswith("administrator") and bool(
+            getattr(admin_rights, "can_delete_messages", False)
+        )
+        if not can_delete:
             raise RuntimeError(
-                "ARCHIVE_POST_TOO_OLD: "
-                f"this archive post was sent at {sent_at.isoformat()} and is "
-                "older than Telegram's 48-hour bot deletion limit. "
-                "Remove this post manually in the database channel, then run "
-                "the same /gdelete command again."
+                "DATABASE_ADMIN_SESSION_NOT_AUTHORIZED: configured user account "
+                "must be a channel administrator with Delete Messages permission."
             )
+        await database_admin_client.delete_messages(
+            chat_id=chat_id,
+            message_ids=message_id,
+        )
+        return "Database channel post deleted using the authorized admin account."
+
+    if is_older_than_48h:
+        raise RuntimeError(
+            "OLD_POST_NEEDS_ADMIN_SESSION: this post is older than 48 hours. "
+            "Set DATABASE_ADMIN_SESSION in Render to a human Telegram account "
+            "that is an administrator of the database channel with Delete Messages."
+        )
 
     bot_api_error = None
     try:
-        await aiogram_bot.delete_message(
-            chat_id=chat_id,
-            message_id=message_id,
-        )
+        await aiogram_bot.delete_message(chat_id=chat_id, message_id=message_id)
         return "Database channel post deleted (Bot API)."
     except Exception as exc:
         bot_api_error = exc
 
     try:
-        await client.delete_messages(
-            chat_id=chat_id,
-            message_ids=message_id,
-        )
-        return "Database channel post deleted (Pyrogram fallback)."
+        await client.delete_messages(chat_id=chat_id, message_ids=message_id)
+        return "Database channel post deleted (Pyrogram bot fallback)."
     except Exception as pyrogram_error:
         raise RuntimeError(
             "Bot API: "
             f"{str(bot_api_error)[:100]} | "
-            "Pyrogram: "
+            "Pyrogram bot: "
             f"{str(pyrogram_error)[:100]}"
         ) from pyrogram_error
 
@@ -284,7 +291,8 @@ async def delete_handler(client, message):
                     "❌ DATABASE CHANNEL DELETE FAILED\n"
                     f"Character {character_id} was NOT deleted.\n"
                     "The MongoDB record and user collections were left untouched.\n"
-                    f"Delete errors: {str(exc)[:220]}\n\n"
+                    f"Delete errors: {str(exc)[:220]}\n"
+                    "Older posts require DATABASE_ADMIN_SESSION from a human channel admin.\n\n"
                     "🔎 LIVE DIAGNOSTICS\n"
                     f"{diagnostics}"
                 )
