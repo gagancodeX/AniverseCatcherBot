@@ -40,7 +40,6 @@ from config import (
 
 
 
-from config import DATABASE_ADMIN_SESSION
 
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
