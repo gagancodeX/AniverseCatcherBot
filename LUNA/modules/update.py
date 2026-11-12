@@ -238,6 +238,69 @@ async def delete_handler(client, message):
     except Exception as exc:
         await message.reply_text(f"Error: {str(exc)}")
 
+
+# Remove a character from MongoDB and user inventories when Telegram's
+# 48-hour Bot API deletion window has passed and the archive post was
+# manually removed by an authorized admin.
+@app.on_message(filters.command("gdelete_db"))
+@require_power("del")
+async def delete_database_only_handler(client, message):
+    try:
+        args = message.text.split()
+        if len(args) != 3 or args[2].upper() != "CONFIRM":
+            return await message.reply_text(
+                "⚠️ DATABASE-ONLY DELETE\n"
+                "Use only AFTER manually deleting the old archive post in the "
+                "database channel.\n\n"
+                "This command does NOT delete any Telegram channel message.\n"
+                "It removes the MongoDB character record and all user copies.\n\n"
+                "To confirm: /gdelete_db ID CONFIRM"
+            )
+
+        character_id = args[1].strip()
+        if not character_id:
+            return await message.reply_text("Please provide a valid character ID.")
+
+        character = await collection.find_one({"id": character_id})
+        if not character:
+            return await message.reply_text(
+                f"❌ Character {character_id} was not found in the main database.\n"
+                "No user collections were changed."
+            )
+
+        delete_result = await collection.delete_one(
+            {"_id": character["_id"], "id": character_id}
+        )
+        if delete_result.deleted_count != 1:
+            return await message.reply_text(
+                f"❌ Character {character_id} was not deleted from MongoDB.\n"
+                "User collections were left untouched."
+            )
+
+        try:
+            update_result = await user_collection.update_many(
+                {"characters.id": character_id},
+                {"$pull": {"characters": {"id": character_id}}},
+            )
+            removed_users = update_result.modified_count
+        except Exception as exc:
+            return await message.reply_text(
+                f"⚠️ Main character record {character_id} was deleted, but removing "
+                "user copies failed.\n"
+                f"Database error: {str(exc)[:160]}\n"
+                "Please retry cleanup after checking the database."
+            )
+
+        await message.reply_text(
+            "✅ DATABASE CLEANUP COMPLETE\n"
+            f"Character ID: {character_id}\n"
+            "MongoDB character record: deleted\n"
+            f"User collections updated: {removed_users}\n"
+            "Telegram archive post: NOT touched by this command."
+        )
+    except Exception as exc:
+        await message.reply_text(f"Database cleanup error: {str(exc)[:180]}")
+
 @app.on_message(filters.command("gupdate"))
 @require_power("up")
 async def update(client: Client, message: Message):
