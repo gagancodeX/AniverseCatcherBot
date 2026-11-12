@@ -150,16 +150,14 @@ async def delete_handler(client, message):
 
         character_id = args[1]
         character = await collection.find_one({"id": character_id})
-        if not character:
-            return await message.reply_text(
-                f"Character with ID {character_id} was not found."
-            )
 
+        # A previous buggy delete may have removed MongoDB first while leaving
+        # the archive post behind. Keep searching so /gdelete can clean that orphan.
         # Search the configured database channel first. Older records can retain
         # a channel ID from a previous configuration, so check that saved channel
         # only as a fallback. Never trust a stale message ID without validation.
-        saved_chat_id = character.get("media_chat_id")
-        saved_message_id = character.get("media_message_id")
+        saved_chat_id = character.get("media_chat_id") if character else None
+        saved_message_id = character.get("media_message_id") if character else None
         archive_channels = []
         for chat_id in (DATABASE_ID, saved_chat_id):
             if chat_id and str(chat_id) not in [str(item) for item in archive_channels]:
@@ -259,13 +257,17 @@ async def delete_handler(client, message):
                 f"Telegram/verification error: {str(exc)[:180]}"
             )
 
-        delete_result = await collection.delete_one({"_id": character["_id"]})
-        if delete_result.deleted_count != 1:
-            return await message.reply_text(
-                "⚠️ The channel post was deleted and verified, but the character "
-                "record could not be deleted. Please check the character record "
-                "before retrying."
-            )
+        if character:
+            delete_result = await collection.delete_one({"_id": character["_id"]})
+            if delete_result.deleted_count != 1:
+                return await message.reply_text(
+                    "⚠️ The channel post was deleted and verified, but the character "
+                    "record could not be deleted. Please check the character record "
+                    "before retrying."
+                )
+            mongo_status = "Character record removed."
+        else:
+            mongo_status = "Record was already absent; orphan archive post removed."
 
         update_result = await user_collection.update_many(
             {"characters.id": character_id},
@@ -276,6 +278,7 @@ async def delete_handler(client, message):
             f"✅ CHARACTER {character_id} DELETED\n"
             f"📦 Database channel: Verified deletion of {len(deleted_ids)} post(s).\n"
             f"🆔 Message ID(s): {', '.join(str(item) for item in deleted_ids)}\n"
+            f"🗃 MongoDB: {mongo_status}\n"
             f"👥 Removed from {update_result.modified_count} user collections."
         )
     except Exception as exc:
