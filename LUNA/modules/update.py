@@ -170,91 +170,45 @@ async def delete_handler(client, message):
                 "The MongoDB record and user collections were left untouched."
             )
 
-        target_chat_id = None
-        target_posts = []
-        search_errors = []
-
-        for chat_id in archive_channels:
+        # Bot accounts cannot call messages.GetHistory. Use the exact
+        # archive message reference saved by the upload handler.
+        target_chat_id = saved_chat_id or DATABASE_ID
+        target_message_ids = []
+        if saved_message_id is not None:
             try:
-                matches = await _find_character_archive_posts(
-                    client, chat_id, character_id
-                )
-            except Exception as exc:
-                search_errors.append(f"{chat_id}: {str(exc)[:120]}")
-                continue
+                target_message_ids = [int(saved_message_id)]
+            except (TypeError, ValueError):
+                target_message_ids = []
 
-            if matches:
-                target_chat_id = chat_id
-                target_posts = matches
-                break
-
-            # Backward compatibility for old archive captions without an ID
-            # marker: accept the saved message only when its media file_id agrees.
-            if (
-                saved_message_id is not None
-                and saved_chat_id is not None
-                and str(chat_id) == str(saved_chat_id)
-            ):
-                try:
-                    saved_post = await client.get_messages(
-                        chat_id, int(saved_message_id), replies=0
-                    )
-                    if (
-                        saved_post
-                        and not getattr(saved_post, "empty", False)
-                        and _message_has_saved_media(
-                            saved_post, character.get("media_file_id")
-                        )
-                    ):
-                        target_chat_id = chat_id
-                        target_posts = [saved_post]
-                        break
-                except Exception as exc:
-                    search_errors.append(
-                        f"saved reference {chat_id}/{saved_message_id}: {str(exc)[:120]}"
-                    )
-
-        if not target_posts:
-            details = (
-                f"Saved reference: chat {saved_chat_id or 'unknown'}, "
-                f"message {saved_message_id or 'unknown'}."
-            )
-            if search_errors:
-                details += "\nSearch details: " + " | ".join(search_errors)
+        if not target_message_ids:
             return await message.reply_text(
-                "❌ DATABASE CHANNEL POST NOT FOUND\n"
+                "❌ SAVED DATABASE POST REFERENCE MISSING\n"
                 f"Character {character_id} was NOT deleted.\n"
-                "No verified archive post for this character was found. "
-                "MongoDB and user collections were left untouched.\n"
-                + details
+                "No channel history scan was attempted because Telegram does not "
+                "allow bot accounts to use messages.GetHistory.\n"
+                "MongoDB and user collections were left untouched."
             )
 
-        # Delete the verified post(s), then ask Telegram again to confirm they
-        # are gone. A successful API response alone is not reported as success.
+        # Telegram Bot API deleteMessage returns True when deletion is accepted.
+        # Do not use Pyrogram history methods here; bots cannot call them.
         deleted_ids = []
         try:
-            for post in target_posts:
-                await aiogram_bot.delete_message(
+            for message_id in target_message_ids:
+                result = await aiogram_bot.delete_message(
                     chat_id=target_chat_id,
-                    message_id=int(post.id),
+                    message_id=message_id,
                 )
-                await asyncio.sleep(0.25)
-                verification = await client.get_messages(
-                    target_chat_id, int(post.id), replies=0
-                )
-                if verification and not getattr(verification, "empty", False):
-                    raise RuntimeError(
-                        f"Telegram returned success but message {post.id} is still present."
-                    )
-                deleted_ids.append(int(post.id))
+                if result is not True:
+                    raise RuntimeError("Telegram did not confirm the delete request.")
+                deleted_ids.append(message_id)
         except Exception as exc:
             return await message.reply_text(
                 "❌ DATABASE CHANNEL DELETE FAILED\n"
                 f"Character {character_id} was NOT deleted.\n"
                 "The MongoDB record and user collections were left untouched.\n"
                 f"Channel: {target_chat_id} | Message IDs: "
-                f"{', '.join(str(post.id) for post in target_posts)}\n"
-                f"Telegram/verification error: {str(exc)[:180]}"
+                f"{', '.join(str(item) for item in target_message_ids)}\n"
+                f"Telegram error: {str(exc)[:180]}"
             )
 
         if character:
