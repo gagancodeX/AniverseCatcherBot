@@ -18,9 +18,6 @@ api_hash = os.getenv("API_HASH", "")
 TOKEN = os.getenv("TOKEN", "").strip()
 
 PYROGRAM_WORKDIR = os.getenv("PYROGRAM_WORKDIR", "/var/data").strip() or "/var/data"
-# Optional human-admin session used to delete older database-channel posts.
-# Keep the value only in the hosting provider secret environment.
-DATABASE_ADMIN_SESSION = os.getenv("DATABASE_ADMIN_SESSION", "").strip()
 
 # Logging & Logs Channel
 BOT_LOGGING = os.getenv("BOT_LOGGING", "")
