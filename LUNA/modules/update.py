@@ -6,7 +6,7 @@
 import asyncio
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
-from LUNA import collection, app, user_collection, require_power, DATABASE_ID
+from LUNA import collection, app, user_collection, require_power, DATABASE_ID, bot as aiogram_bot
 from LUNA.unit.luna_rarity import rarity_map
 
 
@@ -21,6 +21,42 @@ def build_database_caption(character):
     )
     # Telegram media captions are limited to 1024 characters.
     return caption[:1024]
+
+
+async def delete_database_channel_post(client, chat_id, message_id):
+    """
+    Delete a bot-authored channel post using Bot API first, then Pyrogram.
+
+    Telegram allows bots with can_post_messages to delete their own channel
+    posts through Bot API, but that API only deletes messages younger than
+    48 hours. Pyrogram remains a fallback for posts requiring channel-level
+    delete_messages rights (including older posts).
+    """
+    message_id = int(message_id)
+    bot_api_error = None
+
+    try:
+        await aiogram_bot.delete_message(
+            chat_id=chat_id,
+            message_id=message_id,
+        )
+        return "Database channel post deleted (Bot API)."
+    except Exception as exc:
+        bot_api_error = exc
+
+    try:
+        await client.delete_messages(
+            chat_id=chat_id,
+            message_ids=message_id,
+        )
+        return "Database channel post deleted (Pyrogram fallback)."
+    except Exception as pyrogram_error:
+        raise RuntimeError(
+            "Bot API: "
+            f"{str(bot_api_error)[:100]} | "
+            "Pyrogram: "
+            f"{str(pyrogram_error)[:100]}"
+        ) from pyrogram_error
 
 
 async def sync_database_channel_post(client, character):
@@ -136,17 +172,18 @@ async def delete_handler(client, message):
                 )
 
             try:
-                await client.delete_messages(
-                    chat_id=archive_chat_id,
-                    message_ids=int(archive_message_id),
+                channel_status = await delete_database_channel_post(
+                    client,
+                    archive_chat_id,
+                    archive_message_id,
                 )
-                channel_status = "Database channel post deleted."
             except Exception as exc:
                 return await message.reply_text(
                     "❌ DATABASE CHANNEL DELETE FAILED\n"
                     f"Character {character_id} was NOT deleted.\n"
-                    "Check that the bot can delete messages in the database channel.\n"
-                    f"Details: {str(exc)[:180]}"
+                    "Grant the bot Post Messages and Delete Messages rights in the database channel. "
+                    "Telegram's Bot API cannot delete posts older than 48 hours, and some service messages are not deletable.\n"
+                    f"Details: {str(exc)[:220]}"
                 )
 
         delete_result = await collection.delete_one({"_id": character["_id"]})
