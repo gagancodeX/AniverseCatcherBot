@@ -278,6 +278,8 @@ async def delete_handler(client, message):
             f"🆔 Message ID(s): {', '.join(str(item) for item in deleted_ids)}\n"
             f"👥 Removed from {update_result.modified_count} user collections."
         )
+    except Exception as exc:
+        await message.reply_text(f"Error: {str(exc)}")
 
 @app.on_message(filters.command("gupdate"))
 @require_power("up")
