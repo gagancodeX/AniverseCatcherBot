@@ -23,6 +23,7 @@ from LUNA.modules import ALL_MODULES
 BOT_READY = False
 
 BOT_DESCRIPTION = "🌙 WELCOME TO LUNA\n\n✦ Catch characters from your favourite anime.\n✦ Collect rare finds and build your own collection.\n✦ Search the archive, save favourites and trade.\n✦ Gift characters and claim daily rewards.\n✦ Earn coins and rise through collector rankings.\n\n✨ Your next favourite character is waiting. Tap /start!"
+BOT_NAME = "🌙 𝐋𝐮𝐧𝐚 𝐖𝐚𝐢𝐟𝐮 𝐂𝐚𝐭𝐜𝐡𝐞𝐫 ✦"
 
 USER_COMMANDS = [
     {
@@ -338,8 +339,25 @@ def _apply_command_scope(scope: dict, commands: list, language_code: str = "") -
 
 
 def sync_bot_profile() -> None:
-    """Clear About and install complete command lists for private chats, groups and admins."""
-    # Telegram allows an empty short_description to remove the About text.
+    """Sync the public bot name, descriptions and complete command lists."""
+    # Apply the same display name to the default, English and Hindi profiles.
+    for language_code in ABOUT_LANGUAGES:
+        language_payload = {"language_code": language_code} if language_code else {}
+        try:
+            _telegram_api_call("setMyName", {"name": BOT_NAME, **language_payload})
+            LOGGER("LUNA").info(
+                "Telegram bot name synced for language %r: %s",
+                language_code or "default",
+                BOT_NAME,
+            )
+        except Exception as exc:
+            LOGGER("LUNA").warning(
+                "Could not sync Telegram bot name for language %r: %s",
+                language_code or "default",
+                exc,
+            )
+
+    # Telegram allows an empty short_description to remove the dedicated name for the given language.
     for language_code in ABOUT_LANGUAGES:
         payload = {"short_description": ""}
         if language_code:
@@ -413,8 +431,10 @@ def sync_bot_profile() -> None:
             {"scope": {"type": "default"}},
         )
         actual_about = _telegram_api_call("getMyShortDescription", {})
+        actual_name = _telegram_api_call("getMyName", {})
         LOGGER("LUNA").info(
-            "Telegram profile verification: %s default commands; About length=%s",
+            "Telegram profile verification: name=%r; %s default commands; About length=%s",
+            (actual_name or {}).get("name", ""),
             len(actual_commands or []),
             len((actual_about or {}).get("short_description", "")),
         )
