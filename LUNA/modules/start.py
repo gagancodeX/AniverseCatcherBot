@@ -151,17 +151,17 @@ async def generate_start_message(client, message):
     uptime = get_uptime()
     
     caption = (
-        f"✦ <b>WELCOME TO THE LUNA</b> ✦\n"
-        f"<b>{bot_name}</b>  ·  Your anime character universe\n\n"
-        f"<blockquote>╭  ✧ <b>COLLECT</b>\n"
-        f"│  Discover characters and build your collection.\n"
-        f"├  ✧ <b>PLAY</b>\n"
-        f"│  Guess characters and trade with friends.\n"
-        f"╰  ✧ <b>EXPLORE</b>\n"
-        f"   Open /help to discover every feature.</blockquote>\n"
-        f"<code>━━━━━━━━━━━━━━━━━━━━</code>\n"
-        f"⚡ <b>{ping} ms</b>  ·  ⏱ <b>{uptime}</b>\n"
-        f"<i>Choose a destination below to begin.</i>"
+        f"🌙 <b>✦ WELCOME TO THE LUNA ✦</b>\n"
+        f"<b>{bot_name}</b>\n"
+        f"<i>Your anime character universe</i>\n\n"
+        f"<blockquote>"
+        f"✧ <b>COLLECT</b>  ·  Discover characters and build your collection.\n"
+        f"✧ <b>PLAY</b>  ·  Guess characters and trade with friends.\n"
+        f"✧ <b>EXPLORE</b>  ·  Open /help to discover every feature."
+        f"</blockquote>\n"
+        f"<code>✦ ━━━━━━━━━━━━━━━━━━━ ✦</code>\n"
+        f"⚡ <b>{ping} ms</b>   <code>•</code>   ⏱ <b>{uptime}</b>\n"
+        f"<i>Choose your destination and begin your collection.</i>"
     )
 
     buttons = []
@@ -221,16 +221,59 @@ async def generate_group_start_message(client):
     return caption, buttons
 
 # 🔹 Send Media (Helper)
+async def apply_start_button_styles(sent_message, buttons):
+    """Apply Telegram's supported green/blue inline-button styles after sending."""
+    if not buttons:
+        return
+
+    styled_rows = []
+    for row in buttons:
+        styled_row = []
+        for button in row:
+            item = {"text": button.text}
+            if button.callback_data is not None:
+                item["callback_data"] = button.callback_data
+            elif button.url is not None:
+                item["url"] = button.url
+            else:
+                continue
+
+            # Main command-center action gets the green success style.
+            # Navigation and external links use the blue primary style.
+            item["style"] = (
+                "success" if button.callback_data == "open_help" else "primary"
+            )
+            styled_row.append(item)
+        if styled_row:
+            styled_rows.append(styled_row)
+
+    try:
+        await asyncio.to_thread(
+            _telegram_api_call,
+            "editMessageReplyMarkup",
+            {
+                "chat_id": sent_message.chat.id,
+                "message_id": sent_message.id,
+                "reply_markup": {"inline_keyboard": styled_rows},
+            },
+        )
+    except Exception as exc:
+        # The message and its buttons should remain usable even if styling
+        # is not supported by the connected Bot API version.
+        LOGGER("LUNA").warning("Could not apply /start button colours: %s", exc)
+
+
 async def send_media_message(message, media, caption, buttons):
-    """Send the start media; an invalid optional button must not break /start."""
+    """Send the start media and then apply the green/blue button styles."""
     reply_markup = InlineKeyboardMarkup(buttons) if buttons else None
     if not media:
-        await message.reply_text(
+        sent = await message.reply_text(
             caption,
             parse_mode=enums.ParseMode.HTML,
             reply_markup=reply_markup
         )
-        return
+        await apply_start_button_styles(sent, buttons)
+        return sent
 
     media_type = media.lower()
 
@@ -240,14 +283,14 @@ async def send_media_message(message, media, caption, buttons):
             kwargs["reply_markup"] = markup
 
         if media_type.endswith((".png", ".jpg", ".jpeg")):
-            await message.reply_photo(photo=media, **kwargs)
+            return await message.reply_photo(photo=media, **kwargs)
         elif media_type.endswith(".gif"):
-            await message.reply_animation(animation=media, **kwargs)
+            return await message.reply_animation(animation=media, **kwargs)
         else:
-            await message.reply_video(video=media, **kwargs)
+            return await message.reply_video(video=media, **kwargs)
 
     try:
-        await send(reply_markup)
+        sent = await send(reply_markup)
     except Exception as exc:
         if "BUTTON_URL_INVALID" not in str(exc):
             raise
@@ -255,7 +298,11 @@ async def send_media_message(message, media, caption, buttons):
         LOGGER("LUNA").warning(
             "A /start button URL was rejected by Telegram; sending media without buttons."
         )
-        await send(None)
+        sent = await send(None)
+
+    if buttons and sent:
+        await apply_start_button_styles(sent, buttons)
+    return sent
 
 # 🔹 Private Start Command Handler
 @app.on_message(filters.command("start") & filters.private)
