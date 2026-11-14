@@ -21,44 +21,64 @@ async def delete_message(chat_id, message_id, context):
     except Exception as e:
         print(f"Error deleting message: {e}")
 
+# Use the canonical rarity labels so the spawn query always matches
+# the values saved by uploads and the database rarity migration.
 RARITY_WEIGHTS = {
-    "⚪️ Common": (40, True),             # Most frequent
-    "🟣 Rare": (20, True),               # Less frequent than Common
-    "🟡 Legendary": (12, True),          # Rare but obtainable
-    "🟢 Medium": (10, True),             # Less common than Rare
-    "💮 Special Edition": (8, True),     # Very rare
-    "🔮 Limited Edition": (6, True),     # Extremely rare
-    "💸 Premium Edition": (4, True),     # Ultra-rare
-    "🌤 Summer": (3, False),             # Seasonal rarity
-    "🎐 Celestial": (2.5, True),         # Cosmic themed rarity
-    "❄️ Winter": (2, False),             # Winter themed rarity
-    "💝 Valentine": (2, False),          # Valentine's rarity
-    "🎃 Halloween": (1.8, False),        # Halloween themed rarity
-    "🎄 Christmas Special": (1.5, False),# Christmas themed rarity
-    "🪐 Omniversal": (1.2, True),        # Very rare cosmic rarity
-    "🎭 Cosplay Master 🎭": (1, True),   # Exclusive cosplay edition
-    "🧧 Events": (0.8, False),           # Limited-time event rarity
-    "🍑 Echhi": (0.6, True),             # Adult-themed rarity
-    "🎗️ AMV Edition": (0.5, False),     # AMV special rarity
-    "🌧 Rainy": (2.0, False),            # Rainy event rarity
+    rarity_map[1]: (40, True),   # Origin
+    rarity_map[2]: (20, True),   # Phantom
+    rarity_map[3]: (12, True),   # Vanguard
+    rarity_map[4]: (10, True),   # Arcane
+    rarity_map[5]: (8, True),    # Zenith
+    rarity_map[6]: (6, True),    # Ethereal
+    rarity_map[7]: (4, True),    # Mythic
+    rarity_map[8]: (3, False),   # Summer event
+    rarity_map[9]: (2.5, True),  # Divine
+    rarity_map[10]: (2, False), # Winter event
+    rarity_map[11]: (2, False), # Valentine event
+    rarity_map[12]: (1.8, False), # Halloween event
+    rarity_map[13]: (1.5, False), # Christmas event
+    rarity_map[14]: (1.2, True), # Infinity
+    rarity_map[15]: (1, True),   # Cosplay
+    rarity_map[16]: (0.8, False), # Event exclusive
+    rarity_map[18]: (0.5, False), # Cinematic
+    rarity_map[19]: (0.5, True), # Radiant
+    rarity_map[20]: (2, False),  # Rainfall event
 }
 
 
 async def send_image(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
 
-    # Fetch all characters from MongoDB
+    # Only canonical, spawn-enabled rarity labels are eligible.
+    allowed_rarities = [
+        rarity for rarity, (weight, enabled) in RARITY_WEIGHTS.items()
+        if enabled and weight > 0
+    ]
+
+    # Fetch characters that have an approved rarity and a usable media reference.
     all_characters = list(await collection.find({
-        "rarity": {"$in": [k for k, v in RARITY_WEIGHTS.items() if v[1]]},
+        "rarity": {"$in": allowed_rarities},
         "$or": [
-            {"media_file_id": {"$exists": True, "$ne": ""}},
-            {"img_url": {"$exists": True, "$ne": ""}},
-            {"vid_url": {"$exists": True, "$ne": ""}},
+            {"media_file_id": {"$exists": True, "$nin": [None, ""]}},
+            {"img_url": {"$exists": True, "$nin": [None, ""]}},
+            {"vid_url": {"$exists": True, "$nin": [None, ""]}},
         ],
     }).to_list(length=None))
 
     if not all_characters:
-        await context.bot.send_message(chat_id, "No characters found with allowed rarities in the database.")
+        rarity_count = await collection.count_documents(
+            {"rarity": {"$in": allowed_rarities}}
+        )
+        total_count = await collection.count_documents({})
+        LOGGER("LUNA.SPAWN").warning(
+            "Character spawn skipped for group %s: no eligible media records "
+            "(total_records=%s, allowed_rarity_records=%s, allowed_rarities=%s). "
+            "Check archive rarity labels and media fields.",
+            chat_id,
+            total_count,
+            rarity_count,
+            allowed_rarities,
+        )
         return
 
     # Filter characters with valid rarity
@@ -68,7 +88,11 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     ]
 
     if not available_characters:
-        await context.bot.send_message(chat_id, "No available characters with the allowed rarities.")
+        LOGGER("LUNA.SPAWN").warning(
+            "Character spawn skipped for group %s: matched archive records do not "
+            "contain a valid character ID and enabled rarity.",
+            chat_id,
+        )
         return
 
     # Weighted random selection
