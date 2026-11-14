@@ -4,6 +4,7 @@
 # ==========================================
 
 from LUNA import *
+from LUNA.unit.luna_rarity import rarity_map
 import random
 import asyncio
 import time
